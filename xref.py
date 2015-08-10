@@ -36,7 +36,7 @@ class TextOutput(Output):
     def strSessions(self, participant):
         ss = []
         for s in participant.sessions:
-            ss.append(s.sessionid)
+            ss.append(str(s.sessionid))
         return '%s\n' % ', '.join(ss)
 
 class HtmlOutput(Output):
@@ -62,7 +62,7 @@ class HtmlOutput(Output):
         ss = []
         for s in participant.sessions:
             ss.append('<dd>%s %s <a href="%s#%s">%s</a></dd>' % \
-                      (s.day.shortname, s.time, config.filenames['schedule', 'html'], s.sessionid, self.cleanup(s.title)))
+                      (s.time.day.shortname, s.time, config.filenames['schedule', 'html'], s.sessionid, self.cleanup(s.title)))
         return '%s\n</dl>\n' % '\n'.join(ss)
 
 class XmlOutput(Output):
@@ -94,7 +94,10 @@ def write(output, participants):
 if __name__ == '__main__':
     import cmdline
 
-    (args, sessions, participants) = cmdline.cmdline(io=True)
+    args = cmdline.cmdline(io=True)
+    #reader = config.filereader['schedule']
+    #(sessions, participants) = reader.read(config.filenames['schedule', 'input'])
+    (sessions, participants) = config.filereader.read(config.filenames['schedule', 'input'])
 
     if args.text:
         if args.outfile:

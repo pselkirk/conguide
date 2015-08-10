@@ -19,6 +19,7 @@
 """ Config file parsing, and global variables. """
 
 import codecs
+import importlib
 import re
 import time
 import sys
@@ -38,11 +39,14 @@ CFG = 'arisia.cfg'
 
 # global variables
 debug = False
+quiet = False
 convention = ''
 start = None
 default_duration = None
 goh = {}
 filenames = {}
+#filereader = {}
+filereader = None
 level = {}
 room = {}
 room_combo = {}
@@ -70,19 +74,10 @@ slice = {}
 icons = []
 tracks = []
 research = []
-
-# Assume the common case of a con starting on Friday.
-# If it doesn't, session.read() will rotate the array.
-days = [ 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu' ]
-day = {}
-i = 0
-for d in days:
-    Day = times.Day(d)
-    Day.index = i
-    day[i] = Day
-    #day[Day.name] = Day
-    day[Day.shortname] = Day
-    i += 1
+#day = {}
+day = []
+schema = {}
+prune = None
 
 # Boilerplate xhtml file header, with 4 %s bits:
 # - title, for <head>
@@ -134,7 +129,7 @@ if not PY3:
 def parseConfig(fn):
 
     # sigh, scalar variables have to be declared global
-    global convention, start, default_duration, twidth, theight, hwidth, hheight, cheight_min, cheight_max
+    global convention, start, default_duration, twidth, theight, hwidth, hheight, cheight_min, cheight_max, filereader
 
     if PY3:
         cfg = configparser.ConfigParser(allow_no_value=True, strict=False, inline_comment_prefixes=('#',))
@@ -164,6 +159,14 @@ def parseConfig(fn):
     for (key, value) in cfg.items('input files'):
         filenames[key, 'input'] = value
 
+    value = cfg.get('input file importer', 'reader')
+    filereader = importlib.import_module(value)
+
+    #filereader = cfg.get
+    #for (key, value) in cfg.items('input file importer'):
+    #    readername = value
+    #    filereader[key] = importlib.import_module(readername)
+
     for mode in ('text', 'html', 'xml', 'indesign'):
         try:
             for (key, value) in cfg.items('output files ' + mode):
@@ -171,9 +174,20 @@ def parseConfig(fn):
         except configparser.NoSectionError:
             None
 
+    for mode in ('text', 'html', 'xml', 'indesign'):
+        try:
+            for (key, value) in cfg.items('output format ' + mode):
+                value = re.sub(r'(\w+)', r'{\1}', value)
+                schema[key, mode] = value + '\n'
+        except configparser.NoSectionError:
+            None
+    for (key, value) in cfg.items('output format'):
+        value = re.sub(r'(\w+)', r'{\1}', value)
+        schema[key, 'all'] = value + '\n'
+
     try:
         for (name, sortkey) in cfg.items('sort name'):
-            sortname[name] = sortkey
+            sortname[name] = sortkey.lower()
     except configparser.NoSectionError:
         None
 
@@ -276,6 +290,20 @@ def parseConfig(fn):
         None
 
     try:
+        global prune
+        nn = []
+        for k, expr in cfg.items('output prune'):
+            if k == 'type':
+                for n in re.split(r',\s*', expr):
+                    nn.append('session.type == \'%s\'' % n)
+            elif k == 'title':
+                for n in re.split(r',\s*', expr):
+                    nn.append('session.title.startswith(\'%s\')' % n)
+        prune = compile(' or '.join(nn), '<string>', 'eval')
+    except configparser.NoSectionError:
+        None
+
+    try:
         for unused, expr in cfg.items('featured research'):
             expr = expr.replace('track', 'session.track')
             expr = expr.replace('type', 'session.type')
@@ -288,18 +316,18 @@ def parseConfig(fn):
 
     # hotel layout - levels and rooms
     for section in cfg.sections():
-        m = re.match(r'level (.*)', section)
+        m = re.match(r'(level|venue) (.*)', section)
         if m:
-            name = m.group(1)
+            name = m.group(2)
+            level[name] = Level(name)
             try:
-                pubsname = cfg.get(section, 'pubsname')
+                level[name].pubsname = cfg.get(section, 'pubsname')
             except configparser.NoOptionError:
                 pubsname = None
-            level[name] = Level(name, pubsname)
             rooms = cfg.get(section, 'rooms')
             for r in re.split(r',\s*', rooms):
                 # XXX hack for 'Galleria - Autograph Space'
-                r = r.replace(' - ', u'\u2014')
+                #r = r.replace(' - ', u'\u2014')
                 room[r] = Room(r, level[name])
                 room[room[r].index] = room[r]
 
@@ -307,7 +335,7 @@ def parseConfig(fn):
         if m:
             name = m.group(1)
             # XXX hack for 'Galleria - Autograph Space'
-            name = name.replace(' - ', u'\u2014')
+            #name = name.replace(' - ', u'\u2014')
             try:
                 room[name].pubsname = cfg.get(section, 'pubsname')
             except configparser.NoOptionError:
@@ -384,7 +412,12 @@ def parseConfig(fn):
             # XXX validate that slices are contiguous and complete
 
 if __name__ == '__main__':
-    parseConfig(CFG)
+    import sys
+    if sys.argv[1]:
+        parseConfig(sys.argv[1])
+    else:
+        parseConfig(CFG)
+
     print('convention = ' + convention)
     print('start = %d/%d/%d' % (start.tm_mon, start.tm_mday, start.tm_year))
     print('default_duration = %s' % default_duration)
@@ -412,3 +445,7 @@ if __name__ == '__main__':
     print('filenames = %s' % filenames)
     print('featured = %s' % featured)
     print('sortname = %s' % sortname)
+
+    for k,v in schema.items():
+        print('schema[%s] =' % str(k))
+        print(v)

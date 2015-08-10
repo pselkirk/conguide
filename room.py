@@ -19,21 +19,18 @@
 class Level:
     index = 0
 
-    def __init__(self, name, pubsname, rooms=None):
+    def __init__(self, name, rooms=None):
         self.index = Level.index
         Level.index += 1
         self.name = name
-        self.pubsname = pubsname
+        self.pubsname = name
         self.rooms = rooms
 
     def __lt__(self, other):
         return (other and (self.index < other.index))
 
     def __str__(self):
-        if self.pubsname:
-            return '%s (%s)' % (self.name, self.pubsname)
-        else:
-            return self.name
+        return self.pubsname
 
 class Room:
     index = 0
@@ -51,7 +48,16 @@ class Room:
         return (other and (self.index < other.index))
 
     def __str__(self):
-        if self.level and self.level.pubsname:
-            return '%s (%s)' % (self.pubsname, self.level.pubsname)
-        else:
-            return self.pubsname
+        return self.pubsname
+
+if __name__ == '__main__':
+    import sys
+    import config
+
+    try:
+        config.parseConfig(sys.argv[1])
+    except IndexError:
+        config.parseConfig(config.CFG)
+
+    for r in config.room:
+        print('%s\t%s' % (r, config.room[r]))

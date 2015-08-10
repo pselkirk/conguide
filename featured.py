@@ -40,7 +40,7 @@ class TextOutput(Output):
         return re.sub('</?i>', '*', text)
 
     def strDay(self, session):
-        return '\n\n%s\n' % str(session.day).upper()
+        return '\n\n%s\n' % str(session.time.day).upper()
 
     def strIndex(self, session):
         return '\n[%s]\t' % session.sessionid
@@ -70,7 +70,7 @@ class HtmlOutput(Output):
         return text.replace('&', '&amp;')
 
     def strDay(self, session):
-        return '<hr /><h3>%s</h3>\n' % str(session.day).upper()
+        return '<hr /><h3>%s</h3>\n' % str(session.time.day).upper()
 
     def strIndex(self, session):
         return '<dl><dt>'
@@ -103,7 +103,7 @@ class XmlOutput(Output):
         return text.replace('&', '&amp;')
 
     def strDay(self, session):
-        return '<fe-day>%s</fe-day>\n' % str(session.day).upper()
+        return '<fe-day>%s</fe-day>\n' % str(session.time.day).upper()
 
     def strIndex(self, session):
         return '<fe-session><fe-index>%d</fe-index>\t' % session.index
@@ -123,9 +123,9 @@ def write(output, sessions):
     # build the 'sessions' list.
     for s in sessions:
         if s.sessionid in config.featured:
-            if s.day != curday:
+            if s.time.day != curday:
                 nextday = s
-                curday = s.day
+                curday = s.time.day
             if s.time.hour > 2 and nextday:
                 output.writeDay(s)
                 nextday = None
@@ -139,7 +139,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False, parents=[parent])
     parser.add_argument('--research', action='store_true',
                         help='identify likely candidates for "featured" list')
-    (args, sessions, participants) = cmdline.cmdline(parser)
+    args = cmdline.cmdline(parser, io=True)
+    (sessions, participants) = session.read(config.filenames['schedule', 'input'])
 
     # research - list all sessions in major-draw tracks, plus all sessions
     # with at least one GOH participant, formatted for cut-and-paste into

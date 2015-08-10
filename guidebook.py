@@ -46,12 +46,12 @@ bioswriter.writerow(['Name', 'Location (i.e. Table/Booth or Room Numbers)', 'Des
 def writerow(writer, row):
     writer.writerow([codecs.encode(f, 'utf-8') for f in row])
 
-for i in range(times.Day.index):
+for day in config.day:
     # XXX breaks if con spans the end of a month
-    config.day[i].date = '%02d/%02d/%04d' % \
-                         (config.start.tm_mon,
-                          config.start.tm_mday + i,
-                          config.start.tm_year)
+    day.date = '%02d/%02d/%04d' % \
+               (config.start.tm_mon,
+                config.start.tm_mday + i,
+                config.start.tm_year)
 
 titles = {}
 for session in sessions:

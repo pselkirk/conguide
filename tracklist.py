@@ -89,7 +89,7 @@ class HtmlOutput(Output):
             (re.sub(r'\W', '', track), self.cleanup(track))
 
     def strIndex(self, session):
-        return '<dd>%s %s\t' % (session.day.shortname, session.time)
+        return '<dd>%s %s\t' % (session.time.day.shortname, session.time)
 
     def strTitle(self, session):
         return '<a href="%s#%s">%s</a></dd>\n' % \
@@ -142,14 +142,16 @@ def write(output, sessions):
     output.writeTrackNames(sorted(track))
 
     for k,v in sorted(track.items()):
-        output.writeTrack(k)
-        for s in v:
-            output.writeSession(s)
+        if k:
+            output.writeTrack(k)
+            for s in v:
+                output.writeSession(s)
 
 if __name__ == '__main__':
     import cmdline
 
-    (args, sessions, participants) = cmdline.cmdline(io=True)
+    args = cmdline.cmdline(io=True)
+    (sessions, participants) = session.read(config.filenames['schedule', 'input'])
 
     if args.text:
         if args.outfile:

@@ -23,16 +23,20 @@ import config
 import times
 from room import Room
 
-class Slice:
-    # start and end can be Time (from config) or DayTime
+matrix = None
 
-    def __init__(self, name, start, end):
+class Slice:
+    # start and end are Time (with day)
+
+    def __init__(self, name, start, end, day=None):
         self.name = name
         self.start = start
+        self.start.day = day
         self.end = end
+        self.end.day = day
 
     def __str__(self):
-        return '%s: %s - %s' % (self.name, self.start.__str__(), self.end.__str__())
+        return '%s: %s - %s' % (self.name, self.start.__str__(mode='24hr'), self.end.__str__(mode='24hr'))
 
 class Output:
 
@@ -41,6 +45,30 @@ class Output:
 
     def __del__(self):
         self.f.close()
+
+    def cleanup(self, field):
+        if field:
+            # convert dashes
+            field = re.sub(r'(\d) *- *(\d)', r'\1'+u'\u2013'+r'\2', field) # the much-misunderstood n-dash
+            field = re.sub(r' *-{2,} *', u'\u2014', field)   # m--dash, m -- dash, etc.
+            field = re.sub(r' +- +', u'\u2014', field)       # m - dash
+            field = re.sub(r' +\u2014 +', u'\u2014', field, flags=re.U)
+
+            # right quote before abbreviated years and decades ('70s)
+            field = re.sub(r'\'([0-9])', u'\u2019'+r'\1', field)
+
+            # convert quotes
+            field = re.sub(r'^\'', u'\u2018', field) # beginning single quote -> left
+            field = re.sub(r'\'$', u'\u2019', field) # ending single quote -> right
+            field = re.sub(r'([^\w,.!?])\'(\w)', r'\1'+u'\u2018'+r'\2', field) # left single quote
+            field = re.sub(r'\'', u'\u2019', field)  # all remaining single quotes -> right
+
+            field = re.sub(r'^"', u'\u201c', field)  # beginning double quote -> left
+            field = re.sub(r'"$', u'\u201d', field)  # ending double quote -> right
+            field = re.sub(r'([^\w,.!?])"(\w)', r'\1'+u'\u201c'+r'\2', field) # left double quote
+            field = re.sub(r'"', u'\u201d', field)   # all remaining double quotes -> right
+
+        return field
 
 class HtmlOutput(Output):
 
@@ -55,8 +83,7 @@ class HtmlOutput(Output):
                                            'td.white { background-color: #FFFFFF }\n',
                                            title, config.source_date))
         dd = []
-        for d in range(times.Day.index):
-            day = config.day[d]
+        for day in config.day:
             dd.append('<a href="#%s">%s</a>' % (day.name, day.name))
         self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % ' - '.join(dd))
         self.f.write('<br /><br />\n')
@@ -64,6 +91,11 @@ class HtmlOutput(Output):
     def __del__(self):
         self.f.write('</body></html>\n')
         Output.__del__(self)
+
+    def cleanup(self, text):
+        text = Output.cleanup(self, text)
+        # convert ampersand
+        return text.replace('&', '&amp;')
 
     def writeAnchor(self, label):
         if label:
@@ -98,7 +130,7 @@ class HtmlOutput(Output):
             for (sessionid, title) in sessions:
                 ss.append('<a href="%s#%s">%s</a>' % \
                           (config.filenames['schedule', 'html'],
-                           sessionid, title.replace('&', '&amp;')))
+                           sessionid, self.cleanup(title)))
             self.f.write('; <br />'.join(ss) + '</td>\n')
 
     def writeCellsBehind(self, cols):
@@ -191,6 +223,7 @@ class IndesignOutput(Output):
         else:
             ss = []
             for (sessionid, title) in sessions:
+                title = self.cleanup(title)
                 # add roomname to minor rooms, to make it easier to move
                 # cell contents around in indesign
                 if room.minor and not room.name in config.room_combo:
@@ -208,27 +241,23 @@ class IndesignOutput(Output):
         for i in range(cols):
             self.f.write('<CellStart:1,1><CellEnd:>')
 
-#def offset(daytime):
-#    return daytime.day.index * 24 * 2 + \
-#        daytime.time.hour * 2 + \
-#        int((daytime.time.minute + 15) / 30)
-def offset(day, time):
-    return day.index * 24 * 2 + \
+def offset(time):
+    return time.day.index * 24 * 2 + \
         time.hour * 2 + \
         int((time.minute + 15) / 30)
 
 # fill in the giant matrix with all sessions (do this once)
-def matrix(sessions):
+def mkmatrix(sessions):
 
     # declare an array of half-hour blocks * number of rooms
-    matrix = [[None for j in range(times.Day.index * 24 * 2)]
+    matrix = [[None for j in range(len(config.day) * 24 * 2)]
               for i in range(Room.index)]
 
     def fill(i, off, end, s):
         while off < min(end, len(matrix[i])):
             try:
                 # two sessions share the same block iff they start at the same time
-                if matrix[i][off][0].time == s.time:
+                if matrix[i][off][0] == s:
                     matrix[i][off].append(s)
                 else:
                     matrix[i][off] = [s]
@@ -237,10 +266,8 @@ def matrix(sessions):
             off += 1
 
     for s in sessions:
-#        off = offset(s.daytime)
-#        end = offset(s.daytime + s.duration)
-        off = offset(s.day, s.time)
-        end = offset(s.day, s.time + s.duration)
+        off = offset(s.time)
+        end = offset(s.time + s.duration)
         try:
             for r in config.room_combo[s.room.name]:
                 fill(r.index, off, end, s)
@@ -250,7 +277,11 @@ def matrix(sessions):
     return matrix
 
 # slice the matrix and write it out (once for each output mode)
-def write(output, matrix):
+def write(output, sessions):
+
+    global matrix
+    if not matrix:
+        matrix = mkmatrix(sessions)
 
     def active_grid(grid):
         for row in grid:
@@ -284,18 +315,11 @@ def write(output, matrix):
         else:
             ss = []
             for s in sessions:
-                # XXX hardcoded local policies
                 title = s.title
-                if 'Autograph' in title:
-                    pp = []
-                    for p in s.participants:
-                        pp.append(str(p))
-                    title = ', '.join(pp)
-
                 tt = []
-                if s.day < gridslice.start.day or \
-                   (s.day == gridslice.start.day and \
-                    s.time < gridslice.start.time) or \
+                if s.time.day < gridslice.start.day or \
+                   (s.time.day == gridslice.start.day and \
+                    s.time < gridslice.start) or \
                    s.time.minute % 30 != 0:
                     tt.append(str(s.time).replace(':00', ''))
                 if s.duration < times.Duration('15min'):
@@ -323,13 +347,13 @@ def write(output, matrix):
         output.writeRowEnd()
 
     def writeTable(gridslice):
-        daytime = gridslice.start
+        time = gridslice.start
         half = times.Duration('30min')
         tt = []
-        while daytime < gridslice.end:
-            stime = daytime.__str__(mode='grid')
+        while time < gridslice.end:
+            stime = time.__str__(mode='grid')
             tt.append(stime)
-            daytime += half
+            time += half
         output.writeTableHeader(gridslice.name, tt)
 
         for i, g in enumerate(gridslice.grid):
@@ -340,18 +364,14 @@ def write(output, matrix):
                 writeTableRow(gridslice, i)
         output.writeTableEnd()
 
-    for d in range(times.Day.index):
-        day = config.day[d]
+    for day in config.day:
         output.writeAnchor(day.name)
         for slice in config.slice[output.name]:
             gridslice = Slice('%s %s' % (day.name, slice.name),
-                              times.DayTime(day.shortname,
-                                            slice.start.__str__(mode='24hr')),
-                              times.DayTime(day.shortname,
-                                            slice.end.__str__(mode='24hr')))
+                              slice.start, slice.end, day)
             grid = []
-            start = offset(gridslice.start.day, gridslice.start.time)
-            end = offset(gridslice.end.day, gridslice.end.time)
+            start = offset(gridslice.start)
+            end = offset(gridslice.end)
             for m in matrix:
                 grid.append(m[start:end])
             if active_grid(grid):
@@ -362,30 +382,29 @@ def write(output, matrix):
 if __name__ == '__main__':
     import cmdline
 
-    (args, sessions, participants) = cmdline.cmdline(io=True)
-
-    matrix = matrix(sessions)
+    args = cmdline.cmdline(io=True)
+    (sessions, participants) = config.filereader.read(config.filenames['schedule', 'input'])
 
 #    if args.text:
 #        if args.outfile:
-#            write(TextOutput(args.outfile), matrix)
+#            write(TextOutput(args.outfile), sessions)
 #        else:
-#            write(TextOutput(config.filenames['grid', 'text']), matrix)
+#            write(TextOutput(config.filenames['grid', 'text']), sessions)
 
     if args.html:
         if args.outfile:
-            write(HtmlOutput(args.outfile), matrix)
+            write(HtmlOutput(args.outfile), sessions)
         else:
-            write(HtmlOutput(config.filenames['grid', 'html']), matrix)
+            write(HtmlOutput(config.filenames['grid', 'html']), sessions)
 
 #    if args.xml:
 #        if args.outfile:
-#            write(XmlOutput(args.outfile), matrix)
+#            write(XmlOutput(args.outfile), sessions)
 #        else:
-#            write(XmlOutput(config.filenames['grid', 'xml']), matrix)
+#            write(XmlOutput(config.filenames['grid', 'xml']), sessions)
 
     if args.indesign:
         if args.outfile:
-            write(IndesignOutput(args.outfile), matrix)
+            write(IndesignOutput(args.outfile), sessions)
         else:
-            write(IndesignOutput(config.filenames['grid', 'indesign']), matrix)
+            write(IndesignOutput(config.filenames['grid', 'indesign']), sessions)

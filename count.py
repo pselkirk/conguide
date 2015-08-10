@@ -20,18 +20,20 @@ import argparse
 import re
 
 import config
-import uncsv
 
-debug = False
 nitems = []
 day = {}
 time = {}
 duration = {}
+level = {}
 room = {}
+levelroom = {}
 track = {}
 type = {}
 tracktype = {}
+tag = {}
 partic = {}
+config.quiet = True
 
 def incr(hash, value, i):
     try:
@@ -44,31 +46,40 @@ def incr(hash, value, i):
 
 def count(fn, i):
 
-    if debug:
+    if config.debug:
         print('%d: %s' % (i, fn))
 
     nitems.append(0)
 
-    db = uncsv.read(fn, raw=True)
+    #reader = config.filereader['schedule']
+    #(sessions, participants) = reader.read(fn)
+    (sessions, participants) = config.filereader.read(fn)
 
-    for row in db:
+    for session in sessions:
         nitems[i] += 1
-        incr(day, row['day'], i)
-        incr(time, row['time'], i)
-        incr(duration, row['duration'], i)
-        incr(room, row['room'], i)
-        incr(track, row['track'], i)
-        incr(type, row['type'], i)
-        incr(tracktype, (row['track'],row['type']), i)
-        if not row['participants']:
-            row['participants'] = '(no participants)'
-        for p in row['participants'].split(','):
-            p = re.sub('^ +', '', p)
-            p = re.sub(' +$', '', p)
-            p = re.sub(' ?\(m\)', '', p)
-            incr(partic, p, i)
+        incr(day, str(session.time.day), i)
+        incr(time, str(session.time), i)
+        incr(duration, str(session.duration), i)
+        incr(level, str(session.level), i)
+        incr(room, str(session.room), i)
+        incr(levelroom, (str(session.level),str(session.room)), i)
+        incr(track, str(session.track), i)
+        incr(type, str(session.type), i)
+        incr(tracktype, (str(session.track),str(session.type)), i)
+        if not session.participants:
+            incr(partic, '(no participants)', i)
+        else:
+            for p in session.participants:
+                incr(partic, str(p), i)
+        if not session.tags:
+            incr(tag, '(no tags)', i)
+        else:
+            for t in session.tags:
+                incr(tag, t, i)
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
+                    help='config file (default "%s")' % config.CFG)
 parser.add_argument('-d', '--debug', action='store_true',
                     help='add debugging/trace information')
 parser.add_argument('-v', '--verbose', action='store_true',
@@ -77,9 +88,10 @@ parser.add_argument('files', nargs=argparse.REMAINDER,
                     help='one or more snapshots of pocketprogram.csv')
 args = parser.parse_args()
 debug = args.debug
+config.parseConfig(args.cfg)
 
 if not args.files:
-    count('pocketprogram.csv', 0)
+    count(config.filenames['schedule', 'input'], 0)
 else:
     for i, fn in enumerate(args.files):
         count(fn, i)
@@ -106,10 +118,13 @@ report('day', day)
 report('time', time)
 if (args.verbose):
     report('duration', duration)
+report('level', level)
 report('room', room)
+report('level,room', levelroom)
 if (args.verbose):
     report('track', track)
     report('type', type)
 report('track,type', tracktype)
+report('tag', tag)
 if (args.verbose):
     report('participants', partic)

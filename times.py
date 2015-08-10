@@ -31,20 +31,29 @@ class Day:
     # XXX add day/month/year for guidebook?
     __DAY__ = {'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday',
                'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday',
-               'Sun': 'Sunday'}
-    index = 0
+               'Sun': 'Sunday',
+               'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed',
+               'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat',
+               'Sunday': 'Sun'}
+    #index = 0
 
-    def __init__(self, shortname):
-        """ Days are instantitated from config.py, such that Friday is day 0. """
-        self.shortname = shortname
-        self.name = Day.__DAY__[shortname]
-        # KeyError on bad shortname
+    def __init__(self, name):
+        if len(name) == 3:
+            self.shortname = name
+            self.name = Day.__DAY__[name]
+        else:
+            self.name = name
+            self.shortname = Day.__DAY__[name]
+        # KeyError on bad name
+        #self.index = Day.index
+        #Day.index += 1
+        self.time = []
 
     def __lt__(self, other):
         return (other and (self.index < other.index))
 
     def __eq__(self, other):
-        return (other and (self.index == other.index))
+        return (other and (self.name == other.name))
 
     def __ne__(self, other):
         return not (self == other)
@@ -56,8 +65,7 @@ class Day:
 class Time:
     """ Time class. """
 
-    def __init__(self, string):
-        """ Times are instantiated from session.py, from a 12-hour time string. """
+    def __init__(self, string, day=None):
         m = re.match(r'(\d{,2}):(\d{,2}) ?([AP]M)', string, flags=re.IGNORECASE)
         if m:
             self.hour = int(m.group(1))
@@ -76,14 +84,21 @@ class Time:
                 self.minute = int(m.group(2))
             else:
                 raise ValueError('invalid initialization string for Time: \'%s\'' % string)
+        self.session = []
+        self.day = day
 
     def __lt__(self, other):
-        return (other and ((self.hour < other.hour) or \
-                           ((self.hour == other.hour) and \
-                            (self.minute < other.minute))))
+        return (other and \
+                ((self.day and other.day and (self.day < other.day)) or
+                 ((self.hour < other.hour) or \
+                  ((self.hour == other.hour) and \
+                   (self.minute < other.minute)))))
 
     def __eq__(self, other):
-        return (other and (self.hour == other.hour) and (self.minute == other.minute))
+        return (other and \
+                (self.day == other.day) and \
+                (self.hour == other.hour) and \
+                (self.minute == other.minute))
 
     def __ne__(self, other):
         return not (self == other)
@@ -127,51 +142,12 @@ class Time:
             t.minute -= 60
         return t
 
-import config
-
-@total_ordering
-class DayTime(Time):
-    """ DayTime class - a concatenation of Day and Time,
-    currently only used in grid.py.
-    """
-    def __init__(self, day, time):
-        self.day = config.day[day]
-        self.time = Time(time)
-        if self.time.hour >= 24:
-            self.day = config.day[self.day.index + 1]
-            self.time.hour -= 24
-
-    def __lt__(self, other):
-        return (other and ((self.day < other.day) or \
-                           ((self.day == other.day) and \
-                            (self.time < other.time))))
-
-    def __eq__(self, other):
-        return (other and \
-                self.day == other.day and \
-                self.time == other.time)
-
-    def __str__(self, mode=None):
-        if mode == 'grid':
-            return self.time.__str__(mode)
-        else:
-            return self.day.__str__() + ' ' + self.time.__str__()
-
-    def __add__(self, other):
-        if not isinstance(other, Time):
-            raise TypeError('can only add Time or Duration to DayTime')
-        dt = copy.copy(self)
-        dt.time += other
-        if dt.time.hour >= 24:
-            dt.day = config.day[dt.day.index + 1]
-            dt.time.hour -= 24
-        return dt
-
 class Duration(Time):
     """" Duration class. Internally, a Duration is identical to a Time,
     but the initialization and presentation strings are different.
     """
     def __init__(self, string):
+        self.day = None
         m = re.match(r'(\d{,2}) ?hr', string, flags=re.IGNORECASE)
         if m:
             self.hour = int(m.group(1))
@@ -189,7 +165,12 @@ class Duration(Time):
                 self.hour = int(m.group(1))
                 self.minute = int(m.group(2))
             else:
-                raise ValueError('invalid initialization string for Duration: \'%s\'' % string)
+                # bare number of minutes
+                m = re.match(r'^(\d+)$', string)
+                if m:
+                    (self.hour, self.minute) = divmod(int(m.group(1)), 60)
+                else:
+                    raise ValueError('invalid initialization string for Duration: \'%s\'' % string)
 
     def __str__(self):
         if not self.minute:
@@ -200,15 +181,27 @@ class Duration(Time):
             return '%dhr %dmin' % (self.hour, self.minute)
 
 if __name__ == '__main__':
-    for i in range(7):
-        print('{0}: {1}'.format(config.day[i].index, config.day[i].name))
+    import config
 
-    print(Time('4:15 PM'))
-    print(Time('16:15'))
-    print(Duration('3hr 55min'))
-    print(Duration('03:55'))
-    print(DayTime('Fri', '4:15 PM'))
-    print(Time('4:45 PM') + Duration('1hr 15min'))
-    print(Time('11:30 PM') + Duration('6hr'))
-    print(DayTime('Sat', '11:30 PM') + Duration('6hr'))
-    print(DayTime('Sat', '11:30 PM') + Time('06:00'))
+    for d in [ 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu' ]:
+        day = Day(d)
+        day.index = len(config.day)
+        config.day.append(day)
+        #config.day[day.index] = day
+        #config.day[day.name] = day
+        #config.day[day.shortname] = day
+
+    test = [ "Time('4:15 PM')", \
+             "Time('16:15')", \
+             "Time('6:00am')", \
+             "Duration('3hr 55min')", \
+             "Duration('03:55')", \
+             "Duration('235')", \
+             "Time('4:45 PM') + Duration('1hr 15min')", \
+             "Time('11:30 PM') + Duration('6hr')" , \
+             "Time('6:00am') > Time('6:00pm')", \
+             "Time('6:00am') < Time('6:00pm')", \
+             "Time('6:00am') == Time('6:00pm')" ]
+
+    for a in test:
+        print('%s = %s' % (a, eval(a)))

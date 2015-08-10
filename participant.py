@@ -19,7 +19,6 @@
 import re
 
 import config
-import uncsv
 
 class Participant:
 
@@ -63,27 +62,11 @@ class Participant:
     def __str__(self):
         return self.pubsname
 
-def read(fn, participants, quiet=False):
-    """ Read the bios file, identify participants without sessions,
-    and add fields for bios.py.
-    """
-    for row in uncsv.read(fn):
-        pubsname = row['pubsname']
-        if pubsname in config.chname:
-            pubsname = config.chname[pubsname]
-        if not pubsname in participants:
-            if not quiet:
-                print('new participant "%s"' % pubsname)
-            participants[pubsname] = Participant(pubsname)
-        participants[pubsname].firstname = row['firstname']
-        participants[pubsname].lastname = row['lastname']
-        participants[pubsname].bio = row['bio']
-        participants[pubsname].badgeid = row['badgeid']
-    return participants
-
 if __name__ == '__main__':
-    config.parseConfig(config.CFG)
-    participants = read(config.filenames['bios', 'input'], {}, quiet=True)
+    import cmdline
+    
+    args = cmdline.cmdline(io=True, modes=False)
+    participants = config.filereader.read_bios(config.filenames['bios', 'input'], {})
     for p in sorted(participants.values()):
         print(p.pubsname)
     print(len(participants))

@@ -18,6 +18,7 @@
 
 import argparse
 
+import config
 import session
 
 debug = False
@@ -26,17 +27,25 @@ sessions = [{}, {}]
 participants = [{}, {}]
 
 parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
+                    help='config file (default "%s")' % config.CFG)
 parser.add_argument('-d', '--debug', action='store_true',
                     help='add debugging/trace information')
+parser.add_argument('-q', '--quiet', action='store_true',
+                    help='don\t print warning messages')
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='print full description changes')
 parser.add_argument('-s', '--sessionid', action='store_true',
                     help='print session id')
+parser.add_argument('-t', '--by_title', action='store_true',
+                    help='use session title instead of sessionid')
 parser.add_argument('files', nargs=argparse.REMAINDER,
-                    help='one or two snapshots of pocketprogram.csv')
+                    help='one or two snapshots of program data')
 args = parser.parse_args()
-debug = args.debug
+config.debug = args.debug
+config.quiet = args.quiet
 verbose = args.verbose
+config.parseConfig(args.cfg)
 
 if not args.files or len(args.files) > 2:
     print('specify one or two .csv files')
@@ -46,9 +55,15 @@ elif len(args.files) == 1:
     args.files.append('pocketprogram.csv')
 
 def read(fn):
-    (sessions, participants) = session.read(fn, quiet=True, raw=True)
+    if not config.quiet:
+        print('---- %s ----' % fn)
+    #reader = config.filereader['schedule']
+    #(sessions, participants) = reader.read(fn)
+    (sessions, participants) = config.filereader.read(fn)
     session_hash = {}
     for s in sessions:
+        if args.by_title:
+            s.sessionid = s.title
         session_hash[s.sessionid] = s
     return (session_hash, participants)
 
@@ -59,7 +74,7 @@ def session_header(s):
     string = ''
     if args.sessionid:
         string = '%s: ' % s.sessionid
-    string += '%s %s %s' % (s.day, s.time, s.title)
+    string += '%s %s %s' % (s.time.day, s.time, s.title)
     return string
 
 new = []
@@ -79,14 +94,14 @@ for s in sorted(sessions[1].values()):
 
 for s in sorted(sessions[0].values()):
     sh = session_header(s)
-    if debug:
+    if config.debug:
         print(sh)
     s1 = sessions[1].get(s.sessionid)
     if not s1:
         cancelled.append(sh)
         continue
-    if s1.day != s.day or s1.time != s.time:
-        ch_time.append('%s -> %s %s' % (sh, s1.day, s1.time))
+    if s1.time.day != s.time.day or s1.time != s.time:
+        ch_time.append('%s -> %s %s' % (sh, s1.time.day, s1.time))
     if s1.duration != s.duration:
         ch_duration.append('%s: %s -> %s' % (sh, s.duration, s1.duration))
     if s1.room != s.room:
@@ -116,30 +131,36 @@ for s in sorted(sessions[0].values()):
                 remove.append(str(p))
         if remove:
             cp.append('remove %s' % ', '.join(remove))
-    if s1.moderator and not s.moderator:
-        cp.append('add moderator %s' % str(s1.moderator))
-    elif s.moderator and not s1.moderator:
-        cp.append('remove moderator %s' % str(s.moderator))
-    elif s1.moderator != s.moderator:
-        cp.append('change moderator to %s' % str(s1.moderator))
+        addmod = []
+        for p in s1.moderator:
+            if not p in s.moderator:
+                addmod.append(str(p))
+        if addmod:
+            cp.append('add moderator %s' % ', '.join(addmod))
+        removemod = []
+        for p in s.moderator:
+            if not p in s1.moderator:
+                removemod.append(str(p))
+        if removemod:
+            cp.append('remove moderator %s' % ', '.join(removemod))
     if cp:
         ch_participants.append('%s: %s' % (sh, '; '.join(cp)))
 
 if new:
-    print('\nnew sessions:\n%s' % '\n'.join(new))
+    print('\nnew sessions (%d):\n%s' % (len(new), '\n'.join(new)))
 if cancelled:
-    print('\ncancelled sessions:\n%s' % '\n'.join(cancelled))
+    print('\ncancelled sessions (%d):\n%s' % (len(cancelled), '\n'.join(cancelled)))
 if ch_time:
-    print('\ntime changes:\n%s' % '\n'.join(ch_time))
+    print('\ntime changes (%d):\n%s' % (len(ch_time), '\n'.join(ch_time)))
 if ch_room:
-    print('\nroom changes:\n%s' % '\n'.join(ch_room))
+    print('\nroom changes (%d):\n%s' % (len(ch_room), '\n'.join(ch_room)))
 if ch_track:
-    print('\ntrack changes:\n%s' % '\n'.join(ch_track))
+    print('\ntrack changes (%d):\n%s' % (len(ch_track), '\n'.join(ch_track)))
 if ch_type:
-    print('\ntype changes:\n%s' % '\n'.join(ch_type))
+    print('\ntype changes (%d):\n%s' % (len(ch_type), '\n'.join(ch_type)))
 if ch_title:
-    print('\ntitle changes:\n%s' % '\n'.join(ch_title))
+    print('\ntitle changes (%d):\n%s' % (len(ch_title), '\n'.join(ch_title)))
 if ch_description:
-    print('\ndescription changes:\n%s' % '\n'.join(ch_description))
+    print('\ndescription changes (%d):\n%s' % (len(ch_description), '\n'.join(ch_description)))
 if ch_participants:
-    print('\nparticipant changes:\n%s' % '\n'.join(ch_participants))
+    print('\nparticipant changes (%d):\n%s' % (len(ch_participants), '\n'.join(ch_participants)))

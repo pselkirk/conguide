@@ -204,10 +204,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False, parents=[parent])
     parser.add_argument('--infile', action='store', help='input file name')
     parser.add_argument('--outfile', action='store', help='output file name')
-    (args, sessions, participants) = cmdline.cmdline(parser)
+    args = cmdline.cmdline(parser)
+    (sessions, participants) = config.filereader.read(config.filenames['schedule', 'input'])
     if not args.infile:
         args.infile = config.filenames['bios', 'input']
-    participants = participant.read(args.infile, participants)
+    participants = config.filereader.read_bios(args.infile, participants)
 
     if args.text:
         if args.outfile:
