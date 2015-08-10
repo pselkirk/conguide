@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,10 @@ if PY3:
 else:
     import ConfigParser as configparser
 
+if not PY3:
+    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+    sys.stderr = codecs.getwriter('utf8')(sys.stderr)
+
 import grid
 import times
 from room import Level, Room
@@ -45,11 +49,9 @@ start = None
 default_duration = None
 goh = {}
 filenames = {}
-#filereader = {}
 filereader = None
 level = {}
 room = {}
-room_combo = {}
 sortname = {}
 chname = {}
 chroom = {}
@@ -74,10 +76,13 @@ slice = {}
 icons = []
 tracks = []
 research = []
-#day = {}
-day = []
+day = {}
 schema = {}
 prune = None
+sessions = []
+participants = {}
+grid_noprint = None
+grid_title_prune = []
 
 # Boilerplate xhtml file header, with 4 %s bits:
 # - title, for <head>
@@ -129,7 +134,7 @@ if not PY3:
 def parseConfig(fn):
 
     # sigh, scalar variables have to be declared global
-    global convention, start, default_duration, twidth, theight, hwidth, hheight, cheight_min, cheight_max, filereader
+    global convention, start, default_duration, twidth, theight, hwidth, hheight, cheight_min, cheight_max, filereader, grid_noprint, grid_title_prune
 
     if PY3:
         cfg = configparser.ConfigParser(allow_no_value=True, strict=False, inline_comment_prefixes=('#',))
@@ -174,16 +179,15 @@ def parseConfig(fn):
         except configparser.NoSectionError:
             None
 
+    for (key, value) in cfg.items('output format'):
+        for mode in ('text', 'html', 'xml', 'indesign'):
+            schema[key, mode] = value
     for mode in ('text', 'html', 'xml', 'indesign'):
         try:
             for (key, value) in cfg.items('output format ' + mode):
-                value = re.sub(r'(\w+)', r'{\1}', value)
-                schema[key, mode] = value + '\n'
+                schema[key, mode] = value
         except configparser.NoSectionError:
             None
-    for (key, value) in cfg.items('output format'):
-        value = re.sub(r'(\w+)', r'{\1}', value)
-        schema[key, 'all'] = value + '\n'
 
     try:
         for (name, sortkey) in cfg.items('sort name'):
@@ -199,9 +203,6 @@ def parseConfig(fn):
 
     try:
         for (name, rename) in cfg.items('change room'):
-            # XXX hack for dash in room name
-            name = name.replace(' - ', u'\u2014')
-            rename = rename.replace(' - ', u'\u2014')
             chroom[name] = rename
     except configparser.NoSectionError:
         None
@@ -256,11 +257,6 @@ def parseConfig(fn):
 
     try:
         for (name, rename) in cfg.items('bold name'):
-            # XXX hack for quotes in names
-            rename = re.sub(r'^"', u'\u201c', rename)        # beginning double quote -> left
-            rename = re.sub(r'"$', u'\u201d', rename)        # ending double quote -> right
-            rename = re.sub(r'([^\w,.!?])"(\w)', r'\1'+u'\u201c'+r'\2', rename) # left double quote
-            rename = re.sub(r'"', u'\u201d', rename) # all remaining double quotes -> right
             boldname[name] = rename
     except configparser.NoSectionError:
         None
@@ -307,11 +303,24 @@ def parseConfig(fn):
         for unused, expr in cfg.items('featured research'):
             expr = expr.replace('track', 'session.track')
             expr = expr.replace('type', 'session.type')
-            # Note we don't compile these expressions, because we want to
-            # print them out at the end. This makes the whole thing slower,
-            # but it's not something we're going to do very often.
+            # Unlike icons and tracks above, we don't compile these
+            # expressions, because we want to print them out at the
+            # end. This makes the whole thing slower, but it's not
+            # something we're going to do very often.
             research.append(expr)
     except configparser.NoSectionError:
+        None
+
+    try:
+        expr = cfg.get('grid no print', 'title ends with')
+        grid_noprint = compile('session.title.endswith((%s))' % expr, '<string>', 'eval')
+    except (configparser.NoSectionError, configparser.NoOptionError):
+        None
+
+    try:
+        val = cfg.get('grid title prune', 'usage')
+        grid_title_prune = re.split(r',\s*', val)
+    except (configparser.NoSectionError, configparser.NoOptionError):
         None
 
     # hotel layout - levels and rooms
@@ -326,16 +335,12 @@ def parseConfig(fn):
                 pubsname = None
             rooms = cfg.get(section, 'rooms')
             for r in re.split(r',\s*', rooms):
-                # XXX hack for 'Galleria - Autograph Space'
-                #r = r.replace(' - ', u'\u2014')
                 room[r] = Room(r, level[name])
                 room[room[r].index] = room[r]
 
         m = re.match(r'room (.*)', section)
         if m:
             name = m.group(1)
-            # XXX hack for 'Galleria - Autograph Space'
-            #name = name.replace(' - ', u'\u2014')
             try:
                 room[name].pubsname = cfg.get(section, 'pubsname')
             except configparser.NoOptionError:
@@ -345,11 +350,11 @@ def parseConfig(fn):
             except configparser.NoOptionError:
                 None
             try:
-                rooms = re.split(r',\s*', cfg.get(section, 'combination'))
+                rooms = re.split(r',\s*', cfg.get(section, 'grid room'))
                 for i, r in enumerate(rooms):
                     # change room name to Room instance
                     rooms[i] = room[r]
-                room_combo[name] = rooms
+                room[name].gridrooms = rooms
             except configparser.NoOptionError:
                 None
 
@@ -378,16 +383,12 @@ def parseConfig(fn):
         cheight_max = float(cfg.get('grid indesign', 'maximum cell height')) * 72.0
     except configparser.NoOptionError:
         None
-    try:
-        value = cfg.get('grid indesign', 'print empty rooms')
-        fixed['indesign'] = (value == 'major')
-    except configparser.NoOptionError:
-        None
-    try:
-        value = cfg.get('grid html', 'print empty rooms')
-        fixed['html'] = (value == 'major')
-    except configparser.NoOptionError:
-        None
+    for mode in ['html', 'indesign', 'xml']:
+        try:
+            value = cfg.get('grid ' + mode, 'print empty rooms')
+            fixed[mode] = (value == 'major')
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            fixed[mode] = False
 
     # grid slices
     for section in cfg.sections():
@@ -412,7 +413,6 @@ def parseConfig(fn):
             # XXX validate that slices are contiguous and complete
 
 if __name__ == '__main__':
-    import sys
     if sys.argv[1]:
         parseConfig(sys.argv[1])
     else:
@@ -449,3 +449,5 @@ if __name__ == '__main__':
     for k,v in schema.items():
         print('schema[%s] =' % str(k))
         print(v)
+
+    print('grid_title_prune = %s' % ', '.join(grid_title_prune))

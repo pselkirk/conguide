@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -151,22 +151,22 @@ if __name__ == '__main__':
     import cmdline
 
     args = cmdline.cmdline(io=True)
-    (sessions, participants) = session.read(config.filenames['schedule', 'input'])
+    config.filereader.read(config.filenames['schedule', 'input'])
 
     if args.text:
         if args.outfile:
-            write(TextOutput(args.outfile), sessions)
-        else:
-            write(TextOutput(config.filenames['tracks', 'text']), sessions)
+            write(TextOutput(args.outfile), config.sessions)
+        elif ('tracks', 'text') in config.filenames:
+            write(TextOutput(config.filenames['tracks', 'text']), config.sessions)
 
     if args.html:
         if args.outfile:
-            write(HtmlOutput(args.outfile), sessions)
-        else:
-            write(HtmlOutput(config.filenames['tracks', 'html']), sessions)
+            write(HtmlOutput(args.outfile), config.sessions)
+        elif ('tracks', 'html') in config.filenames:
+            write(HtmlOutput(config.filenames['tracks', 'html']), config.sessions)
 
     if args.xml:
         if args.outfile:
-            write(XmlOutput(args.outfile), sessions)
-        else:
-            write(XmlOutput(config.filenames['tracks', 'xml']), sessions)
+            write(XmlOutput(args.outfile), config.sessions)
+        elif ('tracks', 'xml') in config.filenames:
+            write(XmlOutput(config.filenames['tracks', 'xml']), config.sessions)

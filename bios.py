@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -22,7 +22,6 @@ import config
 import participant
 import pocketprogram
 
-# XXX pylint really doesn't like this; is there a way of indicating that this is a base class?
 class Output(pocketprogram.Output):
 
     def writeBio(self, participant):
@@ -205,25 +204,25 @@ if __name__ == '__main__':
     parser.add_argument('--infile', action='store', help='input file name')
     parser.add_argument('--outfile', action='store', help='output file name')
     args = cmdline.cmdline(parser)
-    (sessions, participants) = config.filereader.read(config.filenames['schedule', 'input'])
+    config.filereader.read(config.filenames['schedule', 'input'])
     if not args.infile:
         args.infile = config.filenames['bios', 'input']
-    participants = config.filereader.read_bios(args.infile, participants)
+    config.filereader.read_bios(args.infile)
 
     if args.text:
         if args.outfile:
-            write(TextOutput(args.outfile), participants)
+            write(TextOutput(args.outfile), config.participants)
         else:
-            write(TextOutput(config.filenames['bios', 'text']), participants)
+            write(TextOutput(config.filenames['bios', 'text']), config.participants)
 
     if args.html:
         if args.outfile:
-            write(HtmlOutput(args.outfile), participants)
+            write(HtmlOutput(args.outfile), config.participants)
         else:
-            write(HtmlOutput(config.filenames['bios', 'html']), participants)
+            write(HtmlOutput(config.filenames['bios', 'html']), config.participants)
 
     if args.xml:
         if args.outfile:
-            write(XmlOutput(args.outfile), participants)
+            write(XmlOutput(args.outfile), config.participants)
         else:
-            write(XmlOutput(config.filenames['bios', 'xml']), participants)
+            write(XmlOutput(config.filenames['bios', 'xml']), config.participants)

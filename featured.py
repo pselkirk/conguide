@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     parser.add_argument('--research', action='store_true',
                         help='identify likely candidates for "featured" list')
     args = cmdline.cmdline(parser, io=True)
-    (sessions, participants) = session.read(config.filenames['schedule', 'input'])
+    config.filereader.read(config.filenames['schedule', 'input'])
 
     # research - list all sessions in major-draw tracks, plus all sessions
     # with at least one GOH participant, formatted for cut-and-paste into
@@ -166,7 +166,7 @@ if __name__ == '__main__':
         #trackless = []
         #drama = []
         #concert = []
-        #for s in sessions:
+        #for s in config.sessions:
         #    if s.track == 'GOH':
         #        gohtrack.append(s)
         #    elif is_goh(s):
@@ -184,7 +184,7 @@ if __name__ == '__main__':
         #out("### Concert", concert)
 
         ss = {}
-        for session in sessions:
+        for session in config.sessions:
             for i, expr in enumerate(config.research):
                 if eval(expr):
                     try:
@@ -202,18 +202,18 @@ if __name__ == '__main__':
 
     if args.text:
         if args.outfile:
-            write(TextOutput(args.outfile), sessions)
-        else:
-            write(TextOutput(config.filenames['featured', 'text']), sessions)
+            write(TextOutput(args.outfile), config.sessions)
+        elif ('featured', 'text') in config.filenames:
+            write(TextOutput(config.filenames['featured', 'text']), config.sessions)
 
     if args.html:
         if args.outfile:
-            write(HtmlOutput(args.outfile), sessions)
-        else:
-            write(HtmlOutput(config.filenames['featured', 'html']), sessions)
+            write(HtmlOutput(args.outfile), config.sessions)
+        elif ('featured', 'html') in config.filenames:
+            write(HtmlOutput(config.filenames['featured', 'html']), config.sessions)
 
     if args.xml:
         if args.outfile:
-            write(XmlOutput(args.outfile), sessions)
-        else:
-            write(XmlOutput(config.filenames['featured', 'xml']), sessions)
+            write(XmlOutput(args.outfile), config.sessions)
+        elif ('featured', 'xml') in config.filenames:
+            write(XmlOutput(config.filenames['featured', 'xml']), config.sessions)

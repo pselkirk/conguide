@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -24,11 +24,11 @@ import config
 import session
 import uncsv
 
-config.parseConfig('arisia.cfg')
+config.parseConfig(config.CFG)
 
 ps = []
-(sessions, participants) = session.read('pocketprogram.csv', quiet=True)
-for p in sorted(participants.values()):
+config.filereader.read(config.filenames['schedule', 'input'])
+for p in sorted(config.participants.values()):
     ps.append(p.pubsname)
 
 pb = []

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -95,24 +95,22 @@ if __name__ == '__main__':
     import cmdline
 
     args = cmdline.cmdline(io=True)
-    #reader = config.filereader['schedule']
-    #(sessions, participants) = reader.read(config.filenames['schedule', 'input'])
-    (sessions, participants) = config.filereader.read(config.filenames['schedule', 'input'])
+    config.filereader.read(config.filenames['schedule', 'input'])
 
     if args.text:
         if args.outfile:
-            write(TextOutput(args.outfile), participants)
-        else:
-            write(TextOutput(config.filenames['xref', 'text']), participants)
+            write(TextOutput(args.outfile), config.participants)
+        elif ('xref', 'text') in config.filenames:
+            write(TextOutput(config.filenames['xref', 'text']), config.participants)
 
     if args.html:
         if args.outfile:
-            write(HtmlOutput(args.outfile), participants)
-        else:
-            write(HtmlOutput(config.filenames['xref', 'html']), participants)
+            write(HtmlOutput(args.outfile), config.participants)
+        elif ('xref', 'html') in config.filenames:
+            write(HtmlOutput(config.filenames['xref', 'html']), config.participants)
 
     if args.xml:
         if args.outfile:
-            write(XmlOutput(args.outfile), participants)
-        else:
-            write(XmlOutput(config.filenames['xref', 'xml']), participants)
+            write(XmlOutput(args.outfile), config.participants)
+        elif ('xref', 'html') in config.filenames:
+            write(XmlOutput(config.filenames['xref', 'xml']), config.participants)

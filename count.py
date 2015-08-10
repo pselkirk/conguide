@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -51,18 +51,16 @@ def count(fn, i):
 
     nitems.append(0)
 
-    #reader = config.filereader['schedule']
-    #(sessions, participants) = reader.read(fn)
-    (sessions, participants) = config.filereader.read(fn)
+    config.filereader.read(fn)
 
-    for session in sessions:
+    for session in config.sessions:
         nitems[i] += 1
         incr(day, str(session.time.day), i)
         incr(time, str(session.time), i)
         incr(duration, str(session.duration), i)
-        incr(level, str(session.level), i)
+        incr(level, str(session.room.level), i)
         incr(room, str(session.room), i)
-        incr(levelroom, (str(session.level),str(session.room)), i)
+        incr(levelroom, (str(session.room.level),str(session.room)), i)
         incr(track, str(session.track), i)
         incr(type, str(session.type), i)
         incr(tracktype, (str(session.track),str(session.type)), i)
@@ -77,11 +75,18 @@ def count(fn, i):
             for t in session.tags:
                 incr(tag, t, i)
 
+    # reinitialize for the next count
+    config.day = {}
+    config.sessions = []
+    config.participants = {}
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
                     help='config file (default "%s")' % config.CFG)
 parser.add_argument('-d', '--debug', action='store_true',
                     help='add debugging/trace information')
+parser.add_argument('-q', '--quiet', action='store_true',
+                    help='don\t print warning messages')
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='verbose output')
 parser.add_argument('files', nargs=argparse.REMAINDER,

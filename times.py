@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@ class Day:
                'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed',
                'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat',
                'Sunday': 'Sun'}
-    #index = 0
+    index = 0
 
     def __init__(self, name):
         if len(name) == 3:
@@ -45,9 +45,9 @@ class Day:
             self.name = name
             self.shortname = Day.__DAY__[name]
         # KeyError on bad name
-        #self.index = Day.index
-        #Day.index += 1
-        self.time = []
+        self.index = Day.index
+        Day.index += 1
+        self.time = {}
 
     def __lt__(self, other):
         return (other and (self.index < other.index))
@@ -140,6 +140,17 @@ class Time:
         if t.minute >= 60:
             t.hour += 1
             t.minute -= 60
+        return t
+
+    def __sub__(self, other):
+        if not isinstance(other, Time):
+            raise TypeError('can only subtract Time or Duration from Time')
+        t = copy.copy(self)
+        t.hour -= other.hour
+        t.minute -= other.minute
+        if t.minute >= 60:
+            t.hour -= 1
+            t.minute += 60
         return t
 
 class Duration(Time):

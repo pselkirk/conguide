@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -28,8 +28,8 @@ import session
 import times
 
 config.parseConfig(config.CFG)
-(sessions, participants) = session.read(config.filenames['schedule', 'input'])
-participants = participant.read(config.filenames['bios', 'input'], participants)
+config.filereader.read(config.filenames['schedule', 'input'])
+config.filereader.read_bios(config.filenames['bios', 'input'])
 
 sched = open('guidebook.csv', 'w')
 schedwriter = csv.writer(sched)
@@ -43,10 +43,7 @@ bios = open('guidebook-bios.csv', 'w')
 bioswriter = csv.writer(bios)
 bioswriter.writerow(['Name', 'Location (i.e. Table/Booth or Room Numbers)', 'Description (Optional)'])
 
-def writerow(writer, row):
-    writer.writerow([codecs.encode(f, 'utf-8') for f in row])
-
-for day in config.day:
+for i, day in enumerate(config.day):
     # XXX breaks if con spans the end of a month
     day.date = '%02d/%02d/%04d' % \
                (config.start.tm_mon,
@@ -54,7 +51,7 @@ for day in config.day:
                 config.start.tm_year)
 
 titles = {}
-for session in sessions:
+for session in config.sessions:
     begin = re.sub('([AP]M)', r' \1'.upper(), str(session.time).upper())
     end = re.sub('([AP]M)', r' \1', str(session.time + session.duration).upper())
 
@@ -73,12 +70,15 @@ for session in sessions:
         titles[session.title] = 1
         title = session.title
 
-    writerow(schedwriter, [title, session.day.date, begin, end, str(session.room), track, session.description])
+    def writerow(writer, row):
+        writer.writerow([codecs.encode(f, 'utf-8') for f in row])
+
+    writerow(schedwriter, [title, session.time.day.date, begin, end, str(session.room), track, session.description])
 
     for p in session.participants:
         writerow(linkswriter, ['', p.pubsname, '', title, '', ''])
 
-for p in sorted(participants.values()):
+for p in sorted(config.participants.values()):
     try:
         bio = p.bio
     except AttributeError:

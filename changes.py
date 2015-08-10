@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014, Paul Selkirk
+# Copyright (c) 2014-2015, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -57,17 +57,18 @@ elif len(args.files) == 1:
 def read(fn):
     if not config.quiet:
         print('---- %s ----' % fn)
-    #reader = config.filereader['schedule']
-    #(sessions, participants) = reader.read(fn)
-    (sessions, participants) = config.filereader.read(fn)
+    config.filereader.read(fn)
     session_hash = {}
-    for s in sessions:
+    for s in config.sessions:
         if args.by_title:
             s.sessionid = s.title
         session_hash[s.sessionid] = s
-    return (session_hash, participants)
+    return (session_hash, config.participants)
 
 (sessions[0], participants[0]) = read(args.files[0])
+config.day = {}
+config.sessions = []
+config.participants = {}
 (sessions[1], participants[1]) = read(args.files[1])
 
 def session_header(s):
@@ -132,14 +133,14 @@ for s in sorted(sessions[0].values()):
         if remove:
             cp.append('remove %s' % ', '.join(remove))
         addmod = []
-        for p in s1.moderator:
-            if not p in s.moderator:
+        for p in s1.moderators:
+            if not p in s.moderators:
                 addmod.append(str(p))
         if addmod:
             cp.append('add moderator %s' % ', '.join(addmod))
         removemod = []
-        for p in s.moderator:
-            if not p in s1.moderator:
+        for p in s.moderators:
+            if not p in s1.moderators:
                 removemod.append(str(p))
         if removemod:
             cp.append('remove moderator %s' % ', '.join(removemod))
