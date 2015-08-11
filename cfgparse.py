@@ -34,8 +34,8 @@ else:
     sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
 from grid import Slice
-from times import Time, Duration
 from room import Level, Room
+from times import Time, Duration
 
 if not config.PY3:
     class MyConfigParser(configparser.SafeConfigParser):
@@ -134,50 +134,50 @@ def parseConfig(fn):
         None
 
     try:
-        for (session, unused) in cfg.items('change participants'):
-            config.chpartic[session] = True
+        for (sessionid, unused) in cfg.items('change participants'):
+            config.chpartic[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (session, unused) in cfg.items('no participants'):
-            config.nopartic[session] = True
+        for (sessionid, unused) in cfg.items('no participants'):
+            config.nopartic[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (session, unused) in cfg.items('no description'):
-            config.nodescr[session] = True
+        for (sessionid, unused) in cfg.items('no description'):
+            config.nodescr[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (session, unused) in cfg.items('presentation'):
-            config.presentation[session] = True
+        for (sessionid, unused) in cfg.items('presentation'):
+            config.presentation[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (session, unused) in cfg.items('combat'):
-            config.combat[session] = True
+        for (sessionid, unused) in cfg.items('combat'):
+            config.combat[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (session, unused) in cfg.items('featured'):
-            config.featured[session] = True
+        for (sessionid, unused) in cfg.items('featured'):
+            config.featured.append(sessionid)
     except configparser.NoSectionError:
         None
 
     try:
-        for (session, unused) in cfg.items('do not print'):
-            config.noprint[session] = True
+        for (sessionid, unused) in cfg.items('do not print'):
+            config.noprint[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
         for (name, rename) in cfg.items('bold name'):
-            config.boldname[name] = rename
+            config.boldnames[name] = rename
     except configparser.NoSectionError:
         None
 
@@ -189,7 +189,7 @@ def parseConfig(fn):
             expr = expr.replace('sessionid', 'session.sessionid')
             expr = expr.replace(' in ', ' in config.')
             expr = re.sub(r'room == (\'\w+\')',
-                          r'session.room == config.room[\1]', expr)
+                          r'session.room == config.rooms[\1]', expr)
             config.icons.append((char, compile(expr, '<string>', 'eval')))
     except configparser.NoSectionError:
         None
@@ -199,9 +199,9 @@ def parseConfig(fn):
             expr = expr.replace('track', 'session.track')
             expr = expr.replace('type', 'session.type')
             expr = re.sub(r'room == (\'\w+\')',
-                          r'session.room == config.room[\1]', expr)
+                          r'session.room == config.rooms[\1]', expr)
             area = area.replace(' - ', u'\u2014')
-            config.tracks.append((area, compile(expr, '<string>', 'eval')))
+            config.track_classifiers.append((area, compile(expr, '<string>', 'eval')))
     except configparser.NoSectionError:
         None
 
@@ -224,8 +224,8 @@ def parseConfig(fn):
             expr = expr.replace('type', 'session.type')
             # Unlike icons and tracks above, we don't compile these
             # expressions, because we want to print them out at the
-            # end. This makes the whole thing slower, but it's not
-            # something we're going to do very often.
+            # end. This makes the whole thing a little slower, but it's
+            # not something we're going to do very often.
             config.research.append(expr)
     except configparser.NoSectionError:
         None
@@ -247,33 +247,33 @@ def parseConfig(fn):
         m = re.match(r'(level|venue) (.*)', section)
         if m:
             name = m.group(2)
-            config.level[name] = Level(name)
+            config.levels[name] = Level(name)
             try:
-                config.level[name].pubsname = cfg.get(section, 'pubsname')
+                config.levels[name].pubsname = cfg.get(section, 'pubsname')
             except configparser.NoOptionError:
                 None
             rooms = cfg.get(section, 'rooms')
             for r in re.split(r',\s*', rooms):
-                config.room[r] = Room(r, config.level[name])
-                config.room[config.room[r].index] = config.room[r]
+                config.rooms[r] = Room(r, config.levels[name])
+                config.rooms[config.rooms[r].index] = config.rooms[r]
 
         m = re.match(r'room (.*)', section)
         if m:
             name = m.group(1)
             try:
-                config.room[name].pubsname = cfg.get(section, 'pubsname')
+                config.rooms[name].pubsname = cfg.get(section, 'pubsname')
             except configparser.NoOptionError:
                 None
             try:
-                config.room[name].usage = cfg.get(section, 'usage')
+                config.rooms[name].usage = cfg.get(section, 'usage')
             except configparser.NoOptionError:
                 None
             try:
                 rooms = re.split(r',\s*', cfg.get(section, 'grid room'))
                 for i, r in enumerate(rooms):
                     # change room name to Room instance
-                    rooms[i] = config.room[r]
-                config.room[name].gridrooms = rooms
+                    rooms[i] = config.rooms[r]
+                config.rooms[name].gridrooms = rooms
             except configparser.NoOptionError:
                 None
 
@@ -345,8 +345,8 @@ if __name__ == '__main__':
     print('chroom = %s' % config.chroom)
     print('chtitle = %s' % config.chtitle)
     print('noprint = %s' % config.noprint)
-    print('level = %s' % config.level)
-    print('room = %s' % config.room)
+    print('levels = %s' % config.levels)
+    print('room = %s' % config.rooms)
 
     for k, v in config.slice.items():
         print('grid slice %s' % k)

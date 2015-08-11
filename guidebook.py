@@ -24,6 +24,7 @@ import re
 
 import cfgparse
 import config
+import featured
 import session
 
 cfgparse.parseConfig(config.CFG)
@@ -49,7 +50,7 @@ bioswriter = csv.writer(bios)
 bioswriter.writerow(['Name', 'Location (i.e. Table/Booth or Room Numbers)',
                      'Description (Optional)'])
 
-for i, day in enumerate(config.day):
+for i, day in enumerate(config.days):
     # XXX breaks if con spans the end of a month
     day.date = '%02d/%02d/%04d' % \
                (config.start.tm_mon,
@@ -67,7 +68,7 @@ for session in config.sessions:
         if eval(expr):
             track = t
             break
-    if session.sessionid in config.featured:
+    if session.sessionid in featured.sessions:
         track += '; Featured Events'
 
     if session.title in titles:

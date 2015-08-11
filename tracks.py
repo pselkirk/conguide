@@ -131,7 +131,7 @@ def write(output, sessions):
     track = {}
     for session in sessions:
         t = session.track
-        for k, v in config.tracks:
+        for k, v in config.track_classifiers:
             if eval(v):
                 t = k
                 break

@@ -76,7 +76,7 @@ def count(fn, i):
                 incr(tag, t, i)
 
     # reinitialize for the next count
-    config.day = {}
+    config.days = {}
     config.sessions = []
     config.participants = {}
 

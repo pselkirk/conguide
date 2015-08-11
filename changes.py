@@ -66,7 +66,8 @@ def read(fn):
     return (session_hash, config.participants)
 
 (sessions[0], participants[0]) = read(args.files[0])
-config.day = {}
+# reinitialize for the next read
+config.days = {}
 config.sessions = []
 config.participants = {}
 (sessions[1], participants[1]) = read(args.files[1])

@@ -24,7 +24,7 @@ parser.add_argument('--raw', action='store_true',
 args = cmdline.cmdline(parser, modes=False)
 config.filereader.read(config.filenames['schedule', 'input'])
 
-for day in config.day:
+for day in config.days:
     print(day)
     openclose = []
     for time in day.time:

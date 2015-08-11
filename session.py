@@ -42,12 +42,12 @@ class Session(object):
             self.index = 0
 
         try:
-            day = config.day[row['day']]
+            day = config.days[row['day']]
         except KeyError:
             if config.debug:
                 print('info: new day %s' % row['day'])
             day = Day(row['day'])
-            config.day[row['day']] = day
+            config.days[row['day']] = day
         try:
             time = day.time[row['time']]
         except KeyError:
@@ -61,26 +61,26 @@ class Session(object):
         self.duration = Duration(row['duration'])
 
         try:
-            level = config.level[row['level']]
+            level = config.levels[row['level']]
         except KeyError:
             try:
                 if not config.quiet:
                     print('warning: new level %s' % row['level'])
                 level = Level(row['level'])
-                config.level[level.name] = level
-                config.level[level.name] = level
+                config.levels[level.name] = level
+                config.levels[level.name] = level
             except KeyError:
                 level = None
 
         try:
-            room = config.room[row['room']]
+            room = config.rooms[row['room']]
         except KeyError:
             if not config.quiet:
                 print('warning: new room %s' % row['room'])
             room = Room(row['room'])
             room.level = level
-            config.room[room.name] = room
-            config.room[room.index] = room
+            config.rooms[room.name] = room
+            config.rooms[room.index] = room
         self.room = room
         room.sessions.append(self)
 

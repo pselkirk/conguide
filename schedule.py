@@ -73,7 +73,7 @@ class HtmlOutput(Output):
         title = config.convention + ' Schedule'
         self.f.write(config.html_header % (title, '', title, config.source_date))
         dd = []
-        for day in config.day:
+        for day in config.days:
             dd.append('<a href="#%s">%s</a>' % (day.name, day.name))
         self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % ' - '.join(dd))
         self.curday = None

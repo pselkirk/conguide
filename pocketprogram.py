@@ -176,7 +176,7 @@ if __name__ == '__main__':
     import featured
     import grid
     import schedule
-    import tracklist as tracks
+    import tracks
     import xref
 
     args = cmdline.cmdline()

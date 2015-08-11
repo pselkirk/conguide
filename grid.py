@@ -89,7 +89,7 @@ class HtmlOutput(Output):
                       'td.white { background-color: #FFFFFF }\n',
                       title, config.source_date))
         dd = []
-        for day in config.day:
+        for day in config.days:
             dd.append('<a href="#%s">%s</a>' % (day.name, day.name))
         self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % \
                      ' - '.join(dd))
@@ -168,7 +168,7 @@ class IndesignOutput(Output):
         if config.fixed[self.name]:
             nrow = 0
             for i in range(Room.index):
-                room = config.room[i]
+                room = config.rooms[i]
                 if room.major:
                     nrow += 1
             self.cheight = (config.theight - config.hheight) / nrow
@@ -349,7 +349,7 @@ def write(output, unused=None):
 
     def matrix():
         for i in range(Room.index):
-            room = config.room[i]
+            room = config.rooms[i]
             room.gridsessions = room.sessions
             try:
                 for r in room.gridrooms:
@@ -362,10 +362,10 @@ def write(output, unused=None):
             except AttributeError:
                 None
         for i in range(Room.index):
-            room = config.room[i]
+            room = config.rooms[i]
             room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
             # declare an array of half-hour blocks
-            room.gridrow = [None for j in range((len(config.day) + 1) * 24 * 2)]
+            room.gridrow = [None for j in range((len(config.days) + 1) * 24 * 2)]
             for session in room.gridsessions:
                 if output.name == 'xml' or output.name == 'indesign':
                     if config.grid_noprint and eval(config.grid_noprint):
@@ -461,7 +461,7 @@ def write(output, unused=None):
             k += 1
         return k - i
 
-    for day in config.day:
+    for day in config.days:
         output.f.write(output.strTableAnchor(day.name))
         for slice in config.slice[output.name]:
             gridslice = Slice('%s %s' % (day.name, slice.name),
@@ -470,7 +470,7 @@ def write(output, unused=None):
             gridslice.endIndex = offset(gridslice.end)
             gridslice.rooms = []
             for i in range(Room.index):
-                room = config.room[i]
+                room = config.rooms[i]
                 try:
                     unused = room.gridrow
                 except AttributeError:

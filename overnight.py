@@ -21,7 +21,7 @@ for mode in ('html', 'xml', 'indesign'):
                 if slice.start >= t24:
                     slice.start -= t24
                     slice.end -= t24
-                for day in config.day:
+                for day in config.days:
                     print(day)
                     overnight = {}
                     for time in day.time:

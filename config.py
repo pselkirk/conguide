@@ -23,31 +23,45 @@ PY3 = sys.version > '3'
 
 # default config file
 CFG = 'arisia.cfg'
+# TODO: If there is exactly one .cfg file in the working directory, use
+# that by default.
 
 # global variables
 debug = False
 quiet = False
-convention = ''
-start = None
-default_duration = None
-goh = {}
+convention = ''			# used in html output
+start = None			# used in guidebook.py
+goh = {}			# used in featured.py
 filenames = {}
 filereader = None
-level = {}
-room = {}
+levels = {}			# used in session.py
+rooms = {}			# used in session.py and grid.py
+days = {}
+schema = {}			# used in schedule.py and grid.py (split, expand to others)
+sessions = []
+participants = {}
+
+# session.py or data importer variables
+chname = {}			# used in arisia-csv.py (should also sasquan-xml.py)
+chroom = {}			# used in session.py
+chtitle = {}			# used in session.py
+chdescr = {}			# used in session.py (but not configured)
+chpartic = {}			# unused (but configured)
+nodescr = {}			# unused (but configured)
+noprint = {}			# unused (but configured)
+
+# participant.py variables
 sortname = {}
-chname = {}
-chroom = {}
-chtitle = {}
-chdescr = {}
-chpartic = {}
+
+# schedule.py variables
+default_duration = None
 nopartic = {}
-nodescr = {}
-noprint = {}
+icons = []
+prune = None
 combat = {}
 presentation = {}
-featured = {}
-boldname = {}
+
+# grid.py variables
 twidth = float(0)
 theight = float(0)
 hwidth = float(0)
@@ -56,16 +70,20 @@ cheight_min = float(0)
 cheight_max = float(0)
 fixed = {}
 slice = {}
-icons = []
-tracks = []
-research = []
-day = {}
-schema = {}
-prune = None
-sessions = []
-participants = {}
 grid_noprint = None
 grid_title_prune = []
+
+# bios.py variables
+boldnames = {}
+
+# tracks.py variables
+track_classifiers = []
+
+# featured.py variables
+featured = []
+research = []
+
+# html output variables
 
 # Boilerplate xhtml file header, with 4 %s bits:
 # - title, for <head>
@@ -92,4 +110,3 @@ div.center {text-align:center}\n\
 <p>Generated: %s</p>\n\
 </div>\n'
 source_date = ''
-

@@ -78,8 +78,8 @@ def read(fn):
     # sort
     config.sessions = sorted(config.sessions)
     # NOTE this changes the data type
-    config.day = sorted(config.day.values())
-    for day in config.day:
+    config.days = sorted(config.days.values())
+    for day in config.days:
         day.time = sorted(day.time.values())
 
     # add session index

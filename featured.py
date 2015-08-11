@@ -121,8 +121,9 @@ class XmlOutput(Output):
 
 def write(output, sessions):
     curday = None
-    # XXX It would be more efficient to write a 'featured' array as we
-    # build the 'sessions' list.
+    # TODO: It would be more efficient to write a 'featured' array as we
+    # build the 'sessions' list. Or even add a 'featured' attribute to the
+    # session.
     for s in sessions:
         if s.sessionid in config.featured:
             if s.time.day != curday:
@@ -163,28 +164,7 @@ if __name__ == '__main__':
             for s in a:
                 print('%s\t# %s' % (s.sessionid, s.title))
 
-        #gohtrack = []
         gohpartic = []
-        #trackless = []
-        #drama = []
-        #concert = []
-        #for s in config.sessions:
-        #    if s.track == 'GOH':
-        #        gohtrack.append(s)
-        #    elif is_goh(s):
-        #        gohpartic.append(s)
-        #    elif s.track == 'Trackless events':
-        #        trackless.append(s)
-        #    elif s.type == 'Drama':
-        #        drama.append(s)
-        #    elif s.type == 'Concert':
-        #        concert.append(s)
-        #out("### GOH track", gohtrack)
-        #out("### GOH participant(s)", gohpartic)
-        #out("### Trackless events", trackless)
-        #out("### Drama", drama)
-        #out("### Concert", concert)
-
         ss = {}
         for session in config.sessions:
             for i, expr in enumerate(config.research):

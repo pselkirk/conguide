@@ -40,7 +40,7 @@ class Output(pocketprogram.Output):
             shortname = '%s %s' % (first, lastname)
 
             # Try to bold the name in the bio text.
-            name = config.boldname.get(participant.name)
+            name = config.boldnames.get(participant.name)
             if name:
                 if config.debug:
                     print('config override: ' + participant.name)
