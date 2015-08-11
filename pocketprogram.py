@@ -94,8 +94,8 @@ class Output(object):
         # characters, so we don't collide with square brackets in session
         # title or description
         # 02 = STX (start of text), 03 = ETX (end of text)
-        template = template.replace('[', u'\u0002')
-        template = template.replace(']', u'\u0003')
+        template = template.replace('[', '\x02')
+        template = template.replace(']', '\x03')
         # tokenize the template, and replace all field names with values
         fields = re.split(r'(\W+)', template)
         for i, tag in enumerate(fields):
@@ -110,8 +110,8 @@ class Output(object):
         str = ''.join(fields)
         # remove optional fields without data
         while i:
-            (str, i) = re.subn(ur'\u0002[^\u0002\u0003\w]*\u0003', '', str)
-        str = re.sub(ur'[\u0002\u0003]', '', str)
+            (str, i) = re.subn(r'\x02[^\x02\x03\w]*\x03', '', str)
+        str = re.sub('[\x02\x03]', '', str)
         return str
 
     def strDay(self, session):
