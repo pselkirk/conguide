@@ -22,10 +22,11 @@ import codecs
 import csv
 import re
 
+import cfgparse
 import config
 import session
 
-config.parseConfig(config.CFG)
+cfgparse.parseConfig(config.CFG)
 config.filereader.read(config.filenames['schedule', 'input'])
 config.filereader.read_bios(config.filenames['bios', 'input'])
 

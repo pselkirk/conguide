@@ -22,10 +22,11 @@ import csv
 import difflib
 import re
 
+import cfgparse
 import config
 import session
 
-config.parseConfig(config.CFG)
+cfgparse.parseConfig(config.CFG)
 
 ps = []
 config.filereader.read(config.filenames['schedule', 'input'])

@@ -4,6 +4,7 @@
 
 import argparse
 
+import cfgparse
 import config
 
 title = {}
@@ -26,7 +27,7 @@ parser.add_argument('files', nargs=argparse.REMAINDER,
 args = parser.parse_args()
 config.debug = args.debug
 config.quiet = args.quiet
-config.parseConfig(args.cfg)
+cfgparse.parseConfig(args.cfg)
 
 config.filereader.read(config.filenames['schedule', 'input'])
 

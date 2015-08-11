@@ -18,6 +18,7 @@
 
 import argparse
 
+import cfgparse
 import config
 
 debug = False
@@ -44,7 +45,7 @@ args = parser.parse_args()
 config.debug = args.debug
 config.quiet = args.quiet
 verbose = args.verbose
-config.parseConfig(args.cfg)
+cfgparse.parseConfig(args.cfg)
 
 if not args.files or len(args.files) > 2:
     print('specify one or two .csv files')

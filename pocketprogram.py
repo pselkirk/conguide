@@ -18,18 +18,18 @@
 
 """A front-end driver module to generate Convention Guide content.
 
-usage: pocketprogram.py [-?] [-c CFG] [-d] [-q] [-t] [-h] [-x] [-i] [-a]
-
-optional arguments:
-  -?, --help            show this help message and exit
-  -c CFG, --config CFG  config file (default "arisia.cfg")
-  -d, --debug           add debugging/trace information
-  -q, --quiet           suppress warning messages
-  -t, --text            text output
-  -h, --html            html output
-  -x, --xml             InDesign xml output
-  -i, --indesign        InDesign tagged text output
-  -a, --all             all output modes
+| usage: pocketprogram.py [-?] [-c CFG] [-d] [-q] [-t] [-h] [-x] [-i] [-a]
+| 
+| optional arguments:
+|   -?, --help            show this help message and exit
+|   -c CFG, --config CFG  config file (default "arisia.cfg")
+|   -d, --debug           add debugging/trace information
+|   -q, --quiet           suppress warning messages
+|   -t, --text            text output
+|   -h, --html            html output
+|   -x, --xml             InDesign xml output
+|   -i, --indesign        InDesign tagged text output
+|   -a, --all             all output modes
 
 Depending on configuration, this generates schedule, program participant
 cross-reference (xref), featured sessions, and track list.

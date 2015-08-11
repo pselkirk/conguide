@@ -52,12 +52,13 @@ class Room(object):
 
 if __name__ == '__main__':
     import sys
+    import cfgparse
     import config
 
     try:
-        config.parseConfig(sys.argv[1])
+        cfgparse.parseConfig(sys.argv[1])
     except IndexError:
-        config.parseConfig(config.CFG)
+        cfgparse.parseConfig(config.CFG)
 
     for r in config.room:
         print('%s\t%s' % (r, config.room[r]))

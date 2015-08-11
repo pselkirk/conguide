@@ -18,6 +18,7 @@
 
 import argparse
 
+import cfgparse
 import config
 
 nitems = []
@@ -92,7 +93,7 @@ parser.add_argument('files', nargs=argparse.REMAINDER,
                     help='one or more snapshots of pocketprogram.csv')
 args = parser.parse_args()
 debug = args.debug
-config.parseConfig(args.cfg)
+cfgparse.parseConfig(args.cfg)
 
 if not args.files:
     count(config.filenames['schedule', 'input'], 0)

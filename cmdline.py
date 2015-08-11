@@ -21,6 +21,7 @@
 import argparse
 import os.path, time
 
+import cfgparse
 import config
 
 # To call without adding command line options, do this:
@@ -71,7 +72,7 @@ def cmdline(parser=None, io=False, modes=True):
     config.debug = args.debug
     config.quiet = args.quiet
 
-    config.parseConfig(args.cfg)
+    cfgparse.parseConfig(args.cfg)
 
     if modes:
         if args.all:
