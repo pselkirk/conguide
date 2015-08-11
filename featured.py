@@ -59,7 +59,8 @@ class HtmlOutput(Output):
     def __init__(self, fn):
         Output.__init__(self, fn)
         title = config.convention + ' Featured Panels &amp; Events'
-        self.f.write(config.html_header % (title, '', title, config.source_date))
+        self.f.write(config.html_header % (title, '', title,
+                                           config.source_date))
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -80,7 +81,8 @@ class HtmlOutput(Output):
 
     def strTitle(self, session):
         return '<a href="%s#%s">%s</a> ' % \
-            (config.filenames['schedule', 'html'], session.sessionid, self.cleanup(session.title))
+            (config.filenames['schedule', 'html'], session.sessionid,
+             self.cleanup(session.title))
 
     def strRoom(self, session):
         return '<i>&mdash; %s</i></dt></dl>\n' % session.room
@@ -152,7 +154,7 @@ if __name__ == '__main__':
     if args.research:
         def is_goh(s):
             for p in s.participants:
-                if p.pubsname in config.goh:
+                if p.name in config.goh:
                     return True
             return False
 
@@ -204,16 +206,19 @@ if __name__ == '__main__':
         if args.outfile:
             write(TextOutput(args.outfile), config.sessions)
         elif ('featured', 'text') in config.filenames:
-            write(TextOutput(config.filenames['featured', 'text']), config.sessions)
+            write(TextOutput(config.filenames['featured', 'text']),
+                  config.sessions)
 
     if args.html:
         if args.outfile:
             write(HtmlOutput(args.outfile), config.sessions)
         elif ('featured', 'html') in config.filenames:
-            write(HtmlOutput(config.filenames['featured', 'html']), config.sessions)
+            write(HtmlOutput(config.filenames['featured', 'html']),
+                  config.sessions)
 
     if args.xml:
         if args.outfile:
             write(XmlOutput(args.outfile), config.sessions)
         elif ('featured', 'xml') in config.filenames:
-            write(XmlOutput(config.filenames['featured', 'xml']), config.sessions)
+            write(XmlOutput(config.filenames['featured', 'xml']),
+                  config.sessions)

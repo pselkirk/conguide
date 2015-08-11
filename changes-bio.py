@@ -18,21 +18,20 @@
 
 import argparse
 
-import participant
-import uncsv
+import cmdline
+import config
 
 debug = False
 verbose = False
 participants = [{}, {}]
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-d', '--debug', action='store_true',
-                    help='add debugging/trace information')
+parent = cmdline.cmdlineParser(modes=False)
+parser = argparse.ArgumentParser(add_help=False, parents=[parent])
 parser.add_argument('-v', '--verbose', action='store_true',
                     help='print full description changes')
 parser.add_argument('files', nargs=argparse.REMAINDER,
                     help='one or two snapshots of PubBio.csv')
-args = parser.parse_args()
+args = cmdline.cmdline(parser, modes=False)
 debug = args.debug
 verbose = args.verbose
 
@@ -41,20 +40,19 @@ if not args.files or len(args.files) > 2:
     parser.print_help()
     exit(1)
 elif len(args.files) == 1:
-    args.files.append('PubBio.csv')
+    args.files.append(config.filenames['bios', 'input'])
 
 def read(fn):
     participants = {}
-    for row in uncsv.read(fn):
-        p = participant.Participant(row['pubsname'])
-        p.badgeid = row['badgeid']
-        p.firstname = row['firstname']
-        p.lastname = row['lastname']
-        p.bio = row['bio']
+    config.filereader.read_bios(fn)
+    for p in config.participants.values():
         participants[p.badgeid] = p
     return participants
 
 participants[0] = read(args.files[0])
+config.day = {}
+config.sessions = []
+config.participants = {}
 participants[1] = read(args.files[1])
 
 added = []
@@ -66,8 +64,8 @@ ch_bio = []
 def pheader(p):
     name = '%s %s' % (p.firstname, p.lastname)
     string = '%s: %s' % (p.badgeid, name)
-    if p.pubsname != name:
-        string += ' (%s)' % p.pubsname
+    if p.name != name:
+        string += ' (%s)' % p.name
     return string
 
 for p in sorted(participants[1].values()):
@@ -84,8 +82,8 @@ for p in sorted(participants[0].values()):
         continue
     if p1.firstname != p.firstname or p1.lastname != p.lastname:
         ch_name.append('%s -> %s %s' % (ph, p1.firstname, p1.lastname))
-    if p1.pubsname != p.pubsname:
-        ch_pubsname.append('%s: %s -> %s' % (ph, p.pubsname, p1.pubsname))
+    if p1.name != p.name:
+        ch_pubsname.append('%s: %s -> %s' % (ph, p.name, p1.name))
     if p1.bio != p.bio:
         if verbose:
             ch_bio.append('%s: %s -> %s' % (ph, p.bio, p1.bio))

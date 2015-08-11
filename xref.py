@@ -44,7 +44,8 @@ class HtmlOutput(Output):
     def __init__(self, fn):
         Output.__init__(self, fn)
         title = config.convention + ' Program Participant Cross-Reference'
-        self.f.write(config.html_header % (title, '', title, config.source_date))
+        self.f.write(config.html_header % (title, '', title,
+                                           config.source_date))
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -62,7 +63,9 @@ class HtmlOutput(Output):
         ss = []
         for s in participant.sessions:
             ss.append('<dd>%s %s <a href="%s#%s">%s</a></dd>' % \
-                      (s.time.day.shortname, s.time, config.filenames['schedule', 'html'], s.sessionid, self.cleanup(s.title)))
+                      (s.time.day.shortname, s.time,
+                       config.filenames['schedule', 'html'], s.sessionid,
+                       self.cleanup(s.title)))
         return '%s\n</dl>\n' % '\n'.join(ss)
 
 class XmlOutput(Output):
@@ -101,16 +104,19 @@ if __name__ == '__main__':
         if args.outfile:
             write(TextOutput(args.outfile), config.participants)
         elif ('xref', 'text') in config.filenames:
-            write(TextOutput(config.filenames['xref', 'text']), config.participants)
+            write(TextOutput(config.filenames['xref', 'text']),
+                  config.participants)
 
     if args.html:
         if args.outfile:
             write(HtmlOutput(args.outfile), config.participants)
         elif ('xref', 'html') in config.filenames:
-            write(HtmlOutput(config.filenames['xref', 'html']), config.participants)
+            write(HtmlOutput(config.filenames['xref', 'html']),
+                  config.participants)
 
     if args.xml:
         if args.outfile:
             write(XmlOutput(args.outfile), config.participants)
         elif ('xref', 'html') in config.filenames:
-            write(XmlOutput(config.filenames['xref', 'xml']), config.participants)
+            write(XmlOutput(config.filenames['xref', 'xml']),
+                  config.participants)

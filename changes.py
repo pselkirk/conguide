@@ -19,7 +19,6 @@
 import argparse
 
 import config
-import session
 
 debug = False
 verbose = False
@@ -115,7 +114,8 @@ for s in sorted(sessions[0].values()):
         ch_title.append('%s -> %s' % (sh, s1.title))
     if s1.description != s.description:
         if verbose:
-            ch_description.append('%s:\n\t%s\n->\n\t%s' % (sh, s.description, s1.description))
+            ch_description.append('%s:\n\t%s\n->\n\t%s' % \
+                                  (sh, s.description, s1.description))
         else:
             ch_description.append(sh)
     cp = []
@@ -150,18 +150,26 @@ for s in sorted(sessions[0].values()):
 if new:
     print('\nnew sessions (%d):\n%s' % (len(new), '\n'.join(new)))
 if cancelled:
-    print('\ncancelled sessions (%d):\n%s' % (len(cancelled), '\n'.join(cancelled)))
+    print('\ncancelled sessions (%d):\n%s' % \
+          (len(cancelled), '\n'.join(cancelled)))
 if ch_time:
-    print('\ntime changes (%d):\n%s' % (len(ch_time), '\n'.join(ch_time)))
+    print('\ntime changes (%d):\n%s' % \
+          (len(ch_time), '\n'.join(ch_time)))
 if ch_room:
-    print('\nroom changes (%d):\n%s' % (len(ch_room), '\n'.join(ch_room)))
+    print('\nroom changes (%d):\n%s' % \
+          (len(ch_room), '\n'.join(ch_room)))
 if ch_track:
-    print('\ntrack changes (%d):\n%s' % (len(ch_track), '\n'.join(ch_track)))
+    print('\ntrack changes (%d):\n%s' % \
+          (len(ch_track), '\n'.join(ch_track)))
 if ch_type:
-    print('\ntype changes (%d):\n%s' % (len(ch_type), '\n'.join(ch_type)))
+    print('\ntype changes (%d):\n%s' % \
+          (len(ch_type), '\n'.join(ch_type)))
 if ch_title:
-    print('\ntitle changes (%d):\n%s' % (len(ch_title), '\n'.join(ch_title)))
+    print('\ntitle changes (%d):\n%s' % \
+          (len(ch_title), '\n'.join(ch_title)))
 if ch_description:
-    print('\ndescription changes (%d):\n%s' % (len(ch_description), '\n'.join(ch_description)))
+    print('\ndescription changes (%d):\n%s' % \
+          (len(ch_description), '\n'.join(ch_description)))
 if ch_participants:
-    print('\nparticipant changes (%d):\n%s' % (len(ch_participants), '\n'.join(ch_participants)))
+    print('\nparticipant changes (%d):\n%s' % \
+          (len(ch_participants), '\n'.join(ch_participants)))

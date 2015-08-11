@@ -22,7 +22,6 @@ import argparse
 import os.path, time
 
 import config
-import session
 
 # To call without adding command line options, do this:
 #    (args, sessions, participants) = cmdline.cmdline()
@@ -85,7 +84,8 @@ def cmdline(parser=None, io=False, modes=True):
             parser.print_help()
             exit(1)
 
-        if io and args.outfile and (args.text + args.html + args.xml + args.indesign > 1):
+        if io and args.outfile and \
+           (args.text + args.html + args.xml + args.indesign > 1):
             print('error: --outfile requires exactly one output mode\n')
             parser.print_help()
             exit(1)
@@ -96,7 +96,8 @@ def cmdline(parser=None, io=False, modes=True):
         else:
             args.infile = config.filenames['schedule', 'input']
 
-    config.source_date = time.ctime(os.path.getmtime(config.filenames['schedule', 'input']))
+    config.source_date = time.ctime(os.path.getmtime(
+        config.filenames['schedule', 'input']))
 
     return args
 

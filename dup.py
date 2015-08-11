@@ -5,7 +5,6 @@
 import argparse
 
 import config
-import session
 
 title = {}
 descr = {}
@@ -46,9 +45,11 @@ for s in config.sessions:
 if dup_t:
     print('# by title')
     for s in sorted(dup_t):
-        print('%s = %s\t# %s' % (s.sessionid, title[s.title].sessionid, s.title))
+        print('%s = %s\t# %s' % (s.sessionid, title[s.title].sessionid,
+                                 s.title))
 
 if dup_d:
     print('# by description')
     for s in sorted(dup_d):
-        print('%s = %s\t# %s' % (s.sessionid, descr[s.description].sessionid, s.title))
+        print('%s = %s\t# %s' % (s.sessionid, descr[s.description].sessionid,
+                                 s.title))

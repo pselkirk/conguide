@@ -18,13 +18,10 @@
 
 import csv
 import re
-import sys
 
 import config
 from participant import Participant
-from room import Room
 from session import Session
-from times import Day, Time, Duration
 
 def csv_reader(fn):
     if config.PY3:
@@ -40,7 +37,7 @@ def csv_reader(fn):
     return reader
 
 def read(fn):
-    """ Read a CSV file, and return an array of sesions and an array of participants. """
+    """ Read a CSV file, and create the global ``sessions`` list. """
 
     reader = csv_reader(fn)
     for row in reader:
@@ -55,7 +52,7 @@ def read(fn):
             mods = []
             # chname has to operate on the full participants string
             # because some of the target names have commas in them
-            for k,v in config.chname.items():
+            for k, v in config.chname.items():
                 row['participants'] = row['participants'].replace(k, v)
             partic = re.split(r', ?', row['participants'])
             for i, p in enumerate(partic):
@@ -92,9 +89,9 @@ def read(fn):
 def cleanup(field, minimal=False):
     # convert all whitespace (including newlines) to single spaces
     if type(field) is list:
-        for i,f in enumerate(field):
+        for i, f in enumerate(field):
             field[i] = cleanup(f)
-    
+
     elif (type(field) is str) or (not config.PY3 and type(field) is unicode):
         # convert all whitespace (including newlines) to single spaces
         field = re.sub(r'\s+', ' ', field)
@@ -106,34 +103,10 @@ def cleanup(field, minimal=False):
 
         if not minimal:
             # try to guess where italics were intended
-            field = re.sub(r'(?<!\w)_([^_]+?)_(?!\w)', r'<i>\1</i>', field) # _italic_
-            field = re.sub(r'(?<!\w)\*([^*]+?)\*(?!\w)', r'<i>\1</i>', field) # *italic*
-
-            # Let's don't mess with unicode that's already there;
-            # let's concentrate on converting ascii to appropriate unicode
-
-            # XXX filter bad unicode
-            #field = re.sub(u'\u202a', '', field)
-            #field = re.sub(u'\u202c', '', field)
-
-            # convert dashes
-            field = re.sub(r'(\d) *- *(\d)', r'\1'+u'\u2013'+r'\2', field) # the much-misunderstood n-dash
-            field = re.sub(r' *-{2,} *', u'\u2014', field)   # m--dash, m -- dash, etc.
-            field = re.sub(r' +- +', u'\u2014', field)       # m - dash
-
-            # right quote before abbreviated years and decades ('70s)
-            field = re.sub(r'\'([0-9])', u'\u2019'+r'\1', field)
-
-            # convert quotes
-            field = re.sub(r'^\'', u'\u2018', field) # beginning single quote -> left
-            field = re.sub(r'\'$', u'\u2019', field) # ending single quote -> right
-            field = re.sub(r'([^\w,.!?])\'(\w)', r'\1'+u'\u2018'+r'\2', field) # left single quote
-            field = re.sub(r'\'', u'\u2019', field)  # all remaining single quotes -> right
-
-            field = re.sub(r'^"', u'\u201c', field)  # beginning double quote -> left
-            field = re.sub(r'"$', u'\u201d', field)  # ending double quote -> right
-            field = re.sub(r'([^\w,.!?])"(\w)', r'\1'+u'\u201c'+r'\2', field) # left double quote
-            field = re.sub(r'"', u'\u201d', field)   # all remaining double quotes -> right
+             # _italic_
+            field = re.sub(r'(?<!\w)_([^_]+?)_(?!\w)', r'<i>\1</i>', field)
+             # *italic*
+            field = re.sub(r'(?<!\w)\*([^*]+?)\*(?!\w)', r'<i>\1</i>', field)
 
     return field
 
@@ -160,10 +133,8 @@ def read_bios(fn):
         config.participants[pubsname].badgeid = row['badgeid']
 
 if __name__ == '__main__':
-    import sys
-
     import cmdline
-    
+
     args = cmdline.cmdline(io=True, modes=False)
     read(args.infile)
 

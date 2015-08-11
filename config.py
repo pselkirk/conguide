@@ -29,13 +29,11 @@ if PY3:
     import configparser
 else:
     import ConfigParser as configparser
-
-if not PY3:
     sys.stdout = codecs.getwriter('utf8')(sys.stdout)
     sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
-import grid
-import times
+from grid import Slice
+from times import Time, Duration
 from room import Level, Room
 
 # default config file
@@ -117,7 +115,7 @@ if not PY3:
         def __init__(self):
             """ Allow options without values, and don't lower-case option names. """
             configparser.SafeConfigParser.__init__(self, allow_no_value=True)
-            self.optionxform = lambda s:s
+            self.optionxform = lambda s: s
 
         def get(self, section, option):
             value = configparser.SafeConfigParser.get(self, section, option)
@@ -134,11 +132,14 @@ if not PY3:
 def parseConfig(fn):
 
     # sigh, scalar variables have to be declared global
-    global convention, start, default_duration, twidth, theight, hwidth, hheight, cheight_min, cheight_max, filereader, grid_noprint, grid_title_prune
+    global convention, start, default_duration, twidth, theight, hwidth, \
+        hheight, cheight_min, cheight_max, filereader, grid_noprint, \
+        grid_title_prune
 
     if PY3:
-        cfg = configparser.ConfigParser(allow_no_value=True, strict=False, inline_comment_prefixes=('#',))
-        cfg.optionxform = lambda s:s
+        cfg = configparser.ConfigParser(allow_no_value=True, strict=False,
+                                        inline_comment_prefixes=('#',))
+        cfg.optionxform = lambda s: s
     else:
         cfg = MyConfigParser()
     with codecs.open(fn, 'r', 'utf-8') as f:
@@ -154,7 +155,7 @@ def parseConfig(fn):
         None
 
     try:
-        default_duration = times.Duration(cfg.get('top', 'default duration'))
+        default_duration = Duration(cfg.get('top', 'default duration'))
     except configparser.NoOptionError:
         None
 
@@ -332,7 +333,7 @@ def parseConfig(fn):
             try:
                 level[name].pubsname = cfg.get(section, 'pubsname')
             except configparser.NoOptionError:
-                pubsname = None
+                None
             rooms = cfg.get(section, 'rooms')
             for r in re.split(r',\s*', rooms):
                 room[r] = Room(r, level[name])
@@ -376,11 +377,13 @@ def parseConfig(fn):
     except configparser.NoOptionError:
         None
     try:
-        cheight_min = float(cfg.get('grid indesign', 'minimum cell height')) * 72.0
+        cheight_min = float(cfg.get('grid indesign', 'minimum cell height')) \
+                      * 72.0
     except configparser.NoOptionError:
         None
     try:
-        cheight_max = float(cfg.get('grid indesign', 'maximum cell height')) * 72.0
+        cheight_max = float(cfg.get('grid indesign', 'maximum cell height')) \
+                      * 72.0
     except configparser.NoOptionError:
         None
     for mode in ['html', 'indesign', 'xml']:
@@ -401,7 +404,7 @@ def parseConfig(fn):
             # should refactor this into a bunch of smaller functions
             strt = cfg.get(section, 'start')
             end = cfg.get(section, 'end')
-            s = grid.Slice(name, times.Time(strt), times.Time(end))
+            s = Slice(name, Time(strt), Time(end))
             try:
                 if s.start < slice[type][0].start:
                     s.start.hour += 24
@@ -430,7 +433,7 @@ if __name__ == '__main__':
     print('room = %s' % room)
     print('day = %s' % day)
 
-    for k,v in slice.items():
+    for k, v in slice.items():
         print('grid slice %s' % k)
         for s in v:
             print(s)
@@ -446,7 +449,7 @@ if __name__ == '__main__':
     print('featured = %s' % featured)
     print('sortname = %s' % sortname)
 
-    for k,v in schema.items():
+    for k, v in schema.items():
         print('schema[%s] =' % str(k))
         print(v)
 

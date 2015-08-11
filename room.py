@@ -16,7 +16,7 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-class Level:
+class Level(object):
     index = 0
 
     def __init__(self, name, rooms=None):
@@ -32,7 +32,7 @@ class Level:
     def __str__(self):
         return self.pubsname
 
-class Room:
+class Room(object):
     index = 0
 
     def __init__(self, name, level=None):

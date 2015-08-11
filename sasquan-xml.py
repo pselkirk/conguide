@@ -53,8 +53,7 @@ from session import Session
 #             <company>         (ignore)
 
 def read(fn):
-    """ Read an XML file, and return an array of sesions and an array of participants. """
-    curday = None
+    """ Read an XML file, and create the global ``sessions`` list. """
 
     #for timeslot in xml.etree.ElementTree.parse(fn).getroot():
     parser = xml.etree.ElementTree.XMLParser(encoding='utf-8')
@@ -64,15 +63,14 @@ def read(fn):
         assert(start.tag == 'start')
         day = start.findtext('day')
         time = start.findtext('time')
-        
+
         for item in timeslot[1:]:
             assert item.tag == 'item'
             room = item.findtext('room')
             venue = item.findtext('venue')
-            details = item.find('details')
             row = {'day':day, 'time':time, 'room':room, 'level':venue,
-                    'tracks':[], 'tags':[],
-                    'participants':[], 'moderators':[]}
+                   'tracks':[], 'tags':[],
+                   'participants':[], 'moderators':[]}
             for a in item:
                 if a.tag == 'details':
                     for b in a:
@@ -132,43 +130,43 @@ def read(fn):
 
 def cleanup(field, minimal=False):
     if type(field) is list:
-        for i,f in enumerate(field):
+        for i, f in enumerate(field):
             field[i] = cleanup(f)
-    
+
     elif (type(field) is str) or (not config.PY3 and type(field) is unicode):
         # convert all whitespace (including newlines) to single spaces
         if not config.PY3:
             # python 2.7 doesn't recognize non-breaking space as whitespace
-            field = field.replace(u'\xa0', ' ')
+            field = field.replace(u'\u00a0', ' ')
         field = re.sub(r'\s+', ' ', field)
-    
+
         if not minimal:
             # change bold to italic
             field = re.sub(r'<(/?)em>', r'<\1i>', field)
             field = re.sub(r'<(/?)strong>', r'<\1i>', field)
-    
+
             # change explicit line breaks to newline
             field = re.sub(r'<br ?/> ?', r'\n', field)
             field = re.sub(r'</p> ?<p> ?', r'\n', field)
             field = re.sub(r'^<p>(.*)</p>$', r'\1', field)
             field = re.sub(r' ?<p>', r'\n', field)
             field = re.sub(r'</p>', r'', field)
-    
+
             # lists - hack for one session
             field = re.sub(r' ?<ul> ?', r'', field)
             field = re.sub(r' ?</ul> ?', r'\n\n', field)
             field = re.sub(r'<li> ?', r'\n<li>', field)
-    
+
             # remove html tags we can't/won't support in print
             field = re.sub(r'</?span.*?> ?', r'', field)
             field = re.sub(r'</?div.*?> ?', r'', field)
             field = re.sub(r'</?hr.*?> ?', r'', field)
             field = re.sub(r'</?a.*?> ?', r'', field)
             field = re.sub(r'</?font.*?> ?', r'', field)
-    
+
             # remove wtf
             field = re.sub(u'\u00e2', '', field)
-    
+
         # remove extraneous whitespace
         field = re.sub(r'^\s+', '', field) # leading space
         field = re.sub(r'\s+$', '', field) # trailing space

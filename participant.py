@@ -20,17 +20,17 @@ import re
 
 import config
 
-class Participant:
+class Participant(object):
 
-    def __init__(self, pubsname):
-        self.pubsname = pubsname
+    def __init__(self, name):
+        self.name = name
         self.sessions = []
         try:
             # configured sortkey (usually unhyphenated last name)
-            self.sortkey = config.sortname[pubsname].lower()
+            self.sortkey = config.sortname[name].lower()
         except KeyError:
             # sortkey = Lastname Firstname Middle
-            nn = pubsname.split(' ')
+            nn = name.split(' ')
             # the last token is usually the last name
             first = nn[:-1]
             last = nn[-1]
@@ -60,13 +60,13 @@ class Participant:
         return not self == other
 
     def __str__(self):
-        return self.pubsname
+        return self.name
 
 if __name__ == '__main__':
     import cmdline
-    
+
     args = cmdline.cmdline(io=True, modes=False)
     participants = config.filereader.read_bios(config.filenames['bios', 'input'], {})
     for p in sorted(participants.values()):
-        print(p.pubsname)
+        print(p.name)
     print(len(participants))

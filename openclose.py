@@ -39,7 +39,6 @@ for day in config.day:
                     if m:
                         title = m.group(1)
                         title = re.sub(' Re-$', '', title)
-                        #print(u'%s: %s\u2013%s' % (title, str(session.time), str(session.time + session.duration)))
                         session.shorttitle = title
                         openclose.append(session)
                     else:

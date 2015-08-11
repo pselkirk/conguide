@@ -17,7 +17,6 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 import argparse
-import re
 
 import config
 
@@ -60,15 +59,15 @@ def count(fn, i):
         incr(duration, str(session.duration), i)
         incr(level, str(session.room.level), i)
         incr(room, str(session.room), i)
-        incr(levelroom, (str(session.room.level),str(session.room)), i)
+        incr(levelroom, (str(session.room.level), str(session.room)), i)
         incr(track, str(session.track), i)
         incr(type, str(session.type), i)
-        incr(tracktype, (str(session.track),str(session.type)), i)
+        incr(tracktype, (str(session.track), str(session.type)), i)
         if not session.participants:
             incr(partic, '(no participants)', i)
         else:
             for p in session.participants:
-                incr(partic, str(p), i)
+                incr(partic, p.__str__(), i)
         if not session.tags:
             incr(tag, '(no tags)', i)
         else:

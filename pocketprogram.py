@@ -16,12 +16,33 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+"""A front-end driver module to generate Convention Guide content.
+
+usage: pocketprogram.py [-?] [-c CFG] [-d] [-q] [-t] [-h] [-x] [-i] [-a]
+
+optional arguments:
+  -?, --help            show this help message and exit
+  -c CFG, --config CFG  config file (default "arisia.cfg")
+  -d, --debug           add debugging/trace information
+  -q, --quiet           suppress warning messages
+  -t, --text            text output
+  -h, --html            html output
+  -x, --xml             InDesign xml output
+  -i, --indesign        InDesign tagged text output
+  -a, --all             all output modes
+
+Depending on configuration, this generates schedule, program participant
+cross-reference (xref), featured sessions, and track list.
+
+"""
+
 import codecs
 import re
 
 import config
 
-class Output:
+class Output(object):
+    """ Parent class for TextOutput etc. in schedule.py etc. """
 
     def __init__(self, fn, fd=None, codec='utf-8'):
         if fd:
@@ -39,27 +60,35 @@ class Output:
     def cleanup(self, text):
         if text:
             # convert dashes
-            text = re.sub(r'(\d) *- *(\d)', r'\1'+u'\u2013'+r'\2', text) # the much-misunderstood n-dash
-            text = re.sub(r' *-{2,} *', u'\u2014', text)   # m--dash, m -- dash, etc.
-            text = re.sub(r' +- +', u'\u2014', text)       # m - dash
-            text = re.sub(r' +\u2014 +', u'\u2014', text, flags=re.U)
-
-            # right quote before abbreviated years and decades ('70s)
-            text = re.sub(r'\'([0-9])', u'\u2019'+r'\1', text)
+            # the much-misunderstood n-dash
+            text = re.sub(r'(\d) *- *(\d)', r'\1'+u'\u2013'+r'\2', text)
+            # m--dash, m -- dash, etc.
+            text = re.sub(r' *-{2,} *', u'\u2014', text)
+            # m - dash
+            text = re.sub(r' +- +', u'\u2014', text)
 
             # convert quotes
-            text = re.sub(r'^\'', u'\u2018', text) # beginning single quote -> left
-            text = re.sub(r'\'$', u'\u2019', text) # ending single quote -> right
-            text = re.sub(r'([^\w,.!?])\'(\w)', r'\1'+u'\u2018'+r'\2', text) # left single quote
-            text = re.sub(r'\'', u'\u2019', text)  # all remaining single quotes -> right
-
-            text = re.sub(r'^"', u'\u201c', text)  # beginning double quote -> left
-            text = re.sub(r'"$', u'\u201d', text)  # ending double quote -> right
-            text = re.sub(r'([^\w,.!?])"(\w)', r'\1'+u'\u201c'+r'\2', text) # left double quote
-            text = re.sub(r'"', u'\u201d', text)   # all remaining double quotes -> right
+            # right quote before abbreviated years and decades ('70s)
+            text = re.sub(r'\'([0-9])', u'\u2019'+r'\1', text)
+            # beginning single quote -> left
+            text = re.sub(r'^\'', u'\u2018', text)
+            # ending single quote -> right
+            text = re.sub(r'\'$', u'\u2019', text)
+            # left single quote
+            text = re.sub(r'([^\w,.!?])\'(\w)', r'\1'+u'\u2018'+r'\2', text)
+            # all remaining single quotes -> right
+            text = re.sub(r'\'', u'\u2019', text)
+            # beginning double quote -> left
+            text = re.sub(r'^"', u'\u201c', text)
+            # ending double quote -> right
+            text = re.sub(r'"$', u'\u201d', text)
+            # left double quote
+            text = re.sub(r'([^\w,.!?])"(\w)', r'\1'+u'\u201c'+r'\2', text)
+            # all remaining double quotes -> right
+            text = re.sub(r'"', u'\u201d', text)
 
         return text
-    
+
     def fillTemplate(self, template, session):
         # for optional data, replace square brackets with non-printing
         # characters, so we don't collide with square brackets in session
@@ -68,10 +97,10 @@ class Output:
         template = template.replace('[', u'\u0002')
         template = template.replace(']', u'\u0003')
         # tokenize the template, and replace all field names with values
-        fields = re.split('(\W+)', template)
+        fields = re.split(r'(\W+)', template)
         for i, tag in enumerate(fields):
             try:
-                if re.match('\w+', tag):
+                if re.match(r'\w+', tag):
                     fields[i] = eval('self.str%s(session)' % tag.capitalize())
                     if tag.isupper():
                         fields[i] = fields[i].upper()
@@ -84,7 +113,7 @@ class Output:
             (str, i) = re.subn(ur'\u0002[^\u0002\u0003\w]*\u0003', '', str)
         str = re.sub(ur'[\u0002\u0003]', '', str)
         return str
-        
+
     def strDay(self, session):
         return str(session.time.day)
 
@@ -99,7 +128,7 @@ class Output:
 
     def strTrack(self, session):
         return str(self.track)
-    
+
     def strType(self, session):
         return str(self.type)
 
@@ -146,7 +175,6 @@ if __name__ == '__main__':
     import cmdline
     import featured
     import grid
-    import participant
     import schedule
     import tracklist as tracks
     import xref

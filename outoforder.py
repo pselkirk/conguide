@@ -18,22 +18,40 @@
 
 """ Find participants who might be sorted out of order. """
 
+import csv
 import difflib
+import re
 
 import config
 import session
-import uncsv
 
 config.parseConfig(config.CFG)
 
 ps = []
 config.filereader.read(config.filenames['schedule', 'input'])
 for p in sorted(config.participants.values()):
-    ps.append(p.pubsname)
+    ps.append(p.name)
+
+def read(fn):
+    if config.PY3:
+        f = open(fn, 'rt', encoding='utf-8', newline='')
+    else:
+        f = open(fn, 'rb')
+    reader = csv.DictReader(f)
+    rows = []
+    for row in reader:
+        if not config.PY3:
+            for key in row:
+                row[key] = row[key].decode('utf-8')
+        rows.append(row)
+    return rows
 
 pb = []
-for p in uncsv.read('PubBio.csv'):
+for p in read(config.filenames['bios', 'input']):
     pubsname = p['pubsname']
+    pubsname = re.sub('\s+', ' ', pubsname)
+    pubsname = re.sub('^\s+', '', pubsname)
+    pubsname = re.sub('\s+$', '', pubsname)
     if pubsname in config.chname:
         pubsname = config.chname[pubsname]
     pb.append(pubsname)

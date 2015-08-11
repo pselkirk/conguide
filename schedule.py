@@ -20,7 +20,6 @@ import re
 
 import config
 from pocketprogram import Output
-import session
 import times
 
 prune = True
@@ -88,13 +87,15 @@ class HtmlOutput(Output):
         return Output.cleanup(self, text).replace('&', '&amp;')
 
     def strSession(self, session, str):
-        return '<p><a name="%s"></a>\n<dl>%s</dl></p>\n' % (session.sessionid, str)
+        return '<p><a name="%s"></a>\n<dl>%s</dl></p>\n' % \
+            (session.sessionid, str)
 
     def strDay(self, session):
         return '<p><a name="%s"></a></p>' % str(session.time.day)
 
     def strTime(self, session):
-        return '<hr />\n<h3>%s %s</h3>\n' % (str(session.time.day), str(session.time))
+        return '<hr />\n<h3>%s %s</h3>\n' % \
+            (str(session.time.day), str(session.time))
 
     def strTitle(self, session):
         return '<dt><b>%s</b> ' % self.cleanup(session.title)
@@ -212,7 +213,7 @@ class XmlOutput(Output):
     def strIcons(self, session):
         if (config.icons):
             icon = None
-            for k,v in config.icons:
+            for k, v in config.icons:
                 if eval(v):
                     icon = k
                     break
@@ -222,7 +223,8 @@ class XmlOutput(Output):
 
     def strDescription(self, session):
         if session.description:
-            return '<ss-description>%s</ss-description>' % self.cleanup(session.description)
+            return '<ss-description>%s</ss-description>' % \
+                self.cleanup(session.description)
         else:
             return ''
 
@@ -233,7 +235,11 @@ class XmlOutput(Output):
         # Prune participants to save space.
         if str and prune and config.prune and eval(config.prune):
             if config.debug:
-                print('%s: prune participants %s' % (session.title, ', '.join(pp)))
+                pp = []
+                for p in session.participants:
+                    pp.append(p.__str__())
+                print('%s: prune participants %s' % \
+                      (session.title, ', '.join(pp)))
             return ''
         return '<ss-participants>%s</ss-participants>' % str
 

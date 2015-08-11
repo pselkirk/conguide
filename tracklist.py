@@ -66,7 +66,8 @@ class HtmlOutput(Output):
     def __init__(self, fn):
         Output.__init__(self, fn)
         title = config.convention + ' Schedule, by Area'
-        self.f.write(config.html_header % (title, '', title, config.source_date))
+        self.f.write(config.html_header % (title, '', title,
+                                           config.source_date))
 
     def __del__(self):
         self.f.write('</dl></body></html>\n')
@@ -93,7 +94,8 @@ class HtmlOutput(Output):
 
     def strTitle(self, session):
         return '<a href="%s#%s">%s</a></dd>\n' % \
-            (config.filenames['schedule', 'html'], session.sessionid, self.cleanup(session.title))
+            (config.filenames['schedule', 'html'], session.sessionid,
+             self.cleanup(session.title))
 
 class XmlOutput(Output):
 
@@ -122,13 +124,14 @@ class XmlOutput(Output):
         return '<tr-session><tr-index>%d</tr-index>\t' % session.index
 
     def strTitle(self, session):
-        return '<tr-title>%s</tr-title></tr-session>\n' % self.cleanup(session.title)
+        return '<tr-title>%s</tr-title></tr-session>\n' % \
+            self.cleanup(session.title)
 
 def write(output, sessions):
     track = {}
     for session in sessions:
         t = session.track
-        for k,v in config.tracks:
+        for k, v in config.tracks:
             if eval(v):
                 t = k
                 break
@@ -141,7 +144,7 @@ def write(output, sessions):
 
     output.writeTrackNames(sorted(track))
 
-    for k,v in sorted(track.items()):
+    for k, v in sorted(track.items()):
         if k:
             output.writeTrack(k)
             for s in v:
@@ -157,16 +160,19 @@ if __name__ == '__main__':
         if args.outfile:
             write(TextOutput(args.outfile), config.sessions)
         elif ('tracks', 'text') in config.filenames:
-            write(TextOutput(config.filenames['tracks', 'text']), config.sessions)
+            write(TextOutput(config.filenames['tracks', 'text']),
+                  config.sessions)
 
     if args.html:
         if args.outfile:
             write(HtmlOutput(args.outfile), config.sessions)
         elif ('tracks', 'html') in config.filenames:
-            write(HtmlOutput(config.filenames['tracks', 'html']), config.sessions)
+            write(HtmlOutput(config.filenames['tracks', 'html']),
+                  config.sessions)
 
     if args.xml:
         if args.outfile:
             write(XmlOutput(args.outfile), config.sessions)
         elif ('tracks', 'xml') in config.filenames:
-            write(XmlOutput(config.filenames['tracks', 'xml']), config.sessions)
+            write(XmlOutput(config.filenames['tracks', 'xml']),
+                  config.sessions)

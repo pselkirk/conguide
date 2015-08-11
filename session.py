@@ -21,7 +21,7 @@ from participant import Participant
 from room import Level, Room
 from times import Day, Time, Duration
 
-class Session:
+class Session(object):
 
     def __init__(self, row):
         'init from csv.DictReader()'
@@ -119,6 +119,7 @@ class Session:
                  ((self.time.day == other.time.day) and \
                   ((self.time < other.time) or \
                    ((self.time == other.time) and \
-                    (((not self.index or not other.index) and (self.room < other.room)) or \
+                    (((not self.index or not other.index) and \
+                      (self.room < other.room)) or \
                      (self.index < other.index)))))))
 

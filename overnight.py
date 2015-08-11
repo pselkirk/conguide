@@ -5,7 +5,6 @@
 
 import cmdline
 import config
-import session
 import times
 
 overnight = {}

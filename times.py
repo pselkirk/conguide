@@ -26,47 +26,67 @@ import re
 from functools import total_ordering
 
 @total_ordering
-class Day:
-    """ Day class. """
+class Day(object):
+    """ Day class.
+
+    Parameters:
+
+    name: str
+        Can be a long name ('Friday') or a short name ('Fri')
+    """
+
+    # class variables
+    _DAY_ = {'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday',
+             'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday',
+             'Sun': 'Sunday',
+             'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed',
+             'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat',
+             'Sunday': 'Sun'}
+    _index = 0
+
     # XXX add day/month/year for guidebook?
-    __DAY__ = {'Mon': 'Monday', 'Tue': 'Tuesday', 'Wed': 'Wednesday',
-               'Thu': 'Thursday', 'Fri': 'Friday', 'Sat': 'Saturday',
-               'Sun': 'Sunday',
-               'Monday': 'Mon', 'Tuesday': 'Tue', 'Wednesday': 'Wed',
-               'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat',
-               'Sunday': 'Sun'}
-    index = 0
 
     def __init__(self, name):
         if len(name) == 3:
             self.shortname = name
-            self.name = Day.__DAY__[name]
+            self.name = Day._DAY_[name]
         else:
             self.name = name
-            self.shortname = Day.__DAY__[name]
+            self.shortname = Day._DAY_[name]
         # KeyError on bad name
-        self.index = Day.index
-        Day.index += 1
+        self.index = Day._index
+        Day._index += 1
         self.time = {}
 
     def __lt__(self, other):
-        return (other and (self.index < other.index))
+        return other and (self.index < other.index)
 
     def __eq__(self, other):
-        return (other and (self.name == other.name))
+        return other and (self.name == other.name)
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __str__(self):
         return self.name
 
 @total_ordering
-class Time:
-    """ Time class. """
+class Time(object):
+    """ Time class.
+
+    Parameters:
+
+    string: str
+        Can be American time (e.g. 2:30pm) or 24-hour time (e.g. 14:30).
+        Note that am/pm is case-insensitive, and there can be a space between
+        the time and the am/pm string.
+    day: Day
+        Optional reference to a Day object.
+    """
 
     def __init__(self, string, day=None):
-        m = re.match(r'(\d{,2}):(\d{,2}) ?([AP]M)', string, flags=re.IGNORECASE)
+        m = re.match(r'(\d{,2}):(\d{,2}) ?([AP]M)', string,
+                     flags=re.IGNORECASE)
         if m:
             self.hour = int(m.group(1))
             self.minute = int(m.group(2))
@@ -83,7 +103,8 @@ class Time:
                 self.hour = int(m.group(1))
                 self.minute = int(m.group(2))
             else:
-                raise ValueError('invalid initialization string for Time: \'%s\'' % string)
+                raise ValueError(
+                    'invalid initialization string for Time: \'%s\'' % string)
         self.session = []
         self.day = day
 
@@ -95,13 +116,13 @@ class Time:
                    (self.minute < other.minute)))))
 
     def __eq__(self, other):
-        return (other and \
-                (self.day == other.day) and \
-                (self.hour == other.hour) and \
-                (self.minute == other.minute))
+        return other and \
+            (self.day == other.day) and \
+            (self.hour == other.hour) and \
+            (self.minute == other.minute)
 
     def __ne__(self, other):
-        return not (self == other)
+        return not self == other
 
     def __str__(self, mode=None):
         if mode == '24hr':
@@ -154,8 +175,13 @@ class Time:
         return t
 
 class Duration(Time):
-    """" Duration class. Internally, a Duration is identical to a Time,
+    """ Duration class. Internally, a Duration is identical to a Time,
     but the initialization and presentation strings are different.
+
+    Parameters:
+
+    string: str
+        Can be of the form '2hr 30min', or an absolute number of minutes (150).
     """
     def __init__(self, string):
         self.day = None
@@ -181,7 +207,9 @@ class Duration(Time):
                 if m:
                     (self.hour, self.minute) = divmod(int(m.group(1)), 60)
                 else:
-                    raise ValueError('invalid initialization string for Duration: \'%s\'' % string)
+                    raise ValueError(
+                        'invalid initialization string for Duration: ' +
+                        '\'%s\'' % string)
 
     def __str__(self):
         if not self.minute:
@@ -192,27 +220,18 @@ class Duration(Time):
             return '%dhr %dmin' % (self.hour, self.minute)
 
 if __name__ == '__main__':
-    import config
 
-    for d in [ 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu' ]:
-        day = Day(d)
-        day.index = len(config.day)
-        config.day.append(day)
-        #config.day[day.index] = day
-        #config.day[day.name] = day
-        #config.day[day.shortname] = day
-
-    test = [ "Time('4:15 PM')", \
-             "Time('16:15')", \
-             "Time('6:00am')", \
-             "Duration('3hr 55min')", \
-             "Duration('03:55')", \
-             "Duration('235')", \
-             "Time('4:45 PM') + Duration('1hr 15min')", \
-             "Time('11:30 PM') + Duration('6hr')" , \
-             "Time('6:00am') > Time('6:00pm')", \
-             "Time('6:00am') < Time('6:00pm')", \
-             "Time('6:00am') == Time('6:00pm')" ]
+    test = ["Time('4:15 PM')", \
+            "Time('16:15')", \
+            "Time('6:00am')", \
+            "Duration('3hr 55min')", \
+            "Duration('03:55')", \
+            "Duration('235')", \
+            "Time('4:45 PM') + Duration('1hr 15min')", \
+            "Time('11:30 PM') + Duration('6hr')", \
+            "Time('6:00am') > Time('6:00pm')", \
+            "Time('6:00am') < Time('6:00pm')", \
+            "Time('6:00am') == Time('6:00pm')"]
 
     for a in test:
         print('%s = %s' % (a, eval(a)))

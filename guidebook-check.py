@@ -18,12 +18,28 @@
 
 """ Consistency checks for guidebook csv files. """
 
-import uncsv
+import csv
+
+import config
+
+def read(fn):
+    if config.PY3:
+        f = open(fn, 'rt', encoding='utf-8', newline='')
+    else:
+        f = open(fn, 'rb')
+    reader = csv.DictReader(f)
+    rows = []
+    for row in reader:
+        if not config.PY3:
+            for key in row:
+                row[key] = row[key].decode('utf-8')
+        rows.append(row)
+    return rows
 
 verbose = False
 
 titles = {}
-for row in uncsv.read('guidebook.csv'):
+for row in read('guidebook.csv'):
     title = row['Session Title']
     if title in titles:
         print('duplicate session title "%s"' % title)
@@ -31,14 +47,14 @@ for row in uncsv.read('guidebook.csv'):
         titles[title] = 0
 
 names = {}
-for row in uncsv.read('guidebook-bios.csv'):
+for row in read('guidebook-bios.csv'):
     name = row['Name']
     if name in names:
         print('duplicate name "%s"' % name)
     else:
         names[name] = 0
 
-for row in uncsv.read('guidebook-links.csv'):
+for row in read('guidebook-links.csv'):
     name = row['Item Name (Optional)']
     title = row['Link To Session Name (Optional)']
     if not name in names:

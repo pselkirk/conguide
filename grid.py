@@ -16,16 +16,13 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-import codecs
-import re
-
 import config
 import pocketprogram
 from room import Room
-import times
+from times import Duration
 
 # ----------------------------------------------------------------
-class Slice:
+class Slice(object):
     # start and end are Time (with day)
 
     def __init__(self, name, start, end, day=None):
@@ -36,7 +33,9 @@ class Slice:
         self.end.day = day
 
     def __str__(self):
-        return '%s: %s - %s' % (self.name, self.start.__str__(mode='24hr'), self.end.__str__(mode='24hr'))
+        return '%s: %s - %s' % \
+            (self.name, self.start.__str__(mode='24hr'),
+             self.end.__str__(mode='24hr'))
 
 # ----------------------------------------------------------------
 class Output(pocketprogram.Output):
@@ -48,7 +47,8 @@ class Output(pocketprogram.Output):
             # room usage
             for m in config.grid_title_prune:
                 try:
-                    if session.room.usage == m or session.room.usage == m + 's' or \
+                    if session.room.usage == m or \
+                       session.room.usage == m + 's' or \
                        m in str(session.room):
                         title = title.replace(m + ' - ', '')
                         title = title.replace(m + ': ', '')
@@ -82,15 +82,17 @@ class HtmlOutput(Output):
     def __init__(self, fn):
         Output.__init__(self, fn)
         title = config.convention + ' Schedule Grid'
-        self.f.write(config.html_header % (title,
-                                           'th { background-color: #E0E0E0 }\n' +
-                                           'td.gray { background-color: #C0C0C0 }\n' +
-                                           'td.white { background-color: #FFFFFF }\n',
-                                           title, config.source_date))
+        self.f.write(config.html_header % \
+                     (title,
+                      'th { background-color: #E0E0E0 }\n' +
+                      'td.gray { background-color: #C0C0C0 }\n' +
+                      'td.white { background-color: #FFFFFF }\n',
+                      title, config.source_date))
         dd = []
         for day in config.day:
             dd.append('<a href="#%s">%s</a>' % (day.name, day.name))
-        self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % ' - '.join(dd))
+        self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % \
+                     ' - '.join(dd))
         self.f.write('<br /><br />\n')
 
     def __del__(self):
@@ -132,7 +134,7 @@ class HtmlOutput(Output):
         if text:
             text = text.replace('\n', '<br />')
         return self.strHeaderCell(text)
-  
+
     def strTableHeaderCell(self, text):
         return self.strHeaderCell(text)
 
@@ -182,7 +184,8 @@ class IndesignOutput(Output):
         # This feels the wrong place to do this, but it's the first time
         # the IndesignOutput class gets to see the gridslice.
         if not config.fixed[self.name]:
-            self.cheight = (config.theight - config.hheight) / len(gridslice.rooms)
+            self.cheight = (config.theight - config.hheight) \
+                           / len(gridslice.rooms)
             if self.cheight > config.cheight_max:
                 self.cheight = config.cheight_max
             elif self.cheight < config.cheight_min:
@@ -193,7 +196,9 @@ class IndesignOutput(Output):
         trows = len(gridslice.rooms) + 1
         tcols = gridslice.endIndex - gridslice.startIndex + 1
         cwidth = (config.twidth - config.hwidth) / (tcols - 1)
-        str = '<ParaStyle:Grid time><TableStart:%d,%d:1:0<tCellDefaultCellType:Text>>' % (trows, tcols)
+        str = '<ParaStyle:Grid time>' + \
+              '<TableStart:%d,%d:1:0' % (trows, tcols) + \
+              '<tCellDefaultCellType:Text>>'
         # column widths
         str += '<ColStart:<tColAttrWidth:%.4f>>' % config.hwidth
         for i in range(tcols - 1):
@@ -209,7 +214,7 @@ class IndesignOutput(Output):
     def strRowStart(self, height=None):
         # can't default height=self.cheight in the def
         if not height:
-            height=self.cheight
+            height = self.cheight
         return '<RowStart:<tRowAttrHeight:%.4f><tRowAutoGrow:0>>' % height
 
     def strRowEnd(self):
@@ -325,7 +330,7 @@ class XmlOutput(Output):
         return self.strCellStart('gray', 1, ncol) + self.strCellEnd()
 
 # ----------------------------------------------------------------
-def write(output, sessions):
+def write(output, unused=None):
 
     def activeRoom(room, start, end):
         for i in range(start, end):
@@ -369,7 +374,8 @@ def write(output, sessions):
                 end = offset(session.time + session.duration)
                 while off < min(end, len(room.gridrow)):
                     try:
-                        # two sessions share the same block iff they start at the same time
+                        # two sessions share the same block
+                        # iff they start at the same time
                         if room.gridrow[off][0].time == session.time:
                             room.gridrow[off].append(session)
                         else:
@@ -378,7 +384,6 @@ def write(output, sessions):
                     except (TypeError, AttributeError):
                         room.gridrow[off] = [session]
                     off += 1
-                    
 
     def writeTable(gridslice):
         output.f.write(output.strTableTitle(gridslice))
@@ -392,7 +397,7 @@ def write(output, sessions):
         output.f.write(output.strHeaderRowStart())
         output.f.write(output.strRowHeaderCell(''))
         time = gridslice.start
-        half = times.Duration('30min')
+        half = Duration('30min')
         while time < gridslice.end:
             output.f.write(output.strTableHeaderCell(time.__str__(mode='grid')))
             time += half
@@ -413,7 +418,8 @@ def write(output, sessions):
         while j < gridslice.endIndex:
             ncol = colspan(gridslice, i, j)
             # if this session was previously listed in an adjacent room, skip
-            if row[j] and (i > 0) and (gridslice.rooms[i-1].gridrow[j] == row[j]):
+            if row[j] and (i > 0) and \
+               (gridslice.rooms[i-1].gridrow[j] == row[j]):
                 for i in range(ncol):
                     output.f.write(output.strCellBehind())
             else:
@@ -434,7 +440,7 @@ def write(output, sessions):
                 tt = []
                 if s.time < gridslice.start or s.time.minute % 30 != 0:
                     tt.append(str(s.time).replace(':00', ''))
-                if s.duration < times.Duration('15min'):
+                if s.duration < Duration('15min'):
                     tt.append(str(s.duration))
                 if tt:
                     title += '<i> (%s)</i>' % ', '.join(tt)
@@ -484,24 +490,24 @@ if __name__ == '__main__':
 
 #    if args.text:
 #        if args.outfile:
-#            write(TextOutput(args.outfile), config.sessions)
+#            write(TextOutput(args.outfile))
 #        else:
-#            write(TextOutput(config.filenames['grid', 'text']), config.sessions)
+#            write(TextOutput(config.filenames['grid', 'text']))
 
     if args.html:
         if args.outfile:
-            write(HtmlOutput(args.outfile), config.sessions)
+            write(HtmlOutput(args.outfile))
         else:
-            write(HtmlOutput(config.filenames['grid', 'html']), config.sessions)
+            write(HtmlOutput(config.filenames['grid', 'html']))
 
     if args.xml:
         if args.outfile:
-            write(XmlOutput(args.outfile), config.sessions)
+            write(XmlOutput(args.outfile))
         elif ('grid', 'xml') in config.filenames:
-            write(XmlOutput(config.filenames['grid', 'xml']), config.sessions)
+            write(XmlOutput(config.filenames['grid', 'xml']))
 
     if args.indesign:
         if args.outfile:
-            write(IndesignOutput(args.outfile), config.sessions)
+            write(IndesignOutput(args.outfile))
         else:
-            write(IndesignOutput(config.filenames['grid', 'indesign']), config.sessions)
+            write(IndesignOutput(config.filenames['grid', 'indesign']))

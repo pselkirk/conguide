@@ -23,9 +23,7 @@ import csv
 import re
 
 import config
-import participant
 import session
-import times
 
 config.parseConfig(config.CFG)
 config.filereader.read(config.filenames['schedule', 'input'])
@@ -33,15 +31,22 @@ config.filereader.read_bios(config.filenames['bios', 'input'])
 
 sched = open('guidebook.csv', 'w')
 schedwriter = csv.writer(sched)
-schedwriter.writerow(['Session Title', 'Date (4/21/2011)', 'Time Start', 'Time End', 'Room/Location', 'Schedule Track (Optional)', 'Description (Optional)'])
+schedwriter.writerow(['Session Title', 'Date (4/21/2011)',
+                      'Time Start', 'Time End', 'Room/Location',
+                      'Schedule Track (Optional)', 'Description (Optional)'])
 
 links = open('guidebook-links.csv', 'wb')
 linkswriter = csv.writer(links)
-linkswriter.writerow(['Item ID (Optional)', 'Item Name (Optional)', 'Link To Session ID (Optional)', 'Link To Session Name (Optional)', 'Link To Item ID (Optional)', 'Link To Item Name (Optional)'])
+linkswriter.writerow(['Item ID (Optional)', 'Item Name (Optional)',
+                      'Link To Session ID (Optional)',
+                      'Link To Session Name (Optional)',
+                      'Link To Item ID (Optional)',
+                      'Link To Item Name (Optional)'])
 
 bios = open('guidebook-bios.csv', 'w')
 bioswriter = csv.writer(bios)
-bioswriter.writerow(['Name', 'Location (i.e. Table/Booth or Room Numbers)', 'Description (Optional)'])
+bioswriter.writerow(['Name', 'Location (i.e. Table/Booth or Room Numbers)',
+                     'Description (Optional)'])
 
 for i, day in enumerate(config.day):
     # XXX breaks if con spans the end of a month
@@ -53,7 +58,8 @@ for i, day in enumerate(config.day):
 titles = {}
 for session in config.sessions:
     begin = re.sub('([AP]M)', r' \1'.upper(), str(session.time).upper())
-    end = re.sub('([AP]M)', r' \1', str(session.time + session.duration).upper())
+    end = re.sub('([AP]M)', r' \1',
+                 str(session.time + session.duration).upper())
 
     track = session.track
     for t, expr in config.tracks:
@@ -73,17 +79,18 @@ for session in config.sessions:
     def writerow(writer, row):
         writer.writerow([codecs.encode(f, 'utf-8') for f in row])
 
-    writerow(schedwriter, [title, session.time.day.date, begin, end, str(session.room), track, session.description])
+    writerow(schedwriter, [title, session.time.day.date, begin, end,
+                           str(session.room), track, session.description])
 
     for p in session.participants:
-        writerow(linkswriter, ['', p.pubsname, '', title, '', ''])
+        writerow(linkswriter, ['', p.name, '', title, '', ''])
 
 for p in sorted(config.participants.values()):
     try:
         bio = p.bio
     except AttributeError:
         bio = ''
-    writerow(bioswriter, [p.pubsname, '', bio])
+    writerow(bioswriter, [p.name, '', bio])
 
 sched.close()
 links.close()
