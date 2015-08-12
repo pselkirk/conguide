@@ -30,8 +30,6 @@ if config.PY3:
     import configparser
 else:
     import ConfigParser as configparser
-    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-    sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
 from grid import Slice
 from room import Level, Room
@@ -99,13 +97,14 @@ def parseConfig(fn):
         except configparser.NoSectionError:
             None
 
-    for (key, value) in cfg.items('output format'):
-        for mode in ('text', 'html', 'xml', 'indesign'):
-            config.schema[key, mode] = value
-    for mode in ('text', 'html', 'xml', 'indesign'):
+    for section in ['schedule', 'xref', 'tracks', 'featured', 'grid']:
         try:
-            for (key, value) in cfg.items('output format ' + mode):
-                config.schema[key, mode] = value
+            for (key, value) in cfg.items(section + ' template'):
+                for mode in ('text', 'html', 'xml', 'indesign'):
+                    config.template[section, key, mode] = value
+            for mode in ('text', 'html', 'xml', 'indesign'):
+                for (key, value) in cfg.items(section + ' template ' + mode):
+                    config.template[section, key, mode] = value
         except configparser.NoSectionError:
             None
 
@@ -140,49 +139,49 @@ def parseConfig(fn):
         None
 
     try:
-        for (sessionid, unused) in cfg.items('no participants'):
+        for (sessionid, unused) in cfg.items('schedule no participants'):
             config.nopartic[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (sessionid, unused) in cfg.items('no description'):
+        for (sessionid, unused) in cfg.items('schedule no description'):
             config.nodescr[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (sessionid, unused) in cfg.items('presentation'):
+        for (sessionid, unused) in cfg.items('schedule presentation'):
             config.presentation[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (sessionid, unused) in cfg.items('combat'):
+        for (sessionid, unused) in cfg.items('schedule combat'):
             config.combat[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (sessionid, unused) in cfg.items('featured'):
+        for (sessionid, unused) in cfg.items('featured sessions'):
             config.featured.append(sessionid)
     except configparser.NoSectionError:
         None
 
     try:
-        for (sessionid, unused) in cfg.items('do not print'):
+        for (sessionid, unused) in cfg.items('schedule do not print'):
             config.noprint[sessionid] = True
     except configparser.NoSectionError:
         None
 
     try:
-        for (name, rename) in cfg.items('bold name'):
+        for (name, rename) in cfg.items('bios bold name'):
             config.boldnames[name] = rename
     except configparser.NoSectionError:
         None
 
     try:
-        for char, expr in cfg.items('icons'):
+        for char, expr in cfg.items('schedule icons'):
             #config.icons.append((char, expr))
             expr = expr.replace('track', 'session.track')
             expr = expr.replace('type', 'session.type')
@@ -195,7 +194,7 @@ def parseConfig(fn):
         None
 
     try:
-        for area, expr in cfg.items('tracks'):
+        for area, expr in cfg.items('tracks classifier'):
             expr = expr.replace('track', 'session.track')
             expr = expr.replace('type', 'session.type')
             expr = re.sub(r'room == (\'\w+\')',
@@ -207,7 +206,7 @@ def parseConfig(fn):
 
     try:
         nn = []
-        for k, expr in cfg.items('output prune'):
+        for k, expr in cfg.items('schedule prune participants'):
             if k == 'type':
                 for n in re.split(r',\s*', expr):
                     nn.append('session.type == \'%s\'' % n)
@@ -364,8 +363,8 @@ if __name__ == '__main__':
     print('featured = %s' % config.featured)
     print('sortname = %s' % config.sortname)
 
-    for k, v in config.schema.items():
-        print('schema[%s] =' % str(k))
+    for k, v in config.template.items():
+        print('template[%s] =' % str(k))
         print(v)
 
     print('grid_title_prune = %s' % ', '.join(config.grid_title_prune))

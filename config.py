@@ -21,6 +21,11 @@
 import sys
 PY3 = sys.version > '3'
 
+if not PY3:
+    import codecs
+    sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+    sys.stderr = codecs.getwriter('utf8')(sys.stderr)
+
 # default config file
 CFG = 'arisia.cfg'
 # TODO: If there is exactly one .cfg file in the working directory, use
@@ -37,7 +42,7 @@ filereader = None
 levels = {}			# used in session.py
 rooms = {}			# used in session.py and grid.py
 days = {}
-schema = {}			# used in schedule.py and grid.py (split, expand to others)
+template = {}			# used in schedule.py and grid.py
 sessions = []
 participants = {}
 

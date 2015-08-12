@@ -408,7 +408,7 @@ def write(output, unused=None):
         row = room.gridrow
         output.f.write(output.strRowStart())
         try:
-            rname = output.fillTemplate(config.schema['grid room', output.name], room.sessions[0])
+            rname = output.fillTemplate(config.template['grid', 'room', output.name], room.sessions[0])
         except KeyError:
             rname = str(room)
         if room.usage:

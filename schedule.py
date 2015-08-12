@@ -253,20 +253,20 @@ def write(output, sessions):
 
     def writeDay(session):
         try:
-            str = output.fillTemplate(config.schema['day', output.name], session)
+            str = output.fillTemplate(config.template['schedule', 'day', output.name], session)
             output.f.write(str + '\n')
         except KeyError:
             None
 
     def writeTime(session):
         try:
-            str = output.fillTemplate(config.schema['time', output.name], session)
+            str = output.fillTemplate(config.template['schedule', 'time', output.name], session)
             output.f.write(str + '\n')
         except KeyError:
             None
 
     def writeSession(session):
-        str = output.fillTemplate(config.schema['schedule', output.name], session)
+        str = output.fillTemplate(config.template['schedule', 'session', output.name], session)
         # remove blank lines
         str = re.sub('\n+', '\n', str)
         str = re.sub('\n$', '', str)
