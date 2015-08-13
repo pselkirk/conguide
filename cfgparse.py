@@ -25,7 +25,6 @@ import time
 import sys
 
 import config
-
 if config.PY3:
     import configparser
 else:
@@ -91,22 +90,46 @@ def parseConfig(fn):
     config.filereader = importlib.import_module(value)
 
     for mode in ('text', 'html', 'xml', 'indesign'):
-        try:
+        if cfg.has_section('output files ' + mode):
             for (key, value) in cfg.items('output files ' + mode):
                 config.filenames[key, mode] = value
-        except configparser.NoSectionError:
-            None
+
+    def parseTemplate(template):
+        # parse a template string into a list of tokens,
+        # with optional sections as sub-lists
+        def xyzzy(list):
+            tokens = []
+            while list:
+                a = list.pop(0)
+                if not a:
+                    # split() can insert empty tokens into the list
+                    continue
+                elif a == '[':
+                    # begin optional section: process into sub-list
+                    (toks, residue) = xyzzy(list)
+                    tokens.append(toks)	# sub-list
+                    list = residue
+                elif a == ']':
+                    # end optional section: return sub-list and remaining unprocessed list
+                    break
+                else:
+                    # split token into words and non-words
+                    tokens += re.split('(\W+)', a)
+            return (tokens, list)
+        # split template into brackets and non-brackets
+        list = re.split('([\[\]])', template)
+        (tokens, unused) = xyzzy(list)
+        return tokens        
 
     for section in ['schedule', 'xref', 'tracks', 'featured', 'grid']:
-        try:
+        if cfg.has_section(section + ' template'):
             for (key, value) in cfg.items(section + ' template'):
                 for mode in ('text', 'html', 'xml', 'indesign'):
-                    config.template[section, key, mode] = value
-            for mode in ('text', 'html', 'xml', 'indesign'):
+                    config.template[section, key, mode] = parseTemplate(value)
+        for mode in ('text', 'html', 'xml', 'indesign'):
+            if cfg.has_section(section + ' template ' + mode):
                 for (key, value) in cfg.items(section + ' template ' + mode):
-                    config.template[section, key, mode] = value
-        except configparser.NoSectionError:
-            None
+                    config.template[section, key, mode] = parseTemplate(value)
 
     try:
         for (name, sortkey) in cfg.items('sort name'):

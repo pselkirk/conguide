@@ -56,8 +56,7 @@ class HtmlOutput(Output):
         return text.replace('&', '&amp;')
 
     def strName(self, participant):
-        return '<a name="%s"></a>\n<dl><dt><b>%s</b></dt>\n' % \
-            (re.sub(r'\W', '', participant.__str__()), participant)
+        return '<dl><dt><b>%s</b></dt>\n' % participant
 
     def strSessions(self, participant):
         ss = []
@@ -67,6 +66,11 @@ class HtmlOutput(Output):
                        config.filenames['schedule', 'html'], s.sessionid,
                        self.cleanup(s.title)))
         return '%s\n</dl>\n' % '\n'.join(ss)
+
+    def writeXref(self, participant):
+        if participant.sessions:
+            self.f.write('<a name="%s"></a>' % re.sub(r'\W', '', participant.__str__()))
+            Output.writeXref(self, participant)
 
 class XmlOutput(Output):
 
@@ -91,6 +95,7 @@ class XmlOutput(Output):
         return '<xr-sessions>%s</xr-sessions></xref>\n' % ', '.join(ss)
 
 def write(output, participants):
+
     for p in sorted(participants.values()):
         output.writeXref(p)
 

@@ -43,6 +43,7 @@ class Output(pocketprogram.Output):
     def strTitle(self, session):
         title = session.title
         if self.name == 'xml' or self.name == 'indesign':
+            # XXX local policy
             # remove things like "Reading" from the title if it's in the
             # room usage
             for m in config.grid_title_prune:
@@ -408,11 +409,11 @@ def write(output, unused=None):
         row = room.gridrow
         output.f.write(output.strRowStart())
         try:
-            rname = output.fillTemplate(config.template['grid', 'room', output.name], room.sessions[0])
+            rname = output.fillTemplate(
+                config.template['grid', 'room', output.name],
+                room.gridsessions[0])
         except KeyError:
             rname = str(room)
-        if room.usage:
-            rname += '\n<i>%s</i>' % room.usage
         output.f.write(output.strRowHeaderCell(rname))
         j = gridslice.startIndex
         while j < gridslice.endIndex:

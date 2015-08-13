@@ -83,49 +83,19 @@ class HtmlOutput(Output):
         Output.__del__(self)
 
     def cleanup(self, text):
+        text = Output.cleanup(self, text)
         # convert ampersand
-        return Output.cleanup(self, text).replace('&', '&amp;')
+        text = text.replace('&', '&amp;')
+        # convert line breaks
+        text = text.replace('\n', '<br/>\n')
+        return text
 
     def strSession(self, session, str):
         return '<p><a name="%s"></a>\n<dl>%s</dl></p>\n' % \
             (session.sessionid, str)
 
-    def strDay(self, session):
-        return '<p><a name="%s"></a></p>' % str(session.time.day)
-
-    def strTime(self, session):
-        return '<hr />\n<h3>%s %s</h3>\n' % \
-            (str(session.time.day), str(session.time))
-
-    def strTitle(self, session):
-        return '<dt><b>%s</b> ' % self.cleanup(session.title)
-
-    def strTracktype(self, session):
-        return '<i>%s, %s</i> ' % (self.cleanup(session.track), session.type)
-
-    def strType(self, session):
-        return '<i>%s</i> ' % session.type
-
-    def strDuration(self, session):
-        return '<i>%s</i> ' % session.duration
-
-    def strRoom(self, session):
-        return '<i>%s</i></dt>\n' % session.room
-
-    def strLevel(self, session):
-        return '<i>%s</i>\n' % session.room.level
-
-    def strRoomlevel(self, session):
-        if session.room.level:
-            return '<i>%s (%s)</i></dt>\n' % (session.room, session.room.level)
-        else:
-            return '<i>%s</i></dt>\n' % session.room
-
-    def strDescription(self, session):
-        if session.description:
-            return '<dd>%s</dd>\n' % self.cleanup(session.description)
-        else:
-            return ''
+    def strTrack(self, session):
+        return self.cleanup(session.track)
 
     def strParticipants(self, session):
         if session.participants:
@@ -147,13 +117,7 @@ class HtmlOutput(Output):
                 if p in session.moderators:
                     name += '&nbsp;(m)'
                 pp.append(name)
-            return '<dd><i>%s</i></dd>' % ', '.join(pp)
-        else:
-            return ''
-
-    def strTags(self, session):
-        if session.tags:
-            return '<dd>%s</dd>\n' % ('#' + ', #'.join(session.tags))
+            return ', '.join(pp)
         else:
             return ''
 
@@ -208,7 +172,10 @@ class XmlOutput(Output):
         return '<ss-room>%s</ss-room>' % self.cleanup(str(session.room))
 
     def strLevel(self, session):
-        return '<ss-room>%s</ss-room>' % self.cleanup(str(session.room.level))
+        if session.room.level:
+            return '<ss-room>%s</ss-room>' % self.cleanup(str(session.room.level))
+        else:
+            return ''
 
     def strIcons(self, session):
         if (config.icons):
@@ -267,9 +234,9 @@ def write(output, sessions):
 
     def writeSession(session):
         str = output.fillTemplate(config.template['schedule', 'session', output.name], session)
-        # remove blank lines
-        str = re.sub('\n+', '\n', str)
-        str = re.sub('\n$', '', str)
+        # remove blank lines	# XXX make this a config option
+        #str = re.sub('\n+', '\n', str)
+        #str = re.sub('\n$', '', str)
         str = output.strSession(session, str)
         output.f.write(str + '\n')
 

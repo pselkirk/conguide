@@ -37,6 +37,7 @@ cross-reference (xref), featured sessions, and track list.
 """
 
 import codecs
+import copy
 import re
 
 import config
@@ -89,30 +90,35 @@ class Output(object):
 
         return text
 
+    # Fill a template (list of fields, with optional elements as sub-lists).
+    # At each level, count the number of lexemes that expand into non-empty
+    # strings. If nothing expands, return the empty string; else return a join
+    # of the strings.
+    #
+    # XXX This treats the top-level list as an optional list, so if nothing
+    # expands, it blows away any static text as well.
     def fillTemplate(self, template, session):
-        # for optional data, replace square brackets with non-printing
-        # characters, so we don't collide with square brackets in session
-        # title or description
-        # 02 = STX (start of text), 03 = ETX (end of text)
-        template = template.replace('[', '\x02')
-        template = template.replace(']', '\x03')
-        # tokenize the template, and replace all field names with values
-        fields = re.split(r'(\W+)', template)
+        fields = copy.deepcopy(template)
+        ok = False
         for i, tag in enumerate(fields):
-            try:
-                if re.match(r'\w+', tag):
-                    fields[i] = eval('self.str%s(session)' % tag.capitalize())
-                    if tag.isupper():
-                        fields[i] = fields[i].upper()
-            except AttributeError:
-                None
-        # reassemble the filled-in template
-        str = ''.join(fields)
-        # remove optional fields without data
-        while i:
-            (str, i) = re.subn(r'\x02[^\x02\x03\w]*\x03', '', str)
-        str = re.sub('[\x02\x03]', '', str)
-        return str
+            if type(tag) is list:
+                fields[i] = self.fillTemplate(tag, session)
+                if fields[i]:
+                    ok = True
+            else:
+                try:
+                    if re.match(r'\w+', tag):
+                        fields[i] = eval('self.str%s(session)' % tag.capitalize())
+                        if fields[i]:
+                            ok = True
+                            if tag.isupper():
+                                fields[i] = fields[i].upper()
+                except AttributeError:
+                    None
+        if ok:
+            return ''.join(fields)
+        else:
+            return ''
 
     def strDay(self, session):
         return str(session.time.day)
@@ -127,19 +133,28 @@ class Output(object):
         return self.cleanup(session.title)
 
     def strTrack(self, session):
-        return str(self.track)
+        return str(session.track)
 
     def strType(self, session):
-        return str(self.type)
+        return str(session.type)
 
     def strDuration(self, session):
         return str(session.duration)
 
     def strLevel(self, session):
-        return str(session.room.level)
+        if session.room.level:
+            return str(session.room.level)
+        else:
+            return ''
 
     def strRoom(self, session):
         return str(session.room)
+
+    def strUsage(self, session):
+        if session.room.usage:
+            return session.room.usage
+        else:
+            return ''
 
     def strIcons(self, session):
         return ''

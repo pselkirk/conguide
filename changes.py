@@ -125,25 +125,25 @@ for s in sorted(sessions[0].values()):
         add = []
         for p in s1.participants:
             if not p in s.participants:
-                add.append(str(p))
+                add.append(unicode(p))
         if add:
             cp.append('add %s' % ', '.join(add))
         remove = []
         for p in s.participants:
             if not p in s1.participants:
-                remove.append(str(p))
+                remove.append(unicode(p))
         if remove:
             cp.append('remove %s' % ', '.join(remove))
         addmod = []
         for p in s1.moderators:
             if not p in s.moderators:
-                addmod.append(str(p))
+                addmod.append(unicode(p))
         if addmod:
             cp.append('add moderator %s' % ', '.join(addmod))
         removemod = []
         for p in s.moderators:
             if not p in s1.moderators:
-                removemod.append(str(p))
+                removemod.append(unicode(p))
         if removemod:
             cp.append('remove moderator %s' % ', '.join(removemod))
     if cp:
