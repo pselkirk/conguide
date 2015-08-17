@@ -143,12 +143,12 @@ class Output(object):
 
     def strLevel(self, session):
         if session.room.level:
-            return str(session.room.level)
+            return self.cleanup(str(session.room.level))
         else:
             return ''
 
     def strRoom(self, session):
-        return str(session.room)
+        return self.cleanup(str(session.room))
 
     def strUsage(self, session):
         if session.room.usage:

@@ -368,16 +368,63 @@ def write(output, unused=None):
             # declare an array of half-hour blocks
             room.gridrow = [None for j in range((len(config.days) + 1) * 24 * 2)]
             for session in room.gridsessions:
-                if output.name == 'xml' or output.name == 'indesign':
-                    if config.grid_noprint and eval(config.grid_noprint):
+                if config.grid_noprint and eval(config.grid_noprint):
+                    if output.name == 'xml' or output.name == 'indesign':
                         continue
+                    else:
+                        # XXX more local policy
+                        # XXX may also screw up anything else using session data after this
+                        session.duration = Duration('30min')
                 off = offset(session.time)
                 end = offset(session.time + session.duration)
+                if off == end:
+                    # This is a short session, where start and end round to
+                    # the same time. This can happen for a few reasons,
+                    # outlined below.
+                    startmin = session.time.minute
+                    endmin = startmin + session.duration.minute
+
+                    # a) If the session is less than 15 minutes, and falls
+                    # entirely in the first half of the slot (e.g. 4:00-4:10),
+                    # we need to push out the end time.
+                    if startmin < 15 or \
+                       startmin >= 30 and startmin < 45:
+                        end += 1
+
+                    # b) If the session is less than 15 minutes, and falls
+                    # entirely in the second half of the slot (e.g. 4:20-4:30),
+                    # we need to pull back the start time.
+                    elif endmin >=15 and endmin <= 30 or \
+                         endmin >=45 and endmin <= 60:
+                        off -= 1
+
+                    # c) If the session is less than 30 minutes, and crosses
+                    # an hour or half-hour boundary, we need to figure out
+                    # which slot it's more "in".
+                    else:
+                        if startmin < 30:
+                            # session crosses a half-hour boundary
+                            before = 30 - startmin
+                            after = endmin - 30
+                        else:
+                            # session crosses an hour boundary
+                            before = 60 - startmin
+                            after = endmin - 60
+                        if before > after:
+                            off -= 1
+                        else:
+                            end += 1
+                    # Note: This doesn't account for all short sessions.
+                    # If a session is less than 30 minutes, but crosses a
+                    # 15-minute mark (e.g. 4:05-4:25), start and end get
+                    # rounded in different directions, and it's handled the
+                    # same as a half-hour session.
+
                 while off < min(end, len(room.gridrow)):
                     try:
-                        # two sessions share the same block
+                        # two sessions share the same cell
                         # iff they start at the same time
-                        if room.gridrow[off][0].time == session.time:
+                        if session.time - room.gridrow[off][0].time < Duration('30min'):
                             room.gridrow[off].append(session)
                         else:
                             room.gridrow[off] = [session]
@@ -438,13 +485,15 @@ def write(output, unused=None):
             titles = []
             for s in sessions:
                 title = output.strTitle(s)
-                tt = []
-                if s.time < gridslice.start or s.time.minute % 30 != 0:
-                    tt.append(str(s.time).replace(':00', ''))
-                if s.duration < Duration('15min'):
-                    tt.append(str(s.duration))
-                if tt:
-                    title += '<i> (%s)</i>' % ', '.join(tt)
+                #tt = []
+                #if s.time < gridslice.start or s.time.minute % 30 != 0:
+                #    tt.append(str(s.time).replace(':00', ''))
+                #if s.duration < Duration('15min'):
+                #    tt.append(str(s.duration))
+                #if tt:
+                #    title += '<i> (%s)</i>' % ', '.join(tt)
+                if s.time < gridslice.start:
+                    title += '<i> (%s)</i>' % str(s.time).replace(':00', '')
                 titles.append(title)
             output.f.write(output.strTextCell(nrow, ncol, ', '.join(titles)))
 

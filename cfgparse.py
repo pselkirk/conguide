@@ -212,7 +212,8 @@ def parseConfig(fn):
             expr = expr.replace(' in ', ' in config.')
             expr = re.sub(r'room == (\'\w+\')',
                           r'session.room == config.rooms[\1]', expr)
-            config.icons.append((char, compile(expr, '<string>', 'eval')))
+            config.icons.append((char, expr))
+            #config.icons.append((char, compile(expr, '<string>', 'eval')))
     except configparser.NoSectionError:
         None
 
@@ -223,7 +224,8 @@ def parseConfig(fn):
             expr = re.sub(r'room == (\'\w+\')',
                           r'session.room == config.rooms[\1]', expr)
             area = area.replace(' - ', u'\u2014')
-            config.track_classifiers.append((area, compile(expr, '<string>', 'eval')))
+            config.track_classifiers.append((area, expr))
+            #config.track_classifiers.append((area, compile(expr, '<string>', 'eval')))
     except configparser.NoSectionError:
         None
 
@@ -236,7 +238,8 @@ def parseConfig(fn):
             elif k == 'title':
                 for n in re.split(r',\s*', expr):
                     nn.append('session.title.startswith(\'%s\')' % n)
-        config.prune = compile(' or '.join(nn), '<string>', 'eval')
+        config.prune = ' or '.join(nn)
+        #config.prune = compile(' or '.join(nn), '<string>', 'eval')
     except configparser.NoSectionError:
         None
 
@@ -252,11 +255,19 @@ def parseConfig(fn):
     except configparser.NoSectionError:
         None
 
+    exprs = []
     try:
-        expr = cfg.get('grid no print', 'title ends with')
-        config.grid_noprint = compile('session.title.endswith((%s))' % expr, '<string>', 'eval')
+        expr = cfg.get('grid no print', 'title starts with')
+        exprs.append('session.title.startswith((%s))' % expr)
     except (configparser.NoSectionError, configparser.NoOptionError):
         None
+    try:
+        expr = cfg.get('grid no print', 'title ends with')
+        exprs.append('session.title.endswith((%s))' % expr)
+    except (configparser.NoSectionError, configparser.NoOptionError):
+        None
+    config.grid_noprint = ' or '.join(exprs)
+    #config.grid_noprint = compile(' or '.join(exprs), '<string>', 'eval')
 
     try:
         val = cfg.get('grid title prune', 'usage')
@@ -391,3 +402,4 @@ if __name__ == '__main__':
         print(v)
 
     print('grid_title_prune = %s' % ', '.join(config.grid_title_prune))
+    print('grid_noprint = %s' % config.grid_noprint)

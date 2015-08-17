@@ -177,8 +177,8 @@ class XmlOutput(Output):
         else:
             return ''
 
-    def strIcons(self, session):
-        if (config.icons):
+    def strIcon(self, session):
+        if config.icons:
             icon = None
             for k, v in config.icons:
                 if eval(v):

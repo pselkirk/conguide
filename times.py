@@ -109,17 +109,26 @@ class Time(object):
         self.day = day
 
     def __lt__(self, other):
-        return (other and \
-                ((self.day and other.day and (self.day < other.day)) or
-                 ((self.hour < other.hour) or \
-                  ((self.hour == other.hour) and \
-                   (self.minute < other.minute)))))
+        if not other:
+            return False
+        elif self.day and other.day:
+            h1 = self.day.index * 24 + self.hour
+            h2 = other.day.index * 24 + other.hour
+            return h1 < h2 or \
+                h1 == h2 and self.minute < other.minute
+        else:
+            return self.hour < other.hour or \
+                self.hour == other.hour and self.minute < other.minute
 
     def __eq__(self, other):
-        return other and \
-            (self.day == other.day) and \
-            (self.hour == other.hour) and \
-            (self.minute == other.minute)
+        if not other:
+            return False
+        elif self.day and other.day:
+            h1 = self.day.index * 24 + self.hour
+            h2 = other.day.index * 24 + other.hour
+            return h1 == h2 and self.minute == other.minute
+        else:
+            return self.hour == other.hour and self.minute == other.minute
 
     def __ne__(self, other):
         return not self == other
@@ -161,6 +170,10 @@ class Time(object):
         if t.minute >= 60:
             t.hour += 1
             t.minute -= 60
+        #if t.day:
+        #    if t.hour > 23:
+        #        t.hour -= 24
+        #        t.day = config.days[t.day.index + 1]
         return t
 
     def __sub__(self, other):
