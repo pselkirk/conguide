@@ -16,6 +16,8 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+""" Read schedule data from a CSV file created by the Zambia database. """
+
 import csv
 import re
 
@@ -24,6 +26,10 @@ from participant import Participant
 from session import Session
 
 def csv_reader(fn):
+    """Create a CSV reader. This works around differences between Python 2.7 and
+    3.x handling of UTF-8.
+    """
+
     if config.PY3:
         f = open(fn, 'rt', encoding='utf-8', newline='')
     else:

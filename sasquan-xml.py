@@ -16,41 +16,45 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+""" Read schedule data from an XML file created by the Grenadine database. """
+
 import re
 import xml.etree.ElementTree
 
 import config
 from session import Session
 
-# <program>
-#   <time>
-#     <start>
-#       <day>                   Wednesday
-#       <time>                  13:00
-#     <item>
-#       <room>                  Bays 111A
-#       <venue>                 CC
-#       <details>
-#         <reference_number>    1075
-#         <duration>            45
-#         <format>              activity, panel, autographing, ...
-#         <tracks>
-#           <track>             (not used)
-#         <tags>
-#           <tag>               Discworld, Fandom, ...
-#         <title>               (can have embedded line breaks)
-#         <short_title>         (ignore)
-#         <description>         (may contain html tags)
-#         <short_description>   (ignore)
-#         <people>
-#           <moderator>
-#             <name>            Joe Phan
-#             <job_title>       (ignore)
-#             <company>         (ignore)
-#           <participant>
-#             <name>            Ghu Godly
-#             <job_title>       (ignore)
-#             <company>         (ignore)
+""" The XML schema is like this::
+    <program>
+        <time>
+            <start>
+                <day>                     Wednesday
+                <time>                    13:00
+            <item>
+                <room>                    Bays 111A
+                <venue>                   CC
+                <details>
+                    <reference_number>    1075
+                    <duration>            45
+                    <format>              activity, panel, autographing, ...
+                    <tracks>
+                        <track>           (not used)
+                    <tags>
+                        <tag>             Discworld, Fandom, ...
+                    <title>               (can have embedded line breaks)
+                    <short_title>         (ignore)
+                    <description>         (may contain html tags)
+                    <short_description>   (ignore)
+                    <people>
+                        <moderator>
+                            <name>        Joe Phan
+                            <job_title>   (ignore)
+                            <company>     (ignore)
+                        <participant>
+                            <name>        Ghu Godly
+                            <job_title>   (ignore)
+                            <company>     (ignore)
+"""
 
 def read(fn):
     """ Read an XML file, and create the global ``sessions`` list. """
