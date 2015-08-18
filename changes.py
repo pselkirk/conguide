@@ -20,6 +20,7 @@ import argparse
 
 import cfgparse
 import config
+import times
 
 debug = False
 verbose = False
@@ -67,6 +68,7 @@ def read(fn):
 
 (sessions[0], participants[0]) = read(args.files[0])
 # reinitialize for the next read
+times.Day._index = 0
 config.days = {}
 config.sessions = []
 config.participants = {}
@@ -102,7 +104,8 @@ for s in sorted(sessions[0].values()):
     if not s1:
         cancelled.append(sh)
         continue
-    if s1.time.day != s.time.day or s1.time != s.time:
+    #if s1.time.day != s.time.day or s1.time != s.time:
+    if s1.time != s.time:
         ch_time.append('%s -> %s %s' % (sh, s1.time.day, s1.time))
     if s1.duration != s.duration:
         ch_duration.append('%s: %s -> %s' % (sh, s.duration, s1.duration))

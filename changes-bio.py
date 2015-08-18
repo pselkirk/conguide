@@ -20,6 +20,7 @@ import argparse
 
 import cmdline
 import config
+import times
 
 debug = False
 verbose = False
@@ -51,6 +52,7 @@ def read(fn):
 
 participants[0] = read(args.files[0])
 # reinitialize for the next read
+times.Day._index = 0
 config.days = {}
 config.sessions = []
 config.participants = {}

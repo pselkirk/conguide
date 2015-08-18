@@ -20,6 +20,7 @@ import argparse
 
 import cfgparse
 import config
+import times
 
 nitems = []
 day = {}
@@ -33,7 +34,6 @@ type = {}
 tracktype = {}
 tag = {}
 partic = {}
-config.quiet = True
 
 def incr(hash, value, i):
     try:
@@ -76,6 +76,7 @@ def count(fn, i):
                 incr(tag, t, i)
 
     # reinitialize for the next count
+    times.Day._index = 0
     config.days = {}
     config.sessions = []
     config.participants = {}
