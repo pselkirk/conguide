@@ -21,6 +21,11 @@ import pocketprogram
 from room import Room
 from times import Duration
 
+# TODO:
+# - docstrings
+# - config for "major" room threshold
+# - add session.grid_duration for config.grid_noprint sessions
+
 # ----------------------------------------------------------------
 class Slice(object):
     # start and end are Time (with day)
@@ -39,26 +44,6 @@ class Slice(object):
 
 # ----------------------------------------------------------------
 class Output(pocketprogram.Output):
-
-    def strTitle(self, session):
-        title = session.title
-        if self.name == 'xml' or self.name == 'indesign':
-            # XXX local policy
-            # remove things like "Reading" from the title if it's in the
-            # room usage
-            for m in config.grid_title_prune:
-                try:
-                    if session.room.usage == m or \
-                       session.room.usage == m + 's' or \
-                       m in str(session.room):
-                        title = title.replace(m + ' - ', '')
-                        title = title.replace(m + ': ', '')
-                        break
-                except AttributeError:
-                    None
-        # do the cleanup last, because we're replacing on ' - ',
-        # which cleanup() will translate to m-dash
-        return self.cleanup(title)
 
     def strTableAnchor(self, text):
         return ''
@@ -181,6 +166,25 @@ class IndesignOutput(Output):
         text = text.replace('</i>', '<CharStyle:>')
         return text
 
+    def strTitle(self, session):
+        title = session.title
+        # XXX local policy
+        # remove things like "Reading" from the title if it's in the
+        # room usage
+        for m in config.grid_title_prune:
+            try:
+                if session.room.usage == m or \
+                   session.room.usage == m + 's' or \
+                   m in str(session.room):
+                    title = title.replace(m + ' - ', '')
+                    title = title.replace(m + ': ', '')
+                    break
+            except AttributeError:
+                None
+        # do the cleanup last, because we're replacing on ' - ',
+        # which cleanup() will translate to m-dash
+        return self.cleanup(title)
+
     def strTableTitle(self, gridslice):
         # This feels the wrong place to do this, but it's the first time
         # the IndesignOutput class gets to see the gridslice.
@@ -283,6 +287,9 @@ class XmlOutput(Output):
         text = Output.cleanup(self, text)
         # convert ampersand
         return text.replace('&', '&amp;')
+
+    def strTitle(self, session):
+        return IndesignOutput.strTitle(self, session)
 
     def strTableTitle(self, gridslice):
         return '<title xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" aid:pstyle="Headline">%s</title>' % gridslice.name
@@ -538,11 +545,19 @@ if __name__ == '__main__':
     args = cmdline.cmdline(io=True)
     config.filereader.read(config.filenames['schedule', 'input'])
 
-#    if args.text:
-#        if args.outfile:
-#            write(TextOutput(args.outfile))
-#        else:
-#            write(TextOutput(config.filenames['grid', 'text']))
+    #for mode in ('text', 'html', 'xml', 'indesign'):
+    #    if eval('args.' + mode):
+    #        output = eval('%sOutput' % mode.capitalize())
+    #        if args.outfile:
+    #            write(output(args.outfile))
+    #    else:
+    #        write(output(config.filenames['grid', mode]))
+
+    #if args.text:
+    #    if args.outfile:
+    #        write(TextOutput(args.outfile))
+    #    else:
+    #        write(TextOutput(config.filenames['grid', 'text']))
 
     if args.html:
         if args.outfile:
