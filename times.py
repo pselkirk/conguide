@@ -44,7 +44,7 @@ class Day(object):
              'Sunday': 'Sun'}
     _index = 0
 
-    # XXX add day/month/year for guidebook?
+    # TODO: add day/month/year for guidebook?
 
     def __init__(self, name):
         if len(name) == 3:
@@ -112,6 +112,7 @@ class Time(object):
         if not other:
             return False
         elif self.day and other.day:
+            # Friday 24:00 and Saturday 0:00 should be equal
             h1 = self.day.index * 24 + self.hour
             h2 = other.day.index * 24 + other.hour
             return h1 < h2 or \
@@ -170,6 +171,7 @@ class Time(object):
         if t.minute >= 60:
             t.hour += 1
             t.minute -= 60
+        # if time overflows to the next day, normalize it
         #if t.day:
         #    if t.hour > 23:
         #        t.hour -= 24
