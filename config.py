@@ -16,8 +16,9 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-""" Global variables """
+""" Global variables and config file parsing. """
 
+import re
 import sys
 PY3 = sys.version > '3'
 
@@ -34,61 +35,10 @@ CFG = 'arisia.cfg'
 # global variables
 debug = False
 quiet = False
-convention = ''			# used in html output
-start = None			# used in guidebook.py
-goh = {}			# used in featured.py
-filenames = {}
-filereader = None
-levels = {}			# used in session.py
-rooms = {}			# used in session.py and grid.py
-days = {}
-template = {}			# used in schedule.py and grid.py
-sessions = []
-participants = {}
-
-# session.py or data importer variables
-chname = {}			# used in arisia-csv.py (should also sasquan-xml.py)
-chroom = {}			# used in session.py
-chtitle = {}			# used in session.py
-chdescr = {}			# used in session.py (but not configured)
-chpartic = {}			# unused (but configured)
-nodescr = {}			# unused (but configured)
-noprint = {}			# unused (but configured)
-
-# participant.py variables
-sortname = {}
-
-# schedule.py variables
-default_duration = None
-nopartic = {}
-icons = []
-prune = None
-combat = {}
-presentation = {}
-
-# grid.py variables
-twidth = float(0)
-theight = float(0)
-hwidth = float(0)
-hheight = float(0)
-cheight_min = float(0)
-cheight_max = float(0)
-fixed = {}
-slice = {}
-grid_noprint = None
-grid_title_prune = []
+cfgfile = CFG
 
 # bios.py variables
 boldnames = {}
-
-# tracks.py variables
-track_classifiers = []
-
-# featured.py variables
-featured = []
-research = []
-
-# html output variables
 
 # Boilerplate xhtml file header, with 4 %s bits:
 # - title, for <head>
@@ -115,3 +65,129 @@ div.center {text-align:center}\n\
 <p>Generated: %s</p>\n\
 </div>\n'
 source_date = ''
+
+if PY3:
+    import configparser
+else:
+    import ConfigParser as configparser
+    class MyConfigParser(configparser.SafeConfigParser):
+        """ Py2 ConfigParser does not support inline comments starting with '#'. """
+
+        def __init__(self):
+            """ Allow options without values, and don't lower-case option names. """
+            configparser.SafeConfigParser.__init__(self, allow_no_value=True)
+            self.optionxform = lambda s: s
+
+        def get(self, section, option):
+            value = configparser.SafeConfigParser.get(self, section, option)
+            return re.sub(r'\s*#.*', '', value)
+
+        def items(self, section):
+            list = configparser.ConfigParser.items(self, section)
+            for i, (name, value) in enumerate(list):
+                name = re.sub(r'\s*#.*', '', name)
+                value = re.sub(r'\s*#.*', '', value)
+                list[i] = (name, value)
+            return list
+
+cfg = None
+
+def readConfig(fn):
+    global cfg
+    if not cfg:
+        if PY3:
+            cfg = configparser.ConfigParser(allow_no_value=True, strict=False,
+                                            inline_comment_prefixes=('#',))
+            cfg.optionxform = lambda s: s
+        else:
+            cfg = MyConfigParser()
+        with codecs.open(fn, 'r', 'utf-8') as f:
+            cfg.readfp(f)
+
+def get(section, option):
+    readConfig(cfgfile)
+    try:
+        return cfg.get(section, option)
+    except configparser.NoSectionError as e:
+        raise NoSectionError(e)
+    except configparser.NoOptionError as e:
+        raise NoOptionError(e)
+
+def getfloat(section, option):
+    readConfig(cfgfile)
+    try:
+        return cfg.getfloat(section, option)
+    except configparser.NoSectionError as e:
+        raise NoSectionError(e)
+    except configparser.NoOptionError as e:
+        raise NoOptionError(e)
+
+def items(section):
+    readConfig(cfgfile)
+    try:
+        return cfg.items(section)
+    except configparser.NoSectionError as e:
+        raise NoSectionError(e)
+
+def itemdict(section):
+    readConfig(cfgfile)
+    try:
+        dd = {}
+        for key, value in cfg.items(section):
+            dd[key] = value
+        return dd
+    except configparser.NoSectionError as e:
+        raise NoSectionError(e)
+
+def sections():
+    readConfig(cfgfile)
+    return cfg.sections()
+
+def set(section, option, value):
+    readConfig(cfgfile)
+    try:
+        cfg.set(section, option, value)
+    except configparser.NoSectionError as e:
+        raise NoSectionError(e)
+
+def parseTemplate(template):
+    # parse a template string into a list of tokens,
+    # with optional sections as sub-lists
+    def xyzzy(list):
+        tokens = []
+        while list:
+            a = list.pop(0)
+            if not a:
+                # split() can insert empty tokens into the list
+                continue
+            elif a == '[':
+                # begin optional section: process into sub-list
+                (toks, residue) = xyzzy(list)
+                tokens.append(toks)	# sub-list
+                list = residue
+            elif a == ']':
+                # end optional section: return sub-list and remaining unprocessed list
+                break
+            else:
+                # split token into words and non-words
+                tokens += re.split('(\W+)', a)
+        return (tokens, list)
+    # split template into brackets and non-brackets
+    list = re.split('([\[\]])', template)
+    (tokens, unused) = xyzzy(list)
+    return tokens        
+
+# exception classes, so callers don't have to know about configparser
+# (or ConfigParser)
+class NoSectionError(configparser.NoSectionError):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+class NoOptionError(configparser.NoOptionError):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+

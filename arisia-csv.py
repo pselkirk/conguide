@@ -24,6 +24,7 @@ import re
 import config
 from participant import Participant
 from session import Session
+from times import Day
 
 def csv_reader(fn):
     """Create a CSV reader. This works around differences between Python 2.7 and
@@ -56,10 +57,6 @@ def read(fn):
 
         if row['participants']:
             mods = []
-            # chname has to operate on the full participants string
-            # because some of the target names have commas in them
-            for k, v in config.chname.items():
-                row['participants'] = row['participants'].replace(k, v)
             partic = re.split(r', ?', row['participants'])
             for i, p in enumerate(partic):
                 (p, mod) = re.subn(r' ?\(m\)', '', p)
@@ -79,17 +76,16 @@ def read(fn):
 
         # make a new session from this data
         session = Session(row)
-        config.sessions.append(session)
 
     # sort
-    config.sessions = sorted(config.sessions)
+    Session.sessions = sorted(Session.sessions)
     # NOTE this changes the data type
-    config.days = sorted(config.days.values())
-    for day in config.days:
+    Day.days = sorted(set(Day.days.values()))
+    for day in Day.days:
         day.time = sorted(day.time.values())
 
     # add session index
-    for i, s in enumerate(config.sessions, start=1):
+    for i, s in enumerate(Session.sessions, start=1):
         s.index = i
 
 def cleanup(field, minimal=False):
@@ -127,16 +123,18 @@ def read_bios(fn):
                 row[key] = row[key].decode('utf-8')
             row[key] = cleanup(row[key])
         pubsname = row['pubsname']
-        if pubsname in config.chname:
-            pubsname = config.chname[pubsname]
-        if not pubsname in config.participants:
+        try:
+            pubsname = Participant.chname[pubsname]
+        except (AttributeError, KeyError):
+            pass
+        if not pubsname in Participant.participants:
             if not config.quiet:
                 print('warning: new participant %s' % pubsname)
-            config.participants[pubsname] = Participant(pubsname)
-        config.participants[pubsname].firstname = row['firstname']
-        config.participants[pubsname].lastname = row['lastname']
-        config.participants[pubsname].bio = row['bio']
-        config.participants[pubsname].badgeid = row['badgeid']
+            Participant.participants[pubsname] = Participant(pubsname)
+        Participant.participants[pubsname].firstname = row['firstname']
+        Participant.participants[pubsname].lastname = row['lastname']
+        Participant.participants[pubsname].bio = row['bio']
+        Participant.participants[pubsname].badgeid = row['badgeid']
 
 if __name__ == '__main__':
     import cmdline
@@ -144,7 +142,7 @@ if __name__ == '__main__':
     args = cmdline.cmdline(io=True, modes=False)
     read(args.infile)
 
-    for s in config.sessions:
+    for s in Session.sessions:
         print(s.index)
         print('%s %s (%s)' % (s.time.day, s.time, s.duration))
         print(s.room)
@@ -160,7 +158,7 @@ if __name__ == '__main__':
             print(', '.join(pp))
         print('')
 
-    for p in sorted(config.participants.values()):
+    for p in sorted(Participant.participants.values()):
         ss = []
         for s in p.sessions:
             ss.append(str(s.index))

@@ -22,7 +22,9 @@ import re
 import xml.etree.ElementTree
 
 import config
+from participant import Participant
 from session import Session
+from times import Day
 
 """ The XML schema is like this::
     <program>
@@ -123,13 +125,12 @@ def read(fn):
 
             # make a new session from this data
             session = Session(row)
-            config.sessions.append(session)
 
     # sort
-    config.sessions = sorted(config.sessions)
+    Session.sessions = sorted(Session.sessions)
     # NOTE this changes the data type
-    config.days = sorted(config.days.values())
-    for day in config.days:
+    Day.days = sorted(set(Day.days.values()))
+    for day in Day.days:
         day.time = sorted(day.time.values())
 
 def cleanup(field, minimal=False):
@@ -179,11 +180,13 @@ def cleanup(field, minimal=False):
     return field
 
 if __name__ == '__main__':
-    import sys
+    import cmdline
 
-    read(sys.argv[1])
+    config.CFG = 'sasquan.cfg'
+    args = cmdline.cmdline(io=True, modes=False)
+    read(args.infile)
 
-    for s in config.sessions:
+    for s in Session.sessions:
         print('%04d' % s.index)
         print('%s %s %s' % (s.time.day, s.time, s.duration))
         print(s.room)
@@ -199,10 +202,10 @@ if __name__ == '__main__':
             print(', '.join(pp))
         if s.tags:
             print('#' + ', #'.join(s.tags))
-        print('\n')
+        print('')
 
-    for p in sorted(config.participants.values()):
+    for p in sorted(Participant.participants.values()):
         ss = []
         for s in p.sessions:
             ss.append(str(s.index))
-        print('%s: %s' % (str(p), ', '.join(ss)))
+        print('%s: %s' % (p, ', '.join(ss)))

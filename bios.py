@@ -16,12 +16,32 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+import copy
 import re
 
 import config
 import pocketprogram
 
 class Output(pocketprogram.Output):
+
+    def __init__(self, fn, fd=None):
+        pocketprogram.Output.__init__(self, fn, fd)
+        self.__readconfig()
+
+    def __readconfig(self):
+        Output.template = {}
+        try:
+            for key, value in config.items('bios template'):
+                Output.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        Output.boldnames = {}
+        try:
+            for (name, rename) in config.items('bios bold name'):
+                Output.boldnames[name] = rename
+        except config.NoSectionError:
+            pass
+        Output.__readconfig = lambda x: None
 
     def writeBio(self, participant):
         boldname = self.bold(participant)
@@ -40,7 +60,7 @@ class Output(pocketprogram.Output):
             shortname = '%s %s' % (first, lastname)
 
             # Try to bold the name in the bio text.
-            name = config.boldnames.get(participant.name)
+            name = self.boldnames.get(participant.name)
             if name:
                 if config.debug:
                     print('config override: ' + participant.name)
@@ -92,8 +112,18 @@ class TextOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
+        self.__readconfig()
         import textwrap
         self.wrapper = textwrap.TextWrapper(76)
+
+    def __readconfig(self):
+        TextOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('bios template text'):
+                TextOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        TextOutput.__readconfig = lambda x: None
 
     def cleanup(self, text):
         # convert italics
@@ -115,9 +145,19 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        title = config.convention + ' Program Participant Bios'
+        self.__readconfig()
+        title = self.convention + ' Program Participant Bios'
         self.f.write(config.html_header % (title, '', title,
                                            config.source_date))
+
+    def __readconfig(self):
+        HtmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('bios template html'):
+                HtmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -160,7 +200,7 @@ class HtmlOutput(Output):
         ss = []
         for s in participant.sessions:
             ss.append('<dd><a href="%s#%s">%s</a>\n</dd>' % \
-                      (config.filenames['schedule', 'html'],
+                      (config.get('output files html', 'schedule'),
                        s.sessionid, self.cleanup(s.title)))
         return '<i>\n<dl>\n%s\n</dl>\n</i></p>\n' % '\n'.join(ss)
 
@@ -168,9 +208,19 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
+        self.__readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<bios>')
+
+    def __readconfig(self):
+        XmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('bios template xml'):
+                XmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</bios>\n')
@@ -200,7 +250,10 @@ def write(output, participants):
 
 if __name__ == '__main__':
     import argparse
+    
     import cmdline
+    import participant
+    import session
 
     # --infile in cmdline.py is pocketprogram.csv,
     # but here we want the bios file
@@ -209,28 +262,19 @@ if __name__ == '__main__':
     parser.add_argument('--infile', action='store', help='input file name')
     parser.add_argument('--outfile', action='store', help='output file name')
     args = cmdline.cmdline(parser)
-    config.filereader.read(config.filenames['schedule', 'input'])
+    session.read(config.get('input files', 'schedule'))
     if not args.infile:
-        args.infile = config.filenames['bios', 'input']
-    config.filereader.read_bios(args.infile)
+        args.infile = config.get('input files', 'bios')
+    participant.read(args.infile)
 
-    if args.text:
-        if args.outfile:
-            write(TextOutput(args.outfile), config.participants)
-        else:
-            write(TextOutput(config.filenames['bios', 'text']),
-                  config.participants)
-
-    if args.html:
-        if args.outfile:
-            write(HtmlOutput(args.outfile), config.participants)
-        else:
-            write(HtmlOutput(config.filenames['bios', 'html']),
-                  config.participants)
-
-    if args.xml:
-        if args.outfile:
-            write(XmlOutput(args.outfile), config.participants)
-        else:
-            write(XmlOutput(config.filenames['bios', 'xml']),
-                  config.participants)
+    for mode in ('text', 'html', 'xml'):
+        if eval('args.' + mode):
+            output = eval('%sOutput' % mode.capitalize())
+            if args.outfile:
+                write(output(args.outfile), participant.Participant.participants)
+            else:
+                try:
+                    write(output(config.get('output files ' + mode, 'bios')),
+                          participant.Participant.participants)
+                except config.NoOptionError:
+                    pass

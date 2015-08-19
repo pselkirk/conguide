@@ -16,6 +16,7 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+import copy
 import re
 
 import config
@@ -23,6 +24,33 @@ import pocketprogram
 import session
 
 class Output(pocketprogram.Output):
+
+    def __init__(self, fn, fd=None):
+        pocketprogram.Output.__init__(self, fn, fd)
+        self.__readconfig()
+
+    def __readconfig(self):
+        Output.template = {}
+        try:
+            for key, value in config.items('featured template'):
+                Output.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        Output.featured = []
+        try:
+            for (sessionid, unused) in config.items('featured sessions'):
+                Output.featured.append(sessionid)
+        except config.NoSectionError:
+            pass
+        Output.research = []
+        try:
+            for unused, expr in config.items('featured research'):
+                expr = expr.replace('track', 'session.track')
+                expr = expr.replace('type', 'session.type')
+                Output.research.append(expr)
+        except configparser.NoSectionError:
+            pass
+        Output.__readconfig = lambda x: None
 
     def writeDay(self, session):
         self.f.write(self.strDay(session))
@@ -34,6 +62,19 @@ class Output(pocketprogram.Output):
         self.f.write(self.strRoom(session))
 
 class TextOutput(Output):
+
+    def __init__(self, fn):
+        Output.__init__(self, fn)
+        self.__readconfig()
+
+    def __readconfig(self):
+        TextOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('featured template text'):
+                TextOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        TextOutput.__readconfig = lambda x: None
 
     def cleanup(self, text):
         # convert italics
@@ -58,9 +99,19 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        title = config.convention + ' Featured Panels &amp; Events'
+        self.__readconfig()
+        title = Output.convention + ' Featured Panels &amp; Events'
         self.f.write(config.html_header % (title, '', title,
                                            config.source_date))
+
+    def __readconfig(self):
+        HtmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('featured template html'):
+                HtmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -81,8 +132,8 @@ class HtmlOutput(Output):
 
     def strTitle(self, session):
         return '<a href="%s#%s">%s</a> ' % \
-            (config.filenames['schedule', 'html'], session.sessionid,
-             self.cleanup(session.title))
+            (config.get('output files html', 'schedule'),
+             session.sessionid, self.cleanup(session.title))
 
     def strRoom(self, session):
         return '<i>&mdash; %s</i></dt></dl>\n' % session.room
@@ -91,9 +142,19 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
+        self.__readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<featured>')
+
+    def __readconfig(self):
+        XmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('featured template xml'):
+                XmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</featured>\n')
@@ -125,7 +186,7 @@ def write(output, sessions):
     # build the 'sessions' list. Or even add a 'featured' attribute to the
     # session.
     for s in sessions:
-        if s.sessionid in config.featured:
+        if s.sessionid in Output.featured:
             if s.time.day != curday:
                 nextday = s
                 curday = s.time.day
@@ -143,7 +204,7 @@ if __name__ == '__main__':
     parser.add_argument('--research', action='store_true',
                         help='identify likely candidates for "featured" list')
     args = cmdline.cmdline(parser, io=True)
-    config.filereader.read(config.filenames['schedule', 'input'])
+    session.read(config.get('input files', 'schedule'))
 
     # research - list all sessions in major-draw tracks, plus all sessions
     # with at least one GOH participant, formatted for cut-and-paste into
@@ -155,7 +216,7 @@ if __name__ == '__main__':
     if args.research:
         def is_goh(s):
             for p in s.participants:
-                if p.name in config.goh:
+                if p.name in Output.goh:
                     return True
             return False
 
@@ -166,8 +227,8 @@ if __name__ == '__main__':
 
         gohpartic = []
         ss = {}
-        for session in config.sessions:
-            for i, expr in enumerate(config.research):
+        for session in Output.sessions:
+            for i, expr in enumerate(Output.research):
                 if eval(expr):
                     try:
                         ss[i].append(session)
@@ -177,28 +238,19 @@ if __name__ == '__main__':
             if is_goh(session):
                 gohpartic.append(session)
         for i in sorted(ss):
-            out('### %s' % config.research[i], ss[i])
+            out('### %s' % Output.research[i], ss[i])
         out("### GOH participant(s)", gohpartic)
 
         exit(0)
 
-    if args.text:
-        if args.outfile:
-            write(TextOutput(args.outfile), config.sessions)
-        elif ('featured', 'text') in config.filenames:
-            write(TextOutput(config.filenames['featured', 'text']),
-                  config.sessions)
-
-    if args.html:
-        if args.outfile:
-            write(HtmlOutput(args.outfile), config.sessions)
-        elif ('featured', 'html') in config.filenames:
-            write(HtmlOutput(config.filenames['featured', 'html']),
-                  config.sessions)
-
-    if args.xml:
-        if args.outfile:
-            write(XmlOutput(args.outfile), config.sessions)
-        elif ('featured', 'xml') in config.filenames:
-            write(XmlOutput(config.filenames['featured', 'xml']),
-                  config.sessions)
+    for mode in ('text', 'html', 'xml'):
+        if eval('args.' + mode):
+            output = eval('%sOutput' % mode.capitalize())
+            if args.outfile:
+                write(output(args.outfile), session.Session.sessions)
+            else:
+                try:
+                    write(output(config.get('output files ' + mode, 'featured')),
+                          session.Session.sessions)
+                except config.NoOptionError:
+                    pass

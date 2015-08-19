@@ -16,10 +16,13 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+import copy
+import re
+
 import config
 import pocketprogram
 from room import Room
-from times import Duration
+from times import Day, Time, Duration
 
 # TODO:
 # - docstrings
@@ -45,6 +48,56 @@ class Slice(object):
 # ----------------------------------------------------------------
 class Output(pocketprogram.Output):
 
+    def __init__(self, fn, fd=None, codec=None):
+        pocketprogram.Output.__init__(self, fn, fd)
+        self.__readconfig()
+
+    def __readconfig(self):
+        Output.template = {}
+        try:
+            for key, value in config.items('grid template'):
+                Output.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+
+        exprs = []
+        try:
+            expr = config.get('grid no print', 'title starts with')
+            exprs.append('session.title.startswith((%s))' % expr)
+        except (config.NoSectionError, config.NoOptionError):
+            pass
+        try:
+            expr = config.get('grid no print', 'title ends with')
+            exprs.append('session.title.endswith((%s))' % expr)
+        except (config.NoSectionError, config.NoOptionError):
+            pass
+            Output.noprint = ' or '.join(exprs)
+
+        try:
+            val = config.get('grid title prune', 'usage')
+            Output.title_prune = re.split(r',\s*', val)
+        except (config.NoSectionError, config.NoOptionError):
+            pass
+
+        Output.__readconfig = lambda x: None
+
+    def configSlice(self):
+        for section in config.sections():
+            if re.match('grid slice ' + self.name, section):
+                name = config.get(section, 'name')
+                start = config.get(section, 'start')
+                end = config.get(section, 'end')
+                s = Slice(name, Time(start), Time(end))
+                try:
+                    if s.start < self.slice[0].start:
+                        s.start.hour += 24
+                    if s.end < s.start:
+                        s.end.hour += 24
+                    self.slice.append(s)
+                except AttributeError:
+                    self.slice = [s]
+                # XXX validate that slices are contiguous and complete
+
     def strTableAnchor(self, text):
         return ''
 
@@ -67,7 +120,8 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        title = config.convention + ' Schedule Grid'
+        self.__readconfig()
+        title = self.convention + ' Schedule Grid'
         self.f.write(config.html_header % \
                      (title,
                       'th { background-color: #E0E0E0 }\n' +
@@ -75,11 +129,25 @@ class HtmlOutput(Output):
                       'td.white { background-color: #FFFFFF }\n',
                       title, config.source_date))
         dd = []
-        for day in config.days:
+        for day in Day.days:
             dd.append('<a href="#%s">%s</a>' % (day.name, day.name))
         self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % \
                      ' - '.join(dd))
         self.f.write('<br /><br />\n')
+
+    def __readconfig(self):
+        self.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('schedule template html'):
+                self.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        try:
+            value = config.get('grid html', 'print empty rooms')
+            self.fixed = (value == 'major')
+        except (config.NoSectionError, config.NoOptionError):
+            self.fixed = False
+        self.configSlice()
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -96,7 +164,7 @@ class HtmlOutput(Output):
     def strTitle(self, session):
         title = Output.strTitle(self, session)
         return '<a href="%s#%s">%s</a>' % \
-            (config.filenames['schedule', 'html'], session.sessionid, title)
+            (config.get('output files html', 'schedule'), session.sessionid, title)
 
     def strTableTitle(self, gridslice):
         return '<h2>%s</h2>\n' % gridslice.name
@@ -149,15 +217,53 @@ class IndesignOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn, codec='cp1252')
+        self.__readconfig()
         self.f.write('<ASCII-WIN>\r\n<Version:8><FeatureSet:InDesign-Roman>')
 
-        if config.fixed[self.name]:
+        if self.fixed:
             nrow = 0
-            for i in range(Room.index):
-                room = config.rooms[i]
+            for room in set(Room.rooms.values()):
                 if room.major:
                     nrow += 1
-            self.cheight = (config.theight - config.hheight) / nrow
+            self.cheight = (self.theight - self.hheight) / nrow
+
+    def __readconfig(self):
+        self.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('schedule template indesign'):
+                self.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        try:
+            value = config.get('grid indesign', 'print empty rooms')
+            self.fixed = (value == 'major')
+        except (config.NoSectionError, config.NoOptionError):
+            self.fixed = False
+        try:
+            self.twidth = config.getfloat('grid indesign', 'table width') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.theight = config.getfloat('grid indesign', 'table height') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.hheight = config.getfloat('grid indesign', 'header height') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.hwidth = config.getfloat('grid indesign', 'header width') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.cheight_min = config.getfloat('grid indesign', 'minimum cell height') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.cheight_max = config.getfloat('grid indesign', 'maximum cell height') * 72.0
+        except config.NoOptionError:
+            pass
+        self.configSlice()
 
     def cleanup(self, text):
         text = Output.cleanup(self, text)
@@ -171,16 +277,16 @@ class IndesignOutput(Output):
         # XXX local policy
         # remove things like "Reading" from the title if it's in the
         # room usage
-        for m in config.grid_title_prune:
-            try:
+        try:
+            for m in self.title_prune:
                 if session.room.usage == m or \
                    session.room.usage == m + 's' or \
                    m in str(session.room):
                     title = title.replace(m + ' - ', '')
                     title = title.replace(m + ': ', '')
                     break
-            except AttributeError:
-                None
+        except AttributeError:
+            pass
         # do the cleanup last, because we're replacing on ' - ',
         # which cleanup() will translate to m-dash
         return self.cleanup(title)
@@ -188,24 +294,24 @@ class IndesignOutput(Output):
     def strTableTitle(self, gridslice):
         # This feels the wrong place to do this, but it's the first time
         # the IndesignOutput class gets to see the gridslice.
-        if not config.fixed[self.name]:
-            self.cheight = (config.theight - config.hheight) \
+        if not self.fixed:
+            self.cheight = (self.theight - self.hheight) \
                            / len(gridslice.rooms)
-            if self.cheight > config.cheight_max:
-                self.cheight = config.cheight_max
-            elif self.cheight < config.cheight_min:
-                self.cheight = config.cheight_min
+            if self.cheight > self.cheight_max:
+                self.cheight = self.cheight_max
+            elif self.cheight < self.cheight_min:
+                self.cheight = self.cheight_min
         return '<ParaStyle:Headline>%s\r\n' % gridslice.name
 
     def strTableStart(self, gridslice):
         trows = len(gridslice.rooms) + 1
         tcols = gridslice.endIndex - gridslice.startIndex + 1
-        cwidth = (config.twidth - config.hwidth) / (tcols - 1)
+        cwidth = (self.twidth - self.hwidth) / (tcols - 1)
         str = '<ParaStyle:Grid time>' + \
               '<TableStart:%d,%d:1:0' % (trows, tcols) + \
               '<tCellDefaultCellType:Text>>'
         # column widths
-        str += '<ColStart:<tColAttrWidth:%.4f>>' % config.hwidth
+        str += '<ColStart:<tColAttrWidth:%.4f>>' % self.hwidth
         for i in range(tcols - 1):
             str += '<ColStart:<tColAttrWidth:%.4f>>' % cwidth
         return str
@@ -214,7 +320,7 @@ class IndesignOutput(Output):
         return '<TableEnd:>\r\n'
 
     def strHeaderRowStart(self):
-        return self.strRowStart(config.hheight)
+        return self.strRowStart(self.hheight)
 
     def strRowStart(self, height=None):
         # can't default height=self.cheight in the def
@@ -276,8 +382,47 @@ class XmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
+        self.__readconfig()
         self.f.write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n')
         self.f.write('<Root><Story>')
+
+    def __readconfig(self):
+        self.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('schedule template xml'):
+                self.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        try:
+            value = config.get('grid xml', 'print empty rooms')
+            self.fixed = (value == 'major')
+        except (config.NoSectionError, config.NoOptionError):
+            self.fixed = False
+        try:
+            self.twidth = config.getfloat('grid xml', 'table width') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.theight = config.getfloat('grid xml', 'table height') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.hheight = config.getfloat('grid xml', 'header height') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.hwidth = config.getfloat('grid xml', 'header width') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.cheight_min = config.getfloat('grid xml', 'minimum cell height') * 72.0
+        except config.NoOptionError:
+            pass
+        try:
+            self.cheight_max = config.getfloat('grid xml', 'maximum cell height') * 72.0
+        except config.NoOptionError:
+            pass
+        self.configSlice()
 
     def __del__(self):
         self.f.write('</Story></Root>\n')
@@ -297,7 +442,7 @@ class XmlOutput(Output):
     def strTableStart(self, gridslice):
         trows = len(gridslice.rooms) + 1
         tcols = gridslice.endIndex - gridslice.startIndex + 1
-        self.cwidth = (config.twidth - config.hwidth) / (tcols - 1)
+        self.cwidth = (self.twidth - self.hwidth) / (tcols - 1)
         return'<Table xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" xmlns:aid5="http://ns.adobe.com/AdobeInDesign/5.0/" aid:table="table" aid:trows="%d" aid:tcols="%d">' % (trows, tcols)
 
     def strTableEnd(self):
@@ -326,7 +471,7 @@ class XmlOutput(Output):
     def strRowHeaderCell(self, text):
         #<Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="74.0448" aid5:cellstyle="Grid room"><room aid:pstyle="Grid room">Alcott</room></Cell>
         text = text.replace('<i>', '<i aid:cstyle="Room italic">')
-        return self.strCell('room', 1, 1, config.hwidth, text)
+        return self.strCell('room', 1, 1, self.hwidth, text)
 
     def strTextCell(self, nrow, ncol, text):
         #<Cell aid:table="cell" aid:crows="1" aid:ccols="3" aid5:cellstyle="Grid text"><text aid:pstyle="Grid text">How to Survive the Nerd Convention Apocalypse</text></Cell>
@@ -356,8 +501,7 @@ def write(output, unused=None):
         return (time.day.index * 24 * 2) + (time.hour * 2) + int((time.minute + 15) / 30)
 
     def matrix():
-        for i in range(Room.index):
-            room = config.rooms[i]
+        for room in sorted(set(Room.rooms.values())):
             room.gridsessions = room.sessions
             try:
                 for r in room.gridrooms:
@@ -368,14 +512,13 @@ def write(output, unused=None):
                     r.gridsessions += sessions
                 room.gridsessions = []
             except AttributeError:
-                None
-        for i in range(Room.index):
-            room = config.rooms[i]
+                pass
+        for room in sorted(set(Room.rooms.values())):
             room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
             # declare an array of half-hour blocks
-            room.gridrow = [None for j in range((len(config.days) + 1) * 24 * 2)]
+            room.gridrow = [None for j in range((len(Day.days) + 1) * 24 * 2)]
             for session in room.gridsessions:
-                if config.grid_noprint and eval(config.grid_noprint):
+                if output.noprint and eval(output.noprint):
                     if output.name == 'xml' or output.name == 'indesign':
                         continue
                     else:
@@ -464,7 +607,7 @@ def write(output, unused=None):
         output.f.write(output.strRowStart())
         try:
             rname = output.fillTemplate(
-                config.template['grid', 'room', output.name],
+                output.template['grid', 'room', output.name],
                 room.gridsessions[0])
         except KeyError:
             rname = str(room)
@@ -518,22 +661,21 @@ def write(output, unused=None):
             k += 1
         return k - i
 
-    for day in config.days:
+    for day in Day.days:
         output.f.write(output.strTableAnchor(day.name))
-        for slice in config.slice[output.name]:
+        for slice in output.slice:
             gridslice = Slice('%s %s' % (day.name, slice.name),
                               slice.start, slice.end, day)
             gridslice.startIndex = offset(gridslice.start)
             gridslice.endIndex = offset(gridslice.end)
             gridslice.rooms = []
-            for i in range(Room.index):
-                room = config.rooms[i]
+            for room in sorted(set(Room.rooms.values())):
                 try:
                     unused = room.gridrow
                 except AttributeError:
                     matrix()
                 if activeRoom(room, gridslice.startIndex, gridslice.endIndex) or \
-                   (config.fixed[output.name] and room.major):
+                   (output.fixed and room.major):
                     gridslice.rooms.append(room)
             if activeGrid(gridslice):
                 writeTable(gridslice)
@@ -541,38 +683,19 @@ def write(output, unused=None):
 # ----------------------------------------------------------------
 if __name__ == '__main__':
     import cmdline
+    import session
 
     args = cmdline.cmdline(io=True)
-    config.filereader.read(config.filenames['schedule', 'input'])
+    session.read(config.get('input files', 'schedule'))
 
-    #for mode in ('text', 'html', 'xml', 'indesign'):
-    #    if eval('args.' + mode):
-    #        output = eval('%sOutput' % mode.capitalize())
-    #        if args.outfile:
-    #            write(output(args.outfile))
-    #    else:
-    #        write(output(config.filenames['grid', mode]))
-
-    #if args.text:
-    #    if args.outfile:
-    #        write(TextOutput(args.outfile))
-    #    else:
-    #        write(TextOutput(config.filenames['grid', 'text']))
-
-    if args.html:
-        if args.outfile:
-            write(HtmlOutput(args.outfile))
-        else:
-            write(HtmlOutput(config.filenames['grid', 'html']))
-
-    if args.xml:
-        if args.outfile:
-            write(XmlOutput(args.outfile))
-        elif ('grid', 'xml') in config.filenames:
-            write(XmlOutput(config.filenames['grid', 'xml']))
-
-    if args.indesign:
-        if args.outfile:
-            write(IndesignOutput(args.outfile))
-        else:
-            write(IndesignOutput(config.filenames['grid', 'indesign']))
+    for mode in ('html', 'indesign', 'xml'):
+        if eval('args.' + mode):
+            output = eval('%sOutput' % mode.capitalize())
+            if args.outfile:
+                write(output(args.outfile), session.Session.sessions)
+            else:
+                try:
+                    write(output(config.get('output files ' + mode, 'grid')),
+                          session.Session.sessions)
+                except config.NoOptionError:
+                    pass

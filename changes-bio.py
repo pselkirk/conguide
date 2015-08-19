@@ -52,8 +52,7 @@ def read(fn):
 
 participants[0] = read(args.files[0])
 # reinitialize for the next read
-times.Day._index = 0
-config.days = {}
+times.Day._reset_()
 config.sessions = []
 config.participants = {}
 participants[1] = read(args.files[1])

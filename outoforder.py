@@ -22,15 +22,13 @@ import csv
 import difflib
 import re
 
-import cfgparse
 import config
 import session
-
-cfgparse.parseConfig(config.CFG)
+import participant
 
 ps = []
-config.filereader.read(config.filenames['schedule', 'input'])
-for p in sorted(config.participants.values()):
+session.read(config.get('input files', 'schedule'))
+for p in sorted(participant.Participant.participants.values()):
     ps.append(p.name)
 
 def read(fn):
@@ -48,13 +46,13 @@ def read(fn):
     return rows
 
 pb = []
-for p in read(config.filenames['bios', 'input']):
+for p in read(config.get('input files', 'bios')):
     pubsname = p['pubsname']
     pubsname = re.sub('\s+', ' ', pubsname)
     pubsname = re.sub('^\s+', '', pubsname)
     pubsname = re.sub('\s+$', '', pubsname)
-    if pubsname in config.chname:
-        pubsname = config.chname[pubsname]
+    if pubsname in participant.Participant.chname:
+        pubsname = participant.Participant.chname[pubsname]
     pb.append(pubsname)
 
 for line in difflib.unified_diff(pb, ps):

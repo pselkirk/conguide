@@ -23,17 +23,20 @@ from times import Day, Time, Duration
 
 class Session(object):
 
-    def __init__(self, row):
-        'init from csv.DictReader()'
+    sessions = []
 
-        if row['room'] in config.chroom:
-            row['room'] = config.chroom[row['room']]
-        if row['sessionid'] in config.chroom:
-            row['room'] = config.chroom[row['sessionid']]
-        if row['sessionid'] in config.chtitle:
-            row['title'] = config.chtitle[row['sessionid']]
-        if row['sessionid'] in config.chdescr:
-            row['description'] = config.chdescr[row['sessionid']]
+    def __init__(self, row):
+        self.__readconfig()
+        if row['room'] in Session.chroom:
+            row['room'] = Session.chroom[row['room']]
+        if row['sessionid'] in Session.chroom:
+            row['room'] = Session.chroom[row['sessionid']]
+        if row['sessionid'] in Session.chtitle:
+            row['title'] = Session.chtitle[row['sessionid']]
+        if row['sessionid'] in Session.chdescr:
+            row['description'] = Session.chdescr[row['sessionid']]
+        if row['sessionid'] in Session.chpartic:
+            row['participants'] = Session.chpartic[row['sessionid']]
 
         self.sessionid = row['sessionid']
         try:
@@ -42,12 +45,12 @@ class Session(object):
             self.index = 0
 
         try:
-            day = config.days[row['day']]
+            day = Day.days[row['day']]
         except KeyError:
             if config.debug:
                 print('info: new day %s' % row['day'])
             day = Day(row['day'])
-            config.days[row['day']] = day
+            Day.days[row['day']] = day
         try:
             time = day.time[row['time']]
         except KeyError:
@@ -61,26 +64,52 @@ class Session(object):
         self.duration = Duration(row['duration'])
 
         try:
-            level = config.levels[row['level']]
-        except KeyError:
+            level = row['level']
             try:
+                level = Level.levels[level]
+            except AttributeError:
+                # force Level.__init__() to read the config
+                level = Level('unused')
+                del Level.levels['unused']
+                try:
+                    level = Level.levels[row['level']]
+                except KeyError:
+                    if not config.quiet:
+                        print('warning: new level %s' % row['level'])
+                    level = Level(row['level'])
+                    Level.levels[level.name] = level
+                    Level.levels[level.name] = level
+            except KeyError:
                 if not config.quiet:
                     print('warning: new level %s' % row['level'])
                 level = Level(row['level'])
-                config.levels[level.name] = level
-                config.levels[level.name] = level
-            except KeyError:
-                level = None
+                Level.levels[level.name] = level
+                Level.levels[level.name] = level
+        except KeyError:
+            level = None
 
         try:
-            room = config.rooms[row['room']]
+            room = Room.rooms[row['room']]
+        except AttributeError:
+	    # force Room.__init__() to read the config
+	    room = Room('unused')
+	    del Room.rooms['unused']
+            try:
+                room = Room.rooms[row['room']]
+            except KeyError:
+                if not config.quiet:
+                    print('warning: new room %s' % row['room'])
+                room = Room(row['room'])
+                room.level = level
+                Room.rooms[room.name] = room
+                Room.rooms[room.index] = room
         except KeyError:
             if not config.quiet:
                 print('warning: new room %s' % row['room'])
             room = Room(row['room'])
             room.level = level
-            config.rooms[room.name] = room
-            config.rooms[room.index] = room
+            Room.rooms[room.name] = room
+            Room.rooms[room.index] = room
         self.room = room
         room.sessions.append(self)
 
@@ -98,20 +127,58 @@ class Session(object):
         self.participants = []
         for name in row['participants']:
             try:
-                p = config.participants[name]
+                p = Participant.participants[name]
             except KeyError:
                 if config.debug:
                     print('info: new participant %s' % name)
                 p = Participant(name)
-                config.participants[name] = p
             self.participants.append(p)
             p.sessions.append(self)
+        # XXX local policy
         #self.participants = sorted(self.participants)
 
         self.moderators = []
         for name in row['moderators']:
-            p = config.participants[name]
+            if name in Participant.chname:
+                name = Participant.chname[name]
+            p = Participant.participants[name]
             self.moderators.append(p)
+
+        # add to the global list of sessions
+        Session.sessions.append(self)
+
+    def __readconfig(self):
+        Session.chroom = {}
+        try:
+            for name, rename in config.items('session change room'):
+                Session.chroom[name] = rename
+        except config.NoSectionError:
+            pass
+        Session.chtitle = {}
+        try:
+            for sessionid, rename in config.items('session change title'):
+                Session.chtitle[sessionid] = rename
+        except config.NoSectionError:
+            pass
+        Session.chdescr = {}
+        try:
+            for sessionid, rename in config.items('session change description'):
+                Session.chdescr[sessionid] = rename
+        except config.NoSectionError:
+            pass
+        Session.chpartic = {}
+        try:
+            for sessionid, rename in config.items('session change participants'):
+                Session.chpartic[sessionid] = re.split(r', ?', rename)
+        except config.NoSectionError:
+            pass
+        Session.noprint = {}
+        try:
+            for (sessionid, unused) in config.items('session do not print'):
+                Session.noprint[sessionid] = True
+        except config.NoSectionError:
+            pass
+        Session.__readconfig = lambda x: None
 
     def __lt__(self, other):
         return (other and \
@@ -123,3 +190,8 @@ class Session(object):
                       (self.room < other.room)) or \
                      (self.index < other.index)))))))
 
+def read(fn):
+    import importlib
+    value = config.get('input file importer', 'reader')
+    filereader = importlib.import_module(value)
+    filereader.read(fn)

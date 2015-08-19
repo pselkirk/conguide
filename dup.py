@@ -4,8 +4,8 @@
 
 import argparse
 
-import cfgparse
 import config
+import session
 
 title = {}
 descr = {}
@@ -27,11 +27,11 @@ parser.add_argument('files', nargs=argparse.REMAINDER,
 args = parser.parse_args()
 config.debug = args.debug
 config.quiet = args.quiet
-cfgparse.parseConfig(args.cfg)
+config.cfgfile = args.cfg
 
-config.filereader.read(config.filenames['schedule', 'input'])
+session.read(config.get('input files', 'schedule'))
 
-for s in config.sessions:
+for s in session.Session.sessions:
     if s.title in title:
         dup_t[s] = title[s.title]
     else:

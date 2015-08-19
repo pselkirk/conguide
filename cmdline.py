@@ -21,7 +21,6 @@
 import argparse
 import os.path, time
 
-import cfgparse
 import config
 
 # To call without adding command line options, do this:
@@ -45,9 +44,9 @@ def cmdlineParser(io=False, modes=True):
                         help='add debugging/trace information')
     parser.add_argument('-q', '--quiet', action='store_true',
                         help='suppress warning messages')
-    parser.add_argument('-t', '--text', action='store_true',
-                        help='text output')
     if modes:
+        parser.add_argument('-t', '--text', action='store_true',
+                            help='text output')
         parser.add_argument('-h', '--html', action='store_true',
                             help='html output')
         parser.add_argument('-x', '--xml', action='store_true',
@@ -71,8 +70,7 @@ def cmdline(parser=None, io=False, modes=True):
     args = parser.parse_args()
     config.debug = args.debug
     config.quiet = args.quiet
-
-    cfgparse.parseConfig(args.cfg)
+    config.cfgfile = args.cfg
 
     if modes:
         if args.all:
@@ -93,12 +91,11 @@ def cmdline(parser=None, io=False, modes=True):
 
     if io:
         if args.infile:
-            config.filenames['schedule', 'input'] = args.infile
+            config.set('input files', 'schedule', args.infile)
         else:
-            args.infile = config.filenames['schedule', 'input']
+            args.infile = config.get('input files', 'schedule')
 
-    config.source_date = time.ctime(os.path.getmtime(
-        config.filenames['schedule', 'input']))
+    config.source_date = time.ctime(os.path.getmtime(config.get('input files', 'schedule')))
 
     return args
 

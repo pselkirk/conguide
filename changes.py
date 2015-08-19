@@ -18,8 +18,9 @@
 
 import argparse
 
-import cfgparse
 import config
+import session
+from participant import Participant
 import times
 
 debug = False
@@ -45,8 +46,8 @@ parser.add_argument('files', nargs=argparse.REMAINDER,
 args = parser.parse_args()
 config.debug = args.debug
 config.quiet = args.quiet
+config.cfgfile = args.cfg
 verbose = args.verbose
-cfgparse.parseConfig(args.cfg)
 
 if not args.files or len(args.files) > 2:
     print('specify one or two .csv files')
@@ -58,20 +59,19 @@ elif len(args.files) == 1:
 def read(fn):
     if not config.quiet:
         print('---- %s ----' % fn)
-    config.filereader.read(fn)
+    session.read(fn)
     session_hash = {}
-    for s in config.sessions:
+    for s in session.Session.sessions:
         if args.by_title:
             s.sessionid = s.title
         session_hash[s.sessionid] = s
-    return (session_hash, config.participants)
+    return (session_hash, Participant.participants)
 
 (sessions[0], participants[0]) = read(args.files[0])
 # reinitialize for the next read
-times.Day._index = 0
-config.days = {}
-config.sessions = []
-config.participants = {}
+times.Day._reset_(times.Day.days[0])
+session.Session.sessions = []
+Participant.participants = {}
 (sessions[1], participants[1]) = read(args.files[1])
 
 def session_header(s):

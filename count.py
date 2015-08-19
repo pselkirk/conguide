@@ -18,8 +18,9 @@
 
 import argparse
 
-import cfgparse
 import config
+from participant import Participant
+import session
 import times
 
 nitems = []
@@ -51,35 +52,34 @@ def count(fn, i):
 
     nitems.append(0)
 
-    config.filereader.read(fn)
+    session.read(fn)
 
-    for session in config.sessions:
+    for s in session.Session.sessions:
         nitems[i] += 1
-        incr(day, str(session.time.day), i)
-        incr(time, str(session.time), i)
-        incr(duration, str(session.duration), i)
-        incr(level, str(session.room.level), i)
-        incr(room, str(session.room), i)
-        incr(levelroom, (str(session.room.level), str(session.room)), i)
-        incr(track, str(session.track), i)
-        incr(type, str(session.type), i)
-        incr(tracktype, (str(session.track), str(session.type)), i)
-        if not session.participants:
+        incr(day, str(s.time.day), i)
+        incr(time, str(s.time), i)
+        incr(duration, str(s.duration), i)
+        incr(level, str(s.room.level), i)
+        incr(room, str(s.room), i)
+        incr(levelroom, (str(s.room.level), str(s.room)), i)
+        incr(track, str(s.track), i)
+        incr(type, str(s.type), i)
+        incr(tracktype, (str(s.track), str(s.type)), i)
+        if not s.participants:
             incr(partic, '(no participants)', i)
         else:
-            for p in session.participants:
+            for p in s.participants:
                 incr(partic, p.__str__(), i)
-        if not session.tags:
+        if not s.tags:
             incr(tag, '(no tags)', i)
         else:
-            for t in session.tags:
+            for t in s.tags:
                 incr(tag, t, i)
 
     # reinitialize for the next count
-    times.Day._index = 0
-    config.days = {}
-    config.sessions = []
-    config.participants = {}
+    times.Day._reset_(times.Day.days[0])
+    session.Session.sessions = []
+    Participant.participants = {}
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
@@ -93,11 +93,13 @@ parser.add_argument('-v', '--verbose', action='store_true',
 parser.add_argument('files', nargs=argparse.REMAINDER,
                     help='one or more snapshots of pocketprogram.csv')
 args = parser.parse_args()
-debug = args.debug
-cfgparse.parseConfig(args.cfg)
+config.debug = args.debug
+config.quiet = args.quiet
+config.cfgfile = args.cfg
+verbose = args.verbose
 
 if not args.files:
-    count(config.filenames['schedule', 'input'], 0)
+    count(config.get('input files', 'schedule'), 0)
 else:
     for i, fn in enumerate(args.files):
         count(fn, i)

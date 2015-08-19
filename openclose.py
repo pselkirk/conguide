@@ -15,7 +15,7 @@ import re
 
 import cmdline
 import config
-import times
+from times import Day, Duration
 
 parent = cmdline.cmdlineParser(modes=False)
 parser = argparse.ArgumentParser(add_help=False, parents=[parent])
@@ -24,7 +24,8 @@ parser.add_argument('--raw', action='store_true',
 args = cmdline.cmdline(parser, modes=False)
 config.filereader.read(config.filenames['schedule', 'input'])
 
-for day in config.days:
+for i in range(Day.index):
+    day = Day.days[i]
     print(day)
     openclose = []
     for time in day.time:
@@ -50,7 +51,7 @@ for day in config.days:
                                 end = open.time + open.duration
                                 if end != session.time:
                                     t = session.time - open.time
-                                    duration = times.Duration(t.__str__(mode='24hr'))
+                                    duration = Duration(t.__str__(mode='24hr'))
                                     if not config.quiet:
                                         print('warning: %s duration (%s) does not match %s (%s = %d min)' % (open.title, open.duration, session.title, duration, duration.hour * 60 + duration.minute))
                                     openclose[i].duration = duration

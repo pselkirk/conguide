@@ -16,12 +16,28 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+import copy
 import re
 
 import config
+import participant
 import pocketprogram
+import session
 
 class Output(pocketprogram.Output):
+
+    def __init__(self, fn, fd=None):
+        pocketprogram.Output.__init__(self, fn, fd)
+        self.__readconfig()
+
+    def __readconfig(self):
+        Output.template = {}
+        try:
+            for key, value in config.items('xref template'):
+                Output.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        Output.__readconfig = lambda x: None
 
     def writeXref(self, participant):
         if participant.sessions:
@@ -29,6 +45,19 @@ class Output(pocketprogram.Output):
             self.f.write(self.strSessions(participant))
 
 class TextOutput(Output):
+
+    def __init__(self, fn):
+        Output.__init__(self, fn)
+        self.__readconfig()
+
+    def __readconfig(self):
+        TextOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('xref template text'):
+                TextOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        TextOutput.__readconfig = lambda x: None
 
     def strName(self, participant):
         return '%s: ' % participant.__str__()
@@ -43,9 +72,19 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        title = config.convention + ' Program Participant Cross-Reference'
+        self.__readconfig()
+        title = self.convention + ' Program Participant Cross-Reference'
         self.f.write(config.html_header % (title, '', title,
-                                           config.source_date))
+                                           self.source_date))
+
+    def __readconfig(self):
+        HtmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('xref template html'):
+                HtmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -63,8 +102,8 @@ class HtmlOutput(Output):
         for s in participant.sessions:
             ss.append('<dd>%s %s <a href="%s#%s">%s</a></dd>' % \
                       (s.time.day.shortname, s.time,
-                       config.filenames['schedule', 'html'], s.sessionid,
-                       self.cleanup(s.title)))
+                       config.get('output files html', 'schedule'),
+                       s.sessionid, self.cleanup(s.title)))
         return '%s\n</dl>\n' % '\n'.join(ss)
 
     def writeXref(self, participant):
@@ -76,9 +115,19 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
+        self.__readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<xrefs>')
+
+    def __readconfig(self):
+        XmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('xref template xml'):
+                XmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</xrefs>\n')
@@ -103,25 +152,16 @@ if __name__ == '__main__':
     import cmdline
 
     args = cmdline.cmdline(io=True)
-    config.filereader.read(config.filenames['schedule', 'input'])
+    session.read(config.get('input files', 'schedule'))
 
-    if args.text:
-        if args.outfile:
-            write(TextOutput(args.outfile), config.participants)
-        elif ('xref', 'text') in config.filenames:
-            write(TextOutput(config.filenames['xref', 'text']),
-                  config.participants)
-
-    if args.html:
-        if args.outfile:
-            write(HtmlOutput(args.outfile), config.participants)
-        elif ('xref', 'html') in config.filenames:
-            write(HtmlOutput(config.filenames['xref', 'html']),
-                  config.participants)
-
-    if args.xml:
-        if args.outfile:
-            write(XmlOutput(args.outfile), config.participants)
-        elif ('xref', 'html') in config.filenames:
-            write(XmlOutput(config.filenames['xref', 'xml']),
-                  config.participants)
+    for mode in ('text', 'html', 'xml'):
+        if eval('args.' + mode):
+            output = eval('%sOutput' % mode.capitalize())
+            if args.outfile:
+                write(output(args.outfile), participant.Participant.participants)
+            else:
+                try:
+                    write(output(config.get('output files ' + mode, 'xref')),
+                          participant.Participant.participants)
+                except config.NoOptionError:
+                    pass

@@ -39,13 +39,16 @@ cross-reference (xref), featured sessions, and track list.
 import codecs
 import copy
 import re
+import time
 
 import config
+from times import Duration
 
 class Output(object):
     """ Parent class for TextOutput etc. in schedule.py etc. """
 
     def __init__(self, fn, fd=None, codec='utf-8'):
+        Output.__readconfig(self)
         if fd:
             self.f = fd
             self.leaveopen = True
@@ -53,6 +56,24 @@ class Output(object):
             #self.f = open(fn, 'w')
             self.f = codecs.open(fn, 'w', codec)
             self.leaveopen = False
+
+    def __readconfig(self):
+        # get some basic configuration from the config file
+        Output.convention = config.get('top', 'convention')
+        Output.goh = {}
+        for name in re.split(r',\s*', config.get('top', 'goh')):
+            Output.goh[name] = True
+        try:
+            Output.start = time.strptime(config.get('top', 'start'), '%Y-%m-%d')
+            # time.struct_time(tm_year=2014, tm_mon=1, tm_mday=17, tm_hour=0,
+            # tm_min=0, tm_sec=0, tm_wday=4, tm_yday=17, tm_isdst=-1)
+        except config.NoOptionError:
+            pass
+        try:
+            Output.default_duration = Duration(config.get('top', 'default duration'))
+        except config.NoOptionError:
+            pass
+        Output.__readconfig = lambda x: None
 
     def __del__(self):
         if not self.leaveopen:
@@ -114,7 +135,7 @@ class Output(object):
                             if tag.isupper():
                                 fields[i] = fields[i].upper()
                 except AttributeError:
-                    None
+                    pass
         if ok:
             return ''.join(fields)
         else:
@@ -190,39 +211,45 @@ if __name__ == '__main__':
     import cmdline
     import featured
     import grid
+    import participant
     import schedule
+    import session
     import tracks
     import xref
 
     args = cmdline.cmdline()
-    config.filereader.read(config.filenames['schedule', 'input'])
-    if ('bios', 'input') in config.filenames:
-        config.filereader.read_bios(config.filenames['bios', 'input'])
+    session.read(config.get('input files', 'schedule'))
+    participant.read(config.get('input files', 'bios'))
+
+    sessions = session.Session.sessions
+    participants = participant.Participant.participants
 
     for mode in ('text', 'html', 'xml', 'indesign'):
         if eval('args.' + mode):
             for report in ('schedule', 'featured', 'tracks', 'xref', 'bios', 'grid'):
-                if (report, mode) in config.filenames:
+                try:
                     writer = eval(report + '.write')
-                    try:
-                        output = eval('%s.%sOutput' % (report, mode.capitalize()))
-                    except AttributeError:
-                        # e.g. 'module' object has no attribute 'XmlOutput'
-                        # output function is not defined for that mode
-                        None
+                    output = eval('%s.%sOutput' % (report, mode.capitalize()))
+                    outfile = config.get('output files ' + mode, report)
+                    if report in ('xref', 'bios'):
+                        source = participants
                     else:
-                        if report in ('xref', 'bios'):
-                            source = config.participants
-                        else:
-                            source = config.sessions
-                        writer(output(config.filenames[report, mode]), source)
+                        source = sessions
+                    writer(output(outfile), source)
+                except (AttributeError, KeyError, config.NoOptionError):
+                    pass
 
-    if args.xml and ('pocketprogram', 'xml') in config.filenames:
-        f = codecs.open(config.filenames['pocketprogram', 'xml'], 'w', 'utf-8', 'replace')
-        f.write('<?xml version="1.0" encoding="UTF-8"?>\n<pocketprogram>\n')
-        schedule.write(schedule.XmlOutput(None, f), config.sessions)
-        featured.write(featured.XmlOutput(None, f), config.sessions)
-        tracks.write(tracks.XmlOutput(None, f), config.sessions)
-        xref.write(xref.XmlOutput(None, f), config.participants)
-        f.write('</pocketprogram>\n')
-        f.close()
+    if args.xml:
+        try:
+            f = codecs.open(config.get('output files xml', 'pocketprogram'),
+                            'w', 'utf-8', 'replace')
+        except KeyError:
+            pass
+        else:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n<pocketprogram>\n')
+            schedule.write(schedule.XmlOutput(None, f), sessions)
+            featured.write(featured.XmlOutput(None, f), sessions)
+            tracks.write(tracks.XmlOutput(None, f), sessions)
+            xref.write(xref.XmlOutput(None, f), participants)
+            f.write('</pocketprogram>\n')
+            f.close()

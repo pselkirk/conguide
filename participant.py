@@ -22,12 +22,24 @@ import config
 
 class Participant(object):
 
+    participants = {}
+
     def __init__(self, name):
+        self.__readconfig()
+
+        # XXX change from previous practice, where we did chname in the file
+        # importer, before instantiating the Participant. Moved it here,
+        # because only this module can set Participant class variables. This
+        # means that chname has to change to absorb stray titles (e.g. "Mike
+        # Hunt, MD").
+        if name in Participant.chname:
+            name = Participant.chname[name]
+
         self.name = name
         self.sessions = []
         try:
             # configured sortkey (usually unhyphenated last name)
-            self.sortkey = config.sortname[name].lower()
+            self.sortkey = Participant.sortname[name].lower()
         except KeyError:
             # sortkey = Lastname Firstname Middle
             nn = name.split(' ')
@@ -50,6 +62,24 @@ class Participant(object):
             # mash it together and  make it case-insensitive
             self.sortkey = ' '.join([last] + first).lower()
 
+        # add to the global list of participants
+        Participant.participants[name] = self
+
+    def __readconfig(self):
+        Participant.sortname = {}
+        try:
+            for name, sortkey in config.items('participant sort name'):
+                Participant.sortname[name] = sortkey.lower()
+        except config.NoSectionError:
+            pass
+        Participant.chname = {}
+        try:
+            for name, rename in config.items('participant change name'):
+                Participant.chname[name] = rename
+        except config.NoSectionError:
+            pass
+        Participant.__readconfig = lambda x: None
+
     def __lt__(self, other):
         return (other and (self.sortkey < other.sortkey))
 
@@ -62,11 +92,9 @@ class Participant(object):
     def __str__(self):
         return self.name
 
-if __name__ == '__main__':
-    import cmdline
 
-    args = cmdline.cmdline(io=True, modes=False)
-    participants = config.filereader.read_bios(config.filenames['bios', 'input'], {})
-    for p in sorted(participants.values()):
-        print(p.name)
-    print(len(participants))
+def read(fn):
+    import importlib
+    value = config.get('input file importer', 'reader')
+    filereader = importlib.import_module(value)
+    filereader.read_bios(fn)

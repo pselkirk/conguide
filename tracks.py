@@ -21,8 +21,34 @@ import re
 
 import config
 import pocketprogram
+from room import Room
+import session
 
 class Output(pocketprogram.Output):
+
+    def __init__(self, fn, fd=None):
+        pocketprogram.Output.__init__(self, fn, fd)
+        self.__readconfig()
+
+    def __readconfig(self):
+        Output.template = {}
+        try:
+            for key, value in config.items('tracks template'):
+                Output.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        Output.classifiers = []
+        try:
+            for area, expr in config.items('tracks classifier'):
+                expr = expr.replace('track', 'session.track')
+                expr = expr.replace('type', 'session.type')
+                expr = re.sub(r'room == (\'\w+\')',
+                              r'session.room == Room.rooms[\1]', expr)
+                area = area.replace(' - ', u'\u2014')
+                Output.classifiers.append((area, expr))
+        except config.NoSectionError:
+            pass
+        Output.__readconfig = lambda x: None
 
     def writeTrackNames(self, tracks):
         self.f.write(self.strTrackNames(tracks))
@@ -45,6 +71,19 @@ class Output(pocketprogram.Output):
 
 class TextOutput(Output):
 
+    def __init__(self, fn):
+        Output.__init__(self, fn)
+        self.__readconfig()
+
+    def __readconfig(self):
+        TextOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('tracks template text'):
+                TextOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        TextOutput.__readconfig = lambda x: None
+
     def cleanup(self, text):
         # convert italics
         return re.sub(r'</?i>', '*', text)
@@ -65,9 +104,19 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        title = config.convention + ' Schedule, by Area'
+        self.__readconfig()
+        title = Output.convention + ' Schedule, by Area'
         self.f.write(config.html_header % (title, '', title,
                                            config.source_date))
+
+    def __readconfig(self):
+        HtmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('tracks template html'):
+                HtmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</dl></body></html>\n')
@@ -94,16 +143,26 @@ class HtmlOutput(Output):
 
     def strTitle(self, session):
         return '<a href="%s#%s">%s</a></dd>\n' % \
-            (config.filenames['schedule', 'html'], session.sessionid,
+            (config.get('output files html', 'schedule'), session.sessionid,
              self.cleanup(session.title))
 
 class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
+        self.__readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<tracks>')
+
+    def __readconfig(self):
+        XmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('tracks template xml'):
+                XmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</tracks>\n')
@@ -131,7 +190,7 @@ def write(output, sessions):
     track = {}
     for session in sessions:
         t = session.track
-        for k, v in config.track_classifiers:
+        for k, v in Output.classifiers:
             if eval(v):
                 t = k
                 break
@@ -154,25 +213,16 @@ if __name__ == '__main__':
     import cmdline
 
     args = cmdline.cmdline(io=True)
-    config.filereader.read(config.filenames['schedule', 'input'])
+    session.read(config.get('input files', 'schedule'))
 
-    if args.text:
-        if args.outfile:
-            write(TextOutput(args.outfile), config.sessions)
-        elif ('tracks', 'text') in config.filenames:
-            write(TextOutput(config.filenames['tracks', 'text']),
-                  config.sessions)
-
-    if args.html:
-        if args.outfile:
-            write(HtmlOutput(args.outfile), config.sessions)
-        elif ('tracks', 'html') in config.filenames:
-            write(HtmlOutput(config.filenames['tracks', 'html']),
-                  config.sessions)
-
-    if args.xml:
-        if args.outfile:
-            write(XmlOutput(args.outfile), config.sessions)
-        elif ('tracks', 'xml') in config.filenames:
-            write(XmlOutput(config.filenames['tracks', 'xml']),
-                  config.sessions)
+    for mode in ('text', 'html', 'xml'):
+        if eval('args.' + mode):
+            output = eval('%sOutput' % mode.capitalize())
+            if args.outfile:
+                write(output(args.outfile), session.Session.sessions)
+            else:
+                try:
+                    write(output(config.get('output files ' + mode, 'tracks')),
+                          session.Session.sessions)
+                except config.NoOptionError:
+                    pass

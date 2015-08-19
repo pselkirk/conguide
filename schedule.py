@@ -16,13 +16,87 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+import copy
 import re
 
 import config
-from pocketprogram import Output
-import times
+import pocketprogram
+from times import Day, Duration
+import session
 
 prune = True
+
+class Output(pocketprogram.Output):
+
+    def __init__(self, fn, fd=None):
+        pocketprogram.Output.__init__(self, fn, fd)
+        self.__readconfig()
+
+    def __readconfig(self):
+        Output.template = {}
+        try:
+            for key, value in config.items('schedule template'):
+                Output.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+
+        Output.icons = []
+        try:
+            for char, expr in config.items('schedule icons'):
+                #config.icons.append((char, expr))
+                expr = expr.replace('track', 'session.track')
+                expr = expr.replace('type', 'session.type')
+                expr = expr.replace('sessionid', 'session.sessionid')
+                expr = expr.replace(' in ', ' in config.')
+                expr = re.sub(r'room == (\'\w+\')',
+                              r'session.room == config.rooms[\1]', expr)
+                Output.icons.append((char, expr))
+        except config.NoSectionError:
+            pass
+
+        Output.presentation = []
+        try:
+            for (sessionid, unused) in config.items('schedule presentation'):
+                Output.presentation.append(sessionid)
+        except config.NoSectionError:
+            pass
+
+        Output.combat = []
+        try:
+            for (sessionid, unused) in config.items('schedule combat'):
+                Output.combat.append(sessionid)
+        except config.NoSectionError:
+            pass
+
+        Output.prune = None
+        try:
+            nn = []
+            for k, expr in config.items('schedule prune participants'):
+                if k == 'type':
+                    for n in re.split(r',\s*', expr):
+                        nn.append('session.type == \'%s\'' % n)
+                elif k == 'title':
+                    for n in re.split(r',\s*', expr):
+                        nn.append('session.title.startswith(\'%s\')' % n)
+            Output.prune = ' or '.join(nn)
+        except config.NoSectionError:
+            pass
+
+        Output.nopartic = []
+        try:
+            for (sessionid, unused) in config.items('schedule no participants'):
+                Output.nopartic.append(sessionid)
+        except config.NoSectionError:
+            pass
+
+        Output.nodescr = []
+        try:
+            for (sessionid, unused) in config.items('schedule no description'):
+                Output.nodescr.append(sessionid)
+        except configparser.NoSectionError:
+            pass
+
+        Output.__readconfig = lambda x: None
 
 class TextOutput(Output):
 
@@ -30,8 +104,18 @@ class TextOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
+        self.__readconfig()
         import textwrap
         self.wrapper = textwrap.TextWrapper(76)
+
+    def __readconfig(self):
+        TextOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('schedule template text'):
+                TextOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        TextOutput.__readconfig = lambda x: None
 
     def cleanup(self, text):
         # convert italics
@@ -43,11 +127,11 @@ class TextOutput(Output):
     def strIndex(self, session):
         return '[%s]' % session.index
 
-    def strDuration(self, session):
-        if session.duration != config.default_duration:
-            return str(session.duration)
-        else:
-            return ''
+    #def strDuration(self, session):
+    #    if session.duration != self.default_duration:
+    #        return str(session.duration)
+    #    else:
+    #        return ''
 
     def strTitle(self, session):
         return self.wrapper.fill(self.cleanup(session.title))
@@ -70,13 +154,23 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        title = config.convention + ' Schedule'
+        self.__readconfig()
+        title = self.convention + ' Schedule'
         self.f.write(config.html_header % (title, '', title, config.source_date))
         dd = []
-        for day in config.days:
+        for day in Day.days:
             dd.append('<a href="#%s">%s</a>' % (day.name, day.name))
         self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % ' - '.join(dd))
         self.curday = None
+
+    def __readconfig(self):
+        HtmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('schedule template html'):
+                HtmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -105,15 +199,15 @@ class HtmlOutput(Output):
                 name = p.__str__()
                 try:
                     name = '<a href="%s#%s">%s</a>' % \
-                           (config.filenames['bios', 'html'],
+                           (config.get('output files html', 'bios'),
                             re.sub(r'\W', '', name), name)
                 except KeyError:
                     try:
                         name = '<a href="%s#%s">%s</a>' % \
-                               (config.filenames['xref', 'html'],
+                               (config.get('output files html', 'xref'),
                                 re.sub(r'\W', '', name), name)
                     except KeyError:
-                        None
+                        pass
                 if p in session.moderators:
                     name += '&nbsp;(m)'
                 pp.append(name)
@@ -127,10 +221,20 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
-        self.zeroDuration = times.Duration('0')
+        self.__readconfig()
+        self.zeroDuration = Duration('0')
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<schedule>')
+
+    def __readconfig(self):
+        XmlOutput.template = copy.copy(Output.template)
+        try:
+            for key, value in config.items('schedule template xml'):
+                XmlOutput.template[key] = config.parseTemplate(value)
+        except config.NoSectionError:
+            pass
+        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</schedule>\n')
@@ -163,7 +267,7 @@ class XmlOutput(Output):
 
     def strDuration(self, session):
         if session.duration != self.zeroDuration and \
-           session.duration != config.default_duration:
+           session.duration != self.default_duration:
             return '<ss-duration>%s</ss-duration>' % session.duration
         else:
             return ''
@@ -178,9 +282,9 @@ class XmlOutput(Output):
             return ''
 
     def strIcon(self, session):
-        if config.icons:
+        if self.icons:
             icon = None
-            for k, v in config.icons:
+            for k, v in self.icons:
                 if eval(v):
                     icon = k
                     break
@@ -196,11 +300,11 @@ class XmlOutput(Output):
             return ''
 
     def strParticipants(self, session):
-        if session.sessionid in config.nopartic:
+        if session.sessionid in self.nopartic:
             return ''
         str = Output.strParticipants(self, session)
         # Prune participants to save space.
-        if str and prune and config.prune and eval(config.prune):
+        if str and prune and self.prune and eval(self.prune):
             if config.debug:
                 pp = []
                 for p in session.participants:
@@ -220,20 +324,20 @@ def write(output, sessions):
 
     def writeDay(session):
         try:
-            str = output.fillTemplate(config.template['schedule', 'day', output.name], session)
+            str = output.fillTemplate(output.template['day'], session)
             output.f.write(str + '\n')
         except KeyError:
-            None
+            pass
 
     def writeTime(session):
         try:
-            str = output.fillTemplate(config.template['schedule', 'time', output.name], session)
+            str = output.fillTemplate(output.template['time'], session)
             output.f.write(str + '\n')
         except KeyError:
-            None
+            pass
 
     def writeSession(session):
-        str = output.fillTemplate(config.template['schedule', 'session', output.name], session)
+        str = output.fillTemplate(output.template['session'], session)
         # remove blank lines	# XXX make this a config option
         #str = re.sub('\n+', '\n', str)
         #str = re.sub('\n$', '', str)
@@ -262,22 +366,17 @@ if __name__ == '__main__':
                         help='don\'t prune participants to save space (xml only)')
     args = cmdline.cmdline(parser, io=True)
     prune = args.prune
-    config.filereader.read(config.filenames['schedule', 'input'])
+    session.read(config.get('input files', 'schedule'))
+    # XXX go back to having session.read return a list
 
-    if args.text:
-        if args.outfile:
-            write(TextOutput(args.outfile), config.sessions)
-        elif ('schedule', 'text') in config.filenames:
-            write(TextOutput(config.filenames['schedule', 'text']), config.sessions)
-
-    if args.html:
-        if args.outfile:
-            write(HtmlOutput(args.outfile), config.sessions)
-        elif ('schedule', 'html') in config.filenames:
-            write(HtmlOutput(config.filenames['schedule', 'html']), config.sessions)
-
-    if args.xml:
-        if args.outfile:
-            write(XmlOutput(args.outfile), config.sessions)
-        elif ('schedule', 'xml') in config.filenames:
-            write(XmlOutput(config.filenames['schedule', 'xml']), config.sessions)
+    for mode in ('text', 'html', 'xml'):
+        if eval('args.' + mode):
+            output = eval('%sOutput' % mode.capitalize())
+            if args.outfile:
+                write(output(args.outfile), session.Session.sessions)
+            else:
+                try:
+                    write(output(config.get('output files ' + mode, 'schedule')),
+                          session.Session.sessions)
+                except config.NoOptionError:
+                    pass
