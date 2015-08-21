@@ -48,7 +48,7 @@ class Output(pocketprogram.Output):
                 expr = expr.replace('track', 'session.track')
                 expr = expr.replace('type', 'session.type')
                 Output.research.append(expr)
-        except configparser.NoSectionError:
+        except config.NoSectionError:
             pass
         Output.__readconfig = lambda x: None
 

@@ -15,6 +15,7 @@ import re
 
 import cmdline
 import config
+import session
 from times import Day, Duration
 
 parent = cmdline.cmdlineParser(modes=False)
@@ -22,17 +23,29 @@ parser = argparse.ArgumentParser(add_help=False, parents=[parent])
 parser.add_argument('--raw', action='store_true',
                     help='print raw opening and closing entries')
 args = cmdline.cmdline(parser, modes=False)
-config.filereader.read(config.filenames['schedule', 'input'])
+session.read(config.get('input files', 'schedule'))
 
-for i in range(Day.index):
-    day = Day.days[i]
+exprs = []
+try:
+    expr = config.get('grid no print', 'title starts with')
+    exprs.append('session.title.startswith((%s))' % expr)
+except (config.NoSectionError, config.NoOptionError):
+    pass
+try:
+    expr = config.get('grid no print', 'title ends with')
+    exprs.append('session.title.endswith((%s))' % expr)
+except (config.NoSectionError, config.NoOptionError):
+    pass
+noprint = ' or '.join(exprs)
+
+for day in Day.days:
     print(day)
     openclose = []
     for time in day.time:
         for session in time.session:
             # [grid no print]
             # title ends with = 'Open', 'Opens', 'Close', 'Closes', 'Lunch', 'Dinner'
-            if config.grid_noprint and eval(config.grid_noprint):
+            if noprint and eval(noprint):
                 if args.raw:
                     print('%s %s (%s)' % (session.title, session.time, session.duration))
                 else:

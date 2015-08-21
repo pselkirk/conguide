@@ -71,7 +71,7 @@ class Output(pocketprogram.Output):
             exprs.append('session.title.endswith((%s))' % expr)
         except (config.NoSectionError, config.NoOptionError):
             pass
-            Output.noprint = ' or '.join(exprs)
+        Output.noprint = ' or '.join(exprs)
 
         try:
             val = config.get('grid title prune', 'usage')
@@ -434,7 +434,23 @@ class XmlOutput(Output):
         return text.replace('&', '&amp;')
 
     def strTitle(self, session):
-        return IndesignOutput.strTitle(self, session)
+        title = session.title
+        # XXX local policy
+        # remove things like "Reading" from the title if it's in the
+        # room usage
+        try:
+            for m in self.title_prune:
+                if session.room.usage == m or \
+                   session.room.usage == m + 's' or \
+                   m in str(session.room):
+                    title = title.replace(m + ' - ', '')
+                    title = title.replace(m + ': ', '')
+                    break
+        except AttributeError:
+            pass
+        # do the cleanup last, because we're replacing on ' - ',
+        # which cleanup() will translate to m-dash
+        return self.cleanup(title)
 
     def strTableTitle(self, gridslice):
         return '<title xmlns:aid="http://ns.adobe.com/AdobeInDesign/4.0/" aid:pstyle="Headline">%s</title>' % gridslice.name

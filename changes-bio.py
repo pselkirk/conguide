@@ -20,8 +20,11 @@ import argparse
 
 import cmdline
 import config
+import participant
+import session
 import times
 
+config.quiet = True
 debug = False
 verbose = False
 participants = [{}, {}]
@@ -41,20 +44,19 @@ if not args.files or len(args.files) > 2:
     parser.print_help()
     exit(1)
 elif len(args.files) == 1:
-    args.files.append(config.filenames['bios', 'input'])
+    args.files.append(config.get('input files', 'bios'))
 
 def read(fn):
     participants = {}
-    config.filereader.read_bios(fn)
-    for p in config.participants.values():
+    participant.read(fn)
+    for p in participant.Participant.participants.values():
         participants[p.badgeid] = p
     return participants
 
 participants[0] = read(args.files[0])
 # reinitialize for the next read
-times.Day._reset_()
-config.sessions = []
-config.participants = {}
+session.Session.sessions = []
+participant.Participant.participants = {}
 participants[1] = read(args.files[1])
 
 added = []
