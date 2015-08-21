@@ -24,6 +24,8 @@ from times import Day, Time, Duration
 class Session(object):
 
     sessions = []
+    curday = ('', None)
+    curtime = ('', None)
 
     def __init__(self, row):
         self.__readconfig()
@@ -44,20 +46,21 @@ class Session(object):
         except (KeyError, TypeError):
             self.index = 0
 
-        try:
-            day = Day.days[row['day']]
-        except KeyError:
+        if row['day'] == Session.curday[0]:
+            day = Session.curday[1]
+        else:
             if config.debug:
                 print('info: new day %s' % row['day'])
             day = Day(row['day'])
-            Day.days[row['day']] = day
-        try:
-            time = day.time[row['time']]
-        except KeyError:
+            Session.curday = (row['day'], day)
+        if row['time'] == Session.curtime[0]:
+            time = Session.curtime[1]
+        else:
             if config.debug:
-                print('info: new time %s %s' % (row['day'], row['time']))
+                print('info: new time %s' % row['time'])
             time = Time(row['time'], day)
-            day.time[row['time']] = time
+            Session.curtime = (row['time'], time)
+            day.time.append(time)
         self.time = time
         time.session.append(self)
 
@@ -91,9 +94,9 @@ class Session(object):
         try:
             room = Room.rooms[row['room']]
         except AttributeError:
-	    # force Room.__init__() to read the config
-	    room = Room('unused')
-	    del Room.rooms['unused']
+            # force Room.__init__() to read the config
+            room = Room('unused')
+            del Room.rooms['unused']
             try:
                 room = Room.rooms[row['room']]
             except KeyError:

@@ -43,27 +43,27 @@ class Day(object):
              'Thursday': 'Thu', 'Friday': 'Fri', 'Saturday': 'Sat',
              'Sunday': 'Sun'}
     index = 0
-    days = {}
+    days = []
 
     # TODO: add day/month/year for guidebook?
 
     def __init__(self, name):
-        if name in Day.days:
-	    self.__dict__ = Day.days[name].__dict__
-	else:
-            if len(name) == 3:
-                self.shortname = name
-                self.name = Day._DAY_[name]
-            else:
-                self.name = name
-                self.shortname = Day._DAY_[name]
-            # KeyError on bad name
-            self.index = Day.index
-            Day.index += 1
-            self.time = {}
-            Day.days[self.name] = self
-            Day.days[self.shortname] = self
-            Day.days[self.index] = self
+        for day in Day.days:
+            if name == day.name or name == day.shortname:
+                self.__dict__ = day.__dict__
+                return
+
+        if len(name) == 3:
+            self.shortname = name
+            self.name = Day._DAY_[name]
+        else:
+            self.name = name
+            self.shortname = Day._DAY_[name]
+        # KeyError on bad name
+        self.index = Day.index
+        Day.index += 1
+        Day.days.append(self)
+        self.time = []
 
     def __lt__(self, other):
         return other and (self.index < other.index)
@@ -76,11 +76,6 @@ class Day(object):
 
     def __str__(self):
         return self.name
-
-    def _reset_(self):
-        # we do this when reading multiple input files
-        Day.index = 0
-	Day.days = {}
 
 @total_ordering
 class Time(object):

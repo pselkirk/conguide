@@ -77,7 +77,6 @@ def count(fn, i):
                 incr(tag, t, i)
 
     # reinitialize for the next count
-    times.Day._reset_(times.Day.days[0])
     session.Session.sessions = []
     Participant.participants = {}
 

@@ -128,10 +128,6 @@ def read(fn):
 
     # sort
     Session.sessions = sorted(Session.sessions)
-    # NOTE this changes the data type
-    Day.days = sorted(set(Day.days.values()))
-    for day in Day.days:
-        day.time = sorted(day.time.values())
 
 def cleanup(field, minimal=False):
     if type(field) is list:
