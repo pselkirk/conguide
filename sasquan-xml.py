@@ -59,7 +59,10 @@ from times import Day
 """
 
 def read(fn):
-    """ Read an XML file, and create the global ``sessions`` list. """
+    """ Read an XML file, return a list of sessions and a dict of participants. """
+
+    sessions = []
+    participants = {}
 
     #for timeslot in xml.etree.ElementTree.parse(fn).getroot():
     parser = xml.etree.ElementTree.XMLParser(encoding='utf-8')
@@ -88,9 +91,12 @@ def read(fn):
                                 row['tags'].append(c.text)
                         elif b.tag == 'people':
                             for c in b:
-                                row['participants'].append(c.findtext('name'))
+                                name = c.findtext('name')
+                                if name in Participant.chname:
+                                    name = Participant.chname[name]
+                                row['participants'].append(name)
                                 if c.tag == 'moderator':
-                                    row['moderators'].append(c.findtext('name'))
+                                    row['moderators'].append(name)
                         else:
                             row[b.tag] = b.text
                 else:
@@ -124,10 +130,13 @@ def read(fn):
                 row[k] = cleanup(row[k], minimal)
 
             # make a new session from this data
-            session = Session(row)
+            session = Session(row, participants)
+            sessions.append(session)
 
     # sort
-    Session.sessions = sorted(Session.sessions)
+    sessions = sorted(sessions)
+
+    return (sessions, participants)
 
 def cleanup(field, minimal=False):
     if type(field) is list:
@@ -180,9 +189,20 @@ if __name__ == '__main__':
 
     config.CFG = 'sasquan.cfg'
     args = cmdline.cmdline(io=True, modes=False)
-    read(args.infile)
 
-    for s in Session.sessions:
+    # Read [participant change name] here because we want to check the
+    # chname dict before instantiating the first participant, or even the
+    # first session.
+    Participant.chname = {}
+    try:
+        for name, rename in config.items('participant change name'):
+            Participant.chname[name] = rename
+    except config.NoSectionError:
+        pass
+
+    (sessions, participants) = read(args.infile)
+
+    for s in sessions:
         print('%04d' % s.index)
         print('%s %s %s' % (s.time.day, s.time, s.duration))
         print(s.room)
@@ -200,7 +220,7 @@ if __name__ == '__main__':
             print('#' + ', #'.join(s.tags))
         print('')
 
-    for p in sorted(Participant.participants.values()):
+    for p in sorted(participants.values()):
         ss = []
         for s in p.sessions:
             ss.append(str(s.index))

@@ -33,6 +33,7 @@ class Output(pocketprogram.Output):
         self.__readconfig()
 
     def __readconfig(self):
+        Output.__readconfig = lambda x: None
         try:
             Output.default_duration = Duration(config.get('schedule default duration', 'duration'))
         except (config.NoSectionError, config.NoOptionError):
@@ -100,8 +101,6 @@ class Output(pocketprogram.Output):
         except config.NoSectionError:
             pass
 
-        Output.__readconfig = lambda x: None
-
 class TextOutput(Output):
 
     name = 'text'
@@ -113,13 +112,13 @@ class TextOutput(Output):
         self.wrapper = textwrap.TextWrapper(76)
 
     def __readconfig(self):
+        TextOutput.__readconfig = lambda x: None
         TextOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template text'):
                 TextOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        TextOutput.__readconfig = lambda x: None
 
     def cleanup(self, text):
         # convert italics
@@ -168,13 +167,13 @@ class HtmlOutput(Output):
         self.curday = None
 
     def __readconfig(self):
+        HtmlOutput.__readconfig = lambda x: None
         HtmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template html'):
                 HtmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -232,13 +231,13 @@ class XmlOutput(Output):
         self.f.write('<schedule>')
 
     def __readconfig(self):
+        XmlOutput.__readconfig = lambda x: None
         XmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template xml'):
                 XmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</schedule>\n')
@@ -370,17 +369,16 @@ if __name__ == '__main__':
                         help='don\'t prune participants to save space (xml only)')
     args = cmdline.cmdline(parser, io=True)
     prune = args.prune
-    session.read(config.get('input files', 'schedule'))
-    # XXX go back to having session.read return a list
+    (sessions, participants) = session.read(config.get('input files', 'schedule'))
 
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             output = eval('%sOutput' % mode.capitalize())
             if args.outfile:
-                write(output(args.outfile), session.Session.sessions)
+                write(output(args.outfile), sessions)
             else:
                 try:
                     write(output(config.get('output files ' + mode, 'schedule')),
-                          session.Session.sessions)
+                          sessions)
                 except config.NoOptionError:
                     pass

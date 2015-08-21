@@ -44,7 +44,10 @@ def csv_reader(fn):
     return reader
 
 def read(fn):
-    """ Read a CSV file, and create the global ``sessions`` list. """
+    """ Read a CSV file, return a list of sessions and a dict of participants. """
+
+    sessions = []
+    participants = {}
 
     reader = csv_reader(fn)
     for row in reader:
@@ -56,6 +59,10 @@ def read(fn):
         row['tags'] = []
 
         if row['participants']:
+            # chname has to operate on the full participants string
+            # because some of the target names have commas in them
+            for k, v in Participant.chname.items():
+                row['participants'] = row['participants'].replace(k, v)
             mods = []
             partic = re.split(r', ?', row['participants'])
             for i, p in enumerate(partic):
@@ -75,14 +82,17 @@ def read(fn):
             row[k] = cleanup(row[k], minimal)
 
         # make a new session from this data
-        session = Session(row)
+        session = Session(row, participants)
+        sessions.append(session)
 
     # sort
-    Session.sessions = sorted(Session.sessions)
+    sessions = sorted(sessions)
 
     # add session index
-    for i, s in enumerate(Session.sessions, start=1):
+    for i, s in enumerate(sessions, start=1):
         s.index = i
+
+    return (sessions, participants)
 
 def cleanup(field, minimal=False):
     # convert all whitespace (including newlines) to single spaces
@@ -108,7 +118,7 @@ def cleanup(field, minimal=False):
 
     return field
 
-def read_bios(fn):
+def read_bios(fn, participants):
     """ Read the bios file, identify participants without sessions,
     and add fields for bios.py.
     """
@@ -123,22 +133,37 @@ def read_bios(fn):
             pubsname = Participant.chname[pubsname]
         except (AttributeError, KeyError):
             pass
-        if not pubsname in Participant.participants:
+        try:
+            p = participants[pubsname]
+        except KeyError:
             if not config.quiet:
                 print('warning: new participant %s' % pubsname)
-            Participant.participants[pubsname] = Participant(pubsname)
-        Participant.participants[pubsname].firstname = row['firstname']
-        Participant.participants[pubsname].lastname = row['lastname']
-        Participant.participants[pubsname].bio = row['bio']
-        Participant.participants[pubsname].badgeid = row['badgeid']
+            p = Participant(pubsname)
+            participants[pubsname] = p
+        p.firstname = row['firstname']
+        p.lastname = row['lastname']
+        p.bio = row['bio']
+        p.badgeid = row['badgeid']
+    return participants
 
 if __name__ == '__main__':
     import cmdline
 
     args = cmdline.cmdline(io=True, modes=False)
-    read(args.infile)
 
-    for s in Session.sessions:
+    # Read [participant change name] here because we want to check the
+    # chname dict before instantiating the first participant, or even the
+    # first session.
+    Participant.chname = {}
+    try:
+        for name, rename in config.items('participant change name'):
+            Participant.chname[name] = rename
+    except config.NoSectionError:
+        pass
+
+    (sessions, participants) = read(args.infile)
+
+    for s in sessions:
         print(s.index)
         print('%s %s (%s)' % (s.time.day, s.time, s.duration))
         print(s.room)
@@ -154,7 +179,7 @@ if __name__ == '__main__':
             print(', '.join(pp))
         print('')
 
-    for p in sorted(Participant.participants.values()):
+    for p in sorted(participants.values()):
         ss = []
         for s in p.sessions:
             ss.append(str(s.index))

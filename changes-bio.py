@@ -24,11 +24,6 @@ import participant
 import session
 import times
 
-config.quiet = True
-debug = False
-verbose = False
-participants = [{}, {}]
-
 parent = cmdline.cmdlineParser(modes=False)
 parser = argparse.ArgumentParser(add_help=False, parents=[parent])
 parser.add_argument('-v', '--verbose', action='store_true',
@@ -36,8 +31,7 @@ parser.add_argument('-v', '--verbose', action='store_true',
 parser.add_argument('files', nargs=argparse.REMAINDER,
                     help='one or two snapshots of PubBio.csv')
 args = cmdline.cmdline(parser, modes=False)
-debug = args.debug
-verbose = args.verbose
+config.quiet = True
 
 if not args.files or len(args.files) > 2:
     print('specify one or two .csv files')
@@ -48,16 +42,11 @@ elif len(args.files) == 1:
 
 def read(fn):
     participants = {}
-    participant.read(fn)
-    for p in participant.Participant.participants.values():
+    for p in participant.read(fn, {}).values():
         participants[p.badgeid] = p
     return participants
 
-participants[0] = read(args.files[0])
-# reinitialize for the next read
-session.Session.sessions = []
-participant.Participant.participants = {}
-participants[1] = read(args.files[1])
+participants = [read(args.files[0]), read(args.files[1])]
 
 added = []
 removed = []
@@ -78,7 +67,7 @@ for p in sorted(participants[1].values()):
 
 for p in sorted(participants[0].values()):
     ph = pheader(p)
-    if debug:
+    if args.debug:
         print(ph)
     p1 = participants[1].get(p.badgeid)
     if not p1:
@@ -89,7 +78,7 @@ for p in sorted(participants[0].values()):
     if p1.name != p.name:
         ch_pubsname.append('%s: %s -> %s' % (ph, p.name, p1.name))
     if p1.bio != p.bio:
-        if verbose:
+        if args.verbose:
             ch_bio.append('%s: %s -> %s' % (ph, p.bio, p1.bio))
         else:
             ch_bio.append(ph)

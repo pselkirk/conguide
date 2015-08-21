@@ -58,6 +58,7 @@ class Output(object):
             self.leaveopen = False
 
     def __readconfig(self):
+        Output.__readconfig = lambda x: None
         # get some basic configuration from the config file
         Output.convention = config.get('convention', 'convention')
         Output.goh = {}
@@ -69,7 +70,6 @@ class Output(object):
             # tm_min=0, tm_sec=0, tm_wday=4, tm_yday=17, tm_isdst=-1)
         except config.NoOptionError:
             pass
-        Output.__readconfig = lambda x: None
 
     def __del__(self):
         if not self.leaveopen:
@@ -214,14 +214,11 @@ if __name__ == '__main__':
     import xref
 
     args = cmdline.cmdline()
-    session.read(config.get('input files', 'schedule'))
+    (sessions, participants) = session.read(config.get('input files', 'schedule'))
     try:
-        participant.read(config.get('input files', 'bios'))
+        participant.read(config.get('input files', 'bios'), participants)
     except config.NoOptionError:
         pass
-
-    sessions = session.Session.sessions
-    participants = participant.Participant.participants
 
     for mode in ('text', 'html', 'xml', 'indesign'):
         if eval('args.' + mode):

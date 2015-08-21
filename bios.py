@@ -29,6 +29,7 @@ class Output(pocketprogram.Output):
         self.__readconfig()
 
     def __readconfig(self):
+        Output.__readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('bios template'):
@@ -41,7 +42,6 @@ class Output(pocketprogram.Output):
                 Output.boldnames[name] = rename
         except config.NoSectionError:
             pass
-        Output.__readconfig = lambda x: None
 
     def writeBio(self, participant):
         boldname = self.bold(participant)
@@ -117,13 +117,13 @@ class TextOutput(Output):
         self.wrapper = textwrap.TextWrapper(76)
 
     def __readconfig(self):
+        TextOutput.__readconfig = lambda x: None
         TextOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template text'):
                 TextOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        TextOutput.__readconfig = lambda x: None
 
     def cleanup(self, text):
         # convert italics
@@ -151,13 +151,13 @@ class HtmlOutput(Output):
                                            config.source_date))
 
     def __readconfig(self):
+        HtmlOutput.__readconfig = lambda x: None
         HtmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template html'):
                 HtmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -214,13 +214,13 @@ class XmlOutput(Output):
         self.f.write('<bios>')
 
     def __readconfig(self):
+        XmlOutput.__readconfig = lambda x: None
         XmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template xml'):
                 XmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</bios>\n')
@@ -262,19 +262,19 @@ if __name__ == '__main__':
     parser.add_argument('--infile', action='store', help='input file name')
     parser.add_argument('--outfile', action='store', help='output file name')
     args = cmdline.cmdline(parser)
-    session.read(config.get('input files', 'schedule'))
+    (sessions, participants) = session.read(config.get('input files', 'schedule'))
     if not args.infile:
         args.infile = config.get('input files', 'bios')
-    participant.read(args.infile)
+    participant.read(args.infile, participants)
 
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             output = eval('%sOutput' % mode.capitalize())
             if args.outfile:
-                write(output(args.outfile), participant.Participant.participants)
+                write(output(args.outfile), participants)
             else:
                 try:
                     write(output(config.get('output files ' + mode, 'bios')),
-                          participant.Participant.participants)
+                          participants)
                 except config.NoOptionError:
                     pass

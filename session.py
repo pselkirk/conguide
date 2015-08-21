@@ -23,11 +23,10 @@ from times import Day, Time, Duration
 
 class Session(object):
 
-    sessions = []
     curday = ('', None)
     curtime = ('', None)
 
-    def __init__(self, row):
+    def __init__(self, row, participants=None):
         self.__readconfig()
         if row['room'] in Session.chroom:
             row['room'] = Session.chroom[row['room']]
@@ -130,11 +129,12 @@ class Session(object):
         self.participants = []
         for name in row['participants']:
             try:
-                p = Participant.participants[name]
+                p = participants[name]
             except KeyError:
                 if config.debug:
                     print('info: new participant %s' % name)
                 p = Participant(name)
+                participants[name] = p
             self.participants.append(p)
             p.sessions.append(self)
         # XXX local policy
@@ -142,15 +142,11 @@ class Session(object):
 
         self.moderators = []
         for name in row['moderators']:
-            if name in Participant.chname:
-                name = Participant.chname[name]
-            p = Participant.participants[name]
+            p = participants[name]
             self.moderators.append(p)
 
-        # add to the global list of sessions
-        Session.sessions.append(self)
-
     def __readconfig(self):
+        Session.__readconfig = lambda x: None
         Session.chroom = {}
         try:
             for name, rename in config.items('session change room'):
@@ -181,7 +177,6 @@ class Session(object):
                 Session.noprint[sessionid] = True
         except config.NoSectionError:
             pass
-        Session.__readconfig = lambda x: None
 
     def __lt__(self, other):
         return (other and \
@@ -194,7 +189,17 @@ class Session(object):
                      (self.index < other.index)))))))
 
 def read(fn):
+    # Read [participant change name] here because we want to check the
+    # chname dict before instantiating the first participant, or even the
+    # first session.
+    Participant.chname = {}
+    try:
+        for name, rename in config.items('participant change name'):
+            Participant.chname[name] = rename
+    except config.NoSectionError:
+        pass
+
     import importlib
     value = config.get('input file importer', 'reader')
     filereader = importlib.import_module(value)
-    filereader.read(fn)
+    return filereader.read(fn)

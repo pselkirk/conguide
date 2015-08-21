@@ -31,13 +31,13 @@ class Output(pocketprogram.Output):
         self.__readconfig()
 
     def __readconfig(self):
+        Output.__readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('xref template'):
                 Output.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        Output.__readconfig = lambda x: None
 
     def writeXref(self, participant):
         if participant.sessions:
@@ -51,13 +51,13 @@ class TextOutput(Output):
         self.__readconfig()
 
     def __readconfig(self):
+        TextOutput.__readconfig = lambda x: None
         TextOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template text'):
                 TextOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        TextOutput.__readconfig = lambda x: None
 
     def strName(self, participant):
         return '%s: ' % participant.__str__()
@@ -74,17 +74,16 @@ class HtmlOutput(Output):
         Output.__init__(self, fn)
         self.__readconfig()
         title = self.convention + ' Program Participant Cross-Reference'
-        self.f.write(config.html_header % (title, '', title,
-                                           self.source_date))
+        self.f.write(config.html_header % (title, '', title, config.source_date))
 
     def __readconfig(self):
+        HtmlOutput.__readconfig = lambda x: None
         HtmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template html'):
                 HtmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -121,13 +120,13 @@ class XmlOutput(Output):
         self.f.write('<xrefs>')
 
     def __readconfig(self):
+        XmlOutput.__readconfig = lambda x: None
         XmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template xml'):
                 XmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</xrefs>\n')
@@ -152,16 +151,16 @@ if __name__ == '__main__':
     import cmdline
 
     args = cmdline.cmdline(io=True)
-    session.read(config.get('input files', 'schedule'))
+    (sessions, participants) = session.read(config.get('input files', 'schedule'))
 
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             output = eval('%sOutput' % mode.capitalize())
             if args.outfile:
-                write(output(args.outfile), participant.Participant.participants)
+                write(output(args.outfile), participants)
             else:
                 try:
                     write(output(config.get('output files ' + mode, 'xref')),
-                          participant.Participant.participants)
+                          participants)
                 except config.NoOptionError:
                     pass

@@ -30,6 +30,7 @@ class Output(pocketprogram.Output):
         self.__readconfig()
 
     def __readconfig(self):
+        Output.__readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('featured template'):
@@ -42,15 +43,6 @@ class Output(pocketprogram.Output):
                 Output.featured.append(sessionid)
         except config.NoSectionError:
             pass
-        Output.research = []
-        try:
-            for unused, expr in config.items('featured research'):
-                expr = expr.replace('track', 'session.track')
-                expr = expr.replace('type', 'session.type')
-                Output.research.append(expr)
-        except config.NoSectionError:
-            pass
-        Output.__readconfig = lambda x: None
 
     def writeDay(self, session):
         self.f.write(self.strDay(session))
@@ -68,13 +60,13 @@ class TextOutput(Output):
         self.__readconfig()
 
     def __readconfig(self):
+        TextOutput.__readconfig = lambda x: None
         TextOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template text'):
                 TextOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        TextOutput.__readconfig = lambda x: None
 
     def cleanup(self, text):
         # convert italics
@@ -105,13 +97,13 @@ class HtmlOutput(Output):
                                            config.source_date))
 
     def __readconfig(self):
+        HtmlOutput.__readconfig = lambda x: None
         HtmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template html'):
                 HtmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</body></html>\n')
@@ -148,13 +140,13 @@ class XmlOutput(Output):
         self.f.write('<featured>')
 
     def __readconfig(self):
+        XmlOutput.__readconfig = lambda x: None
         XmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template xml'):
                 XmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</featured>\n')
@@ -196,27 +188,29 @@ def write(output, sessions):
             output.writeSession(s)
 
 if __name__ == '__main__':
-    import argparse
-    import cmdline
+    def research(sessions):
+        # research - list all sessions in major-draw tracks, plus all sessions
+        # with at least one GOH participant, formatted for cut-and-paste into
+        # arisia.cfg. Note this is just a starting point, and often misses
+        # things like the Masquerade.
+        #
+        # XXX one current glitch is that cmdline.py will barf if --research
+        # is given without an output mode, even though we don't use it
+        research = []
+        try:
+            for unused, expr in config.items('featured research'):
+                expr = expr.replace('track', 'session.track')
+                expr = expr.replace('type', 'session.type')
+                research.append(expr)
+        except config.NoSectionError:
+            return
+        goh = {}
+        for name in re.split(r',\s*', config.get('convention', 'goh')):
+            goh[name] = True
 
-    parent = cmdline.cmdlineParser(io=True)
-    parser = argparse.ArgumentParser(add_help=False, parents=[parent])
-    parser.add_argument('--research', action='store_true',
-                        help='identify likely candidates for "featured" list')
-    args = cmdline.cmdline(parser, io=True)
-    session.read(config.get('input files', 'schedule'))
-
-    # research - list all sessions in major-draw tracks, plus all sessions
-    # with at least one GOH participant, formatted for cut-and-paste into
-    # arisia.cfg. Note this is just a starting point, and often misses
-    # things like the Masquerade.
-    #
-    # XXX one current glitch is that cmdline.py will barf if --research
-    # is given without an output mode, even though we don't use it
-    if args.research:
         def is_goh(s):
             for p in s.participants:
-                if p.name in Output.goh:
+                if p.name in goh:
                     return True
             return False
 
@@ -227,8 +221,8 @@ if __name__ == '__main__':
 
         gohpartic = []
         ss = {}
-        for session in Output.sessions:
-            for i, expr in enumerate(Output.research):
+        for session in sessions:
+            for i, expr in enumerate(research):
                 if eval(expr):
                     try:
                         ss[i].append(session)
@@ -238,19 +232,29 @@ if __name__ == '__main__':
             if is_goh(session):
                 gohpartic.append(session)
         for i in sorted(ss):
-            out('### %s' % Output.research[i], ss[i])
+            out('### %s' % research[i], ss[i])
         out("### GOH participant(s)", gohpartic)
 
-        exit(0)
+    import argparse
+    import cmdline
+
+    parent = cmdline.cmdlineParser(io=True)
+    parser = argparse.ArgumentParser(add_help=False, parents=[parent])
+    parser.add_argument('--research', action='store_true',
+                        help='identify likely candidates for "featured" list')
+    args = cmdline.cmdline(parser, io=True)
+    (sessions, participants) = session.read(config.get('input files', 'schedule'))
 
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             output = eval('%sOutput' % mode.capitalize())
-            if args.outfile:
-                write(output(args.outfile), session.Session.sessions)
+            if args.research:
+                research(sessions)
+            elif args.outfile:
+                write(output(args.outfile), sessions)
             else:
                 try:
                     write(output(config.get('output files ' + mode, 'featured')),
-                          session.Session.sessions)
+                          sessions)
                 except config.NoOptionError:
                     pass

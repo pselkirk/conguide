@@ -29,9 +29,9 @@ config.debug = args.debug
 config.quiet = args.quiet
 config.cfgfile = args.cfg
 
-session.read(config.get('input files', 'schedule'))
+(sessions, participants) = session.read(config.get('input files', 'schedule'))
 
-for s in session.Session.sessions:
+for s in sessions:
     if s.title in title:
         dup_t[s] = title[s.title]
     else:

@@ -53,6 +53,7 @@ class Output(pocketprogram.Output):
         self.__readconfig()
 
     def __readconfig(self):
+        Output.__readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('grid template'):
@@ -79,7 +80,6 @@ class Output(pocketprogram.Output):
         except (config.NoSectionError, config.NoOptionError):
             pass
 
-        Output.__readconfig = lambda x: None
 
     def configSlice(self):
         for section in config.sections():
@@ -702,16 +702,16 @@ if __name__ == '__main__':
     import session
 
     args = cmdline.cmdline(io=True)
-    session.read(config.get('input files', 'schedule'))
+    (sessions, participants) = session.read(config.get('input files', 'schedule'))
 
     for mode in ('html', 'indesign', 'xml'):
         if eval('args.' + mode):
             output = eval('%sOutput' % mode.capitalize())
             if args.outfile:
-                write(output(args.outfile), session.Session.sessions)
+                write(output(args.outfile), sessions)
             else:
                 try:
                     write(output(config.get('output files ' + mode, 'grid')),
-                          session.Session.sessions)
+                          sessions)
                 except config.NoOptionError:
                     pass

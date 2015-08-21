@@ -53,27 +53,24 @@ config.cfgfile = args.cfg
 verbose = args.verbose
 
 if not args.files or len(args.files) > 2:
-    print('specify one or two .csv files')
+    print('specify one or two data files')
     parser.print_help()
     exit(1)
 elif len(args.files) == 1:
-    args.files.append('pocketprogram.csv')
+    args.files.append(config.get('input files', 'schedule'))
 
 def read(fn):
     if not config.quiet:
         print('---- %s ----' % fn)
-    session.read(fn)
+    (sessions, participants) = session.read(fn)
     session_hash = {}
-    for s in session.Session.sessions:
+    for s in sessions:
         if args.by_title:
             s.sessionid = s.title
         session_hash[s.sessionid] = s
-    return (session_hash, Participant.participants)
+    return (session_hash, participants)
 
 (sessions[0], participants[0]) = read(args.files[0])
-# reinitialize for the next read
-session.Session.sessions = []
-Participant.participants = {}
 (sessions[1], participants[1]) = read(args.files[1])
 
 def session_header(s):

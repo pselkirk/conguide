@@ -49,8 +49,8 @@ config.cfgfile = args.cfg
 if args.infile:
     config.set('input files', 'schedule', args.infile)
 
-session.read(config.get('input files', 'schedule'))
-participant.read(config.get('input files', 'bios'))
+(sessions, participants) = session.read(config.get('input files', 'schedule'))
+participant.read(config.get('input files', 'bios'), participants)
 
 sched = open('guidebook.csv', 'w')
 schedwriter = csv.writer(sched)
@@ -77,9 +77,7 @@ bioswriter.writerow(['Name',
                      'Location (i.e. Table/Booth or Room Numbers)',
                      'Description (Optional)'])
 
-# __readconfig:
-# normally the Output class for each report moduel will read the relevant
-# configuration, but this is a little different
+# read configuration
 start = time.strptime(config.get('convention', 'start'), '%Y-%m-%d')
 # time.struct_time(tm_year=2014, tm_mon=1, tm_mday=17, tm_hour=0,
 # tm_min=0, tm_sec=0, tm_wday=4, tm_yday=17, tm_isdst=-1)
@@ -106,7 +104,7 @@ for i, day in enumerate(Day.days):
     day.date = '%02d/%02d/%04d' % (start.tm_mon, start.tm_mday + i, start.tm_year)
 
 titles = {}
-for session in session.Session.sessions:
+for session in sessions:
     begin = re.sub('([AP]M)', r' \1'.upper(), str(session.time).upper())
     end = re.sub('([AP]M)', r' \1',
                  str(session.time + session.duration).upper())
@@ -135,7 +133,7 @@ for session in session.Session.sessions:
     for p in session.participants:
         writerow(linkswriter, ['', p.name, '', title, '', ''])
 
-for p in sorted(participant.Participant.participants.values()):
+for p in sorted(participants.values()):
     try:
         bio = p.bio
     except AttributeError:

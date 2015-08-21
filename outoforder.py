@@ -27,8 +27,8 @@ import session
 import participant
 
 ps = []
-session.read(config.get('input files', 'schedule'))
-for p in sorted(participant.Participant.participants.values()):
+(sessions, participants) = session.read(config.get('input files', 'schedule'))
+for p in sorted(participants.values()):
     ps.append(p.name)
 
 def read(fn):

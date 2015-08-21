@@ -52,9 +52,9 @@ def count(fn, i):
 
     nitems.append(0)
 
-    session.read(fn)
+    (sessions, participants) = session.read(fn)
 
-    for s in session.Session.sessions:
+    for s in sessions:
         nitems[i] += 1
         incr(day, str(s.time.day), i)
         incr(time, str(s.time), i)
@@ -75,10 +75,6 @@ def count(fn, i):
         else:
             for t in s.tags:
                 incr(tag, t, i)
-
-    # reinitialize for the next count
-    session.Session.sessions = []
-    Participant.participants = {}
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,

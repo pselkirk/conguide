@@ -7,18 +7,19 @@ import re
 
 import cmdline
 import config
+import session
 from times import Duration
 
 parent = cmdline.cmdlineParser(modes=False)
 parser = argparse.ArgumentParser(add_help=False, parents=[parent])
 parser.add_argument('--duration', action='store', default='12hr',
-                    help='what duration is "too long"')
+                    help='what duration is "too long" (default 12hr)')
 args = cmdline.cmdline(parser, modes=False)
-config.filereader.read(config.filenames['schedule', 'input'])
+(sessions, participants) = session.read(config.get('input files', 'schedule'))
 
 def check(text, func, duration=False):
     found = False
-    for s in config.sessions:
+    for s in sessions:
         if func(s):
             if not found:
                 print(text)
@@ -46,5 +47,5 @@ check('lowercase words in title', lower)
 #check('no description', lambda s: not s.description)
 #check('no period', lambda s: re.search(r'\w$', s.description))
 check('no duration', lambda s: s.duration == Duration('0'))
-check('long duration', lambda s: s.duration >= Duration(args.duration),
-      duration=True)
+check('negative duration', lambda s: s.duration < Duration('0'))
+check('long duration', lambda s: s.duration >= Duration(args.duration), duration=True)

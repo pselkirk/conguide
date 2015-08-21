@@ -31,6 +31,7 @@ class Output(pocketprogram.Output):
         self.__readconfig()
 
     def __readconfig(self):
+        Output.__readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('tracks template'):
@@ -48,7 +49,6 @@ class Output(pocketprogram.Output):
                 Output.classifiers.append((area, expr))
         except config.NoSectionError:
             pass
-        Output.__readconfig = lambda x: None
 
     def writeTrackNames(self, tracks):
         self.f.write(self.strTrackNames(tracks))
@@ -76,13 +76,13 @@ class TextOutput(Output):
         self.__readconfig()
 
     def __readconfig(self):
+        TextOutput.__readconfig = lambda x: None
         TextOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template text'):
                 TextOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        TextOutput.__readconfig = lambda x: None
 
     def cleanup(self, text):
         # convert italics
@@ -110,13 +110,13 @@ class HtmlOutput(Output):
                                            config.source_date))
 
     def __readconfig(self):
+        HtmlOutput.__readconfig = lambda x: None
         HtmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template html'):
                 HtmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        HtmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</dl></body></html>\n')
@@ -156,13 +156,13 @@ class XmlOutput(Output):
         self.f.write('<tracks>')
 
     def __readconfig(self):
+        XmlOutput.__readconfig = lambda x: None
         XmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template xml'):
                 XmlOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-        XmlOutput.__readconfig = lambda x: None
 
     def __del__(self):
         self.f.write('</tracks>\n')
@@ -213,16 +213,16 @@ if __name__ == '__main__':
     import cmdline
 
     args = cmdline.cmdline(io=True)
-    session.read(config.get('input files', 'schedule'))
+    (sessions, participants) = session.read(config.get('input files', 'schedule'))
 
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             output = eval('%sOutput' % mode.capitalize())
             if args.outfile:
-                write(output(args.outfile), session.Session.sessions)
+                write(output(args.outfile), sessions)
             else:
                 try:
                     write(output(config.get('output files ' + mode, 'tracks')),
-                          session.Session.sessions)
+                          sessions)
                 except config.NoOptionError:
                     pass
