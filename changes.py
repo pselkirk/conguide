@@ -23,6 +23,9 @@ import session
 from participant import Participant
 import times
 
+if not config.PY3:
+    str = unicode
+
 debug = False
 verbose = False
 sessions = [{}, {}]
@@ -69,7 +72,6 @@ def read(fn):
 
 (sessions[0], participants[0]) = read(args.files[0])
 # reinitialize for the next read
-times.Day._reset_(times.Day.days[0])
 session.Session.sessions = []
 Participant.participants = {}
 (sessions[1], participants[1]) = read(args.files[1])
@@ -128,25 +130,25 @@ for s in sorted(sessions[0].values()):
         add = []
         for p in s1.participants:
             if not p in s.participants:
-                add.append(unicode(p))
+                add.append(str(p))
         if add:
             cp.append('add %s' % ', '.join(add))
         remove = []
         for p in s.participants:
             if not p in s1.participants:
-                remove.append(unicode(p))
+                remove.append(str(p))
         if remove:
             cp.append('remove %s' % ', '.join(remove))
         addmod = []
         for p in s1.moderators:
             if not p in s.moderators:
-                addmod.append(unicode(p))
+                addmod.append(str(p))
         if addmod:
             cp.append('add moderator %s' % ', '.join(addmod))
         removemod = []
         for p in s.moderators:
             if not p in s1.moderators:
-                removemod.append(unicode(p))
+                removemod.append(str(p))
         if removemod:
             cp.append('remove moderator %s' % ', '.join(removemod))
     if cp:

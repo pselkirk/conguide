@@ -99,10 +99,12 @@ def readConfig(fn):
             cfg = configparser.ConfigParser(allow_no_value=True, strict=False,
                                             inline_comment_prefixes=('#',))
             cfg.optionxform = lambda s: s
+            with open(fn, 'r') as f:
+                cfg.readfp(f)
         else:
             cfg = MyConfigParser()
-        with codecs.open(fn, 'r', 'utf-8') as f:
-            cfg.readfp(f)
+            with codecs.open(fn, 'r', 'utf-8') as f:
+                cfg.readfp(f)
 
 def get(section, option):
     readConfig(cfgfile)
