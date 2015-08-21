@@ -59,18 +59,14 @@ class Output(object):
 
     def __readconfig(self):
         # get some basic configuration from the config file
-        Output.convention = config.get('top', 'convention')
+        Output.convention = config.get('convention', 'convention')
         Output.goh = {}
-        for name in re.split(r',\s*', config.get('top', 'goh')):
+        for name in re.split(r',\s*', config.get('convention', 'goh')):
             Output.goh[name] = True
         try:
-            Output.start = time.strptime(config.get('top', 'start'), '%Y-%m-%d')
+            Output.start = time.strptime(config.get('convention', 'start'), '%Y-%m-%d')
             # time.struct_time(tm_year=2014, tm_mon=1, tm_mday=17, tm_hour=0,
             # tm_min=0, tm_sec=0, tm_wday=4, tm_yday=17, tm_isdst=-1)
-        except config.NoOptionError:
-            pass
-        try:
-            Output.default_duration = Duration(config.get('top', 'default duration'))
         except config.NoOptionError:
             pass
         Output.__readconfig = lambda x: None
@@ -219,7 +215,10 @@ if __name__ == '__main__':
 
     args = cmdline.cmdline()
     session.read(config.get('input files', 'schedule'))
-    participant.read(config.get('input files', 'bios'))
+    try:
+        participant.read(config.get('input files', 'bios'))
+    except config.NoOptionError:
+        pass
 
     sessions = session.Session.sessions
     participants = participant.Participant.participants

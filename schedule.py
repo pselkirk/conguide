@@ -33,6 +33,10 @@ class Output(pocketprogram.Output):
         self.__readconfig()
 
     def __readconfig(self):
+        try:
+            Output.default_duration = Duration(config.get('schedule default duration', 'duration'))
+        except (config.NoSectionError, config.NoOptionError):
+            pass
         Output.template = {}
         try:
             for key, value in config.items('schedule template'):
@@ -93,7 +97,7 @@ class Output(pocketprogram.Output):
         try:
             for (sessionid, unused) in config.items('schedule no description'):
                 Output.nodescr.append(sessionid)
-        except configparser.NoSectionError:
+        except config.NoSectionError:
             pass
 
         Output.__readconfig = lambda x: None
