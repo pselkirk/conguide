@@ -20,7 +20,6 @@ import copy
 import re
 
 import config
-import participant
 import pocketprogram
 import session
 
@@ -39,10 +38,20 @@ class Output(pocketprogram.Output):
         except config.NoSectionError:
             pass
 
-    def writeXref(self, participant):
-        if participant.sessions:
-            self.f.write(self.strName(participant))
-            self.f.write(self.strSessions(participant))
+    def strXref(self, participant):
+        return self.fillTemplate(self.template['xref'], participant) + '\n'
+
+    def strName(self, participant):
+        return participant.__str__()
+
+    def strSessions(self, participant):
+        ss = []
+        for s in participant.sessions:
+            ss.append(self.fillTemplate(self.template['session'], s))
+        return ', '.join(ss)
+
+    def strSession(self, session):
+        return str(session.index)
 
 class TextOutput(Output):
 
@@ -58,15 +67,6 @@ class TextOutput(Output):
                 TextOutput.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
-
-    def strName(self, participant):
-        return '%s: ' % participant.__str__()
-
-    def strSessions(self, participant):
-        ss = []
-        for s in participant.sessions:
-            ss.append(str(s.sessionid))
-        return '%s\n' % ', '.join(ss)
 
 class HtmlOutput(Output):
 
@@ -94,21 +94,19 @@ class HtmlOutput(Output):
         return text.replace('&', '&amp;')
 
     def strName(self, participant):
-        return '<dl><dt><b>%s</b></dt>\n' % participant
+        name = participant.__str__()
+        return '<a name="%s"></a>%s' % (re.sub(r'\W', '', name), name)
 
     def strSessions(self, participant):
         ss = []
         for s in participant.sessions:
-            ss.append('<dd>%s %s <a href="%s#%s">%s</a></dd>' % \
-                      (s.time.day.shortname, s.time,
-                       config.get('output files html', 'schedule'),
-                       s.sessionid, self.cleanup(s.title)))
-        return '%s\n</dl>\n' % '\n'.join(ss)
+            ss.append(self.fillTemplate(self.template['session'], s))
+        return '\n'.join(ss)
 
-    def writeXref(self, participant):
-        if participant.sessions:
-            self.f.write('<a name="%s"></a>' % re.sub(r'\W', '', participant.__str__()))
-            Output.writeXref(self, participant)
+    def strTitle(self, session):
+        title = Output.strTitle(self, session)
+        return '<a href="%s#%s">%s</a>' % \
+            (config.get('output files html', 'schedule'), session.sessionid, title)
 
 class XmlOutput(Output):
 
@@ -133,19 +131,22 @@ class XmlOutput(Output):
         if not self.leaveopen:
             Output.__del__(self)
 
+    def strXref(self, participant):
+        return '<xref>%s</xref>\n' % \
+            self.fillTemplate(self.template['xref'], participant)
+
     def strName(self, participant):
-        return '<xref><xr-name>%s</xr-name>: ' % participant
+        return '<xr-name>%s</xr-name>' % participant
 
     def strSessions(self, participant):
-        ss = []
-        for s in participant.sessions:
-            ss.append(str(s.index))
-        return '<xr-sessions>%s</xr-sessions></xref>\n' % ', '.join(ss)
+        sessions = Output.strSessions(self, participant)
+        return '<xr-sessions>%s</xr-sessions>' % sessions
 
 def write(output, participants):
 
     for p in sorted(participants.values()):
-        output.writeXref(p)
+        if p.sessions:
+            output.f.write(output.strXref(p))
 
 if __name__ == '__main__':
     import cmdline

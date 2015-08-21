@@ -198,19 +198,17 @@ class HtmlOutput(Output):
         if session.participants:
             pp = []
             for p in session.participants:
-                #name = str(p)
                 name = p.__str__()
                 try:
-                    name = '<a href="%s#%s">%s</a>' % \
-                           (config.get('output files html', 'bios'),
-                            re.sub(r'\W', '', name), name)
-                except KeyError:
+                    href = config.get('output files html', 'bios')
+                except config.NoOptionError:
                     try:
-                        name = '<a href="%s#%s">%s</a>' % \
-                               (config.get('output files html', 'xref'),
-                                re.sub(r'\W', '', name), name)
-                    except KeyError:
-                        pass
+                        href = config.get('output files html', 'xref')
+                    except config.NoOptionError:
+                        href = None
+                if href:
+                    name = '<a href="%s#%s">%s</a>' % \
+                           (href, re.sub(r'\W', '', name), name)
                 if p in session.moderators:
                     name += '&nbsp;(m)'
                 pp.append(name)
