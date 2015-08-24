@@ -44,14 +44,8 @@ class Output(pocketprogram.Output):
         except config.NoSectionError:
             pass
 
-    def writeDay(self, session):
-        self.f.write(self.strDay(session))
-
-    def writeSession(self, session):
-        self.f.write(self.strIndex(session))
-        self.f.write(self.strTime(session))
-        self.f.write(self.strTitle(session))
-        self.f.write(self.strRoom(session))
+    def strSession(self, session, str):
+        return str
 
 class TextOutput(Output):
 
@@ -70,22 +64,16 @@ class TextOutput(Output):
 
     def cleanup(self, text):
         # convert italics
-        return re.sub('</?i>', '*', text)
+        return re.sub('</?i>', '*', Output.cleanup(self, text))
+
+    def strDAY(self, session):
+        return '\n%s' % session.time.day.upper()
 
     def strDay(self, session):
-        return '\n\n%s\n' % str(session.time.day).upper()
+        return '\n%s' % session.time.day
 
     def strIndex(self, session):
-        return '\n[%s]\t' % session.sessionid
-
-    def strTime(self, session):
-        return '%s\t' % session.time
-
-    def strTitle(self, session):
-        return '%s\t' % self.cleanup(session.title)
-
-    def strRoom(self, session):
-        return '%s\n' % session.room
+        return '[%s]' % session.index
 
 class HtmlOutput(Output):
 
@@ -111,24 +99,16 @@ class HtmlOutput(Output):
 
     def cleanup(self, text):
         # convert ampersand
-        return text.replace('&', '&amp;')
+        return Output.cleanup(self, text).replace('&', '&amp;')
 
-    def strDay(self, session):
-        return '<hr /><h3>%s</h3>\n' % str(session.time.day).upper()
-
-    def strIndex(self, session):
-        return '<dl><dt>'
-
-    def strTime(self, session):
-        return '%s ' % session.time
+    def strSession(self, session, str):
+        return '<p><a name="%s"></a>%s</p>\n' % \
+            (session.sessionid, str)
 
     def strTitle(self, session):
-        return '<a href="%s#%s">%s</a> ' % \
-            (config.get('output files html', 'schedule'),
-             session.sessionid, self.cleanup(session.title))
-
-    def strRoom(self, session):
-        return '<i>&mdash; %s</i></dt></dl>\n' % session.room
+        title = Output.strTitle(self, session)
+        return '<a href="%s#%s">%s</a>' % \
+            (config.get('output files html', 'schedule'), session.sessionid, title)
 
 class XmlOutput(Output):
 
@@ -155,24 +135,45 @@ class XmlOutput(Output):
 
     def cleanup(self, text):
         # convert ampersand
-        return text.replace('&', '&amp;')
+        return Output.cleanup(self, text).replace('&', '&amp;')
+
+    def strSession(self, session, str):
+        return '<fe-session>%s</fe-session>' % str
+
+    def strDAY(self, session):
+        return '<fe-day>%s</fe-day>' % str(session.time.day).upper()
 
     def strDay(self, session):
-        return '<fe-day>%s</fe-day>\n' % str(session.time.day).upper()
+        return '<fe-day>%s</fe-day>' % str(session.time.day)
 
     def strIndex(self, session):
-        return '<fe-session><fe-index>%d</fe-index>\t' % session.index
+        return '<fe-index>%d</fe-index>' % session.index
 
     def strTime(self, session):
-        return '<fe-time>%s</fe-time>\t' % session.time
+        return '<fe-time>%s</fe-time>' % session.time
 
     def strTitle(self, session):
-        return '<fe-title>%s</fe-title>\t' % self.cleanup(session.title)
+        return '<fe-title>%s</fe-title>' % self.cleanup(session.title)
 
     def strRoom(self, session):
-        return '<fe-room>%s</fe-room></fe-session>\n' % session.room
+        return '<fe-room>%s</fe-room>' % session.room
+
+    def strRoomlevel(self, session):
+        return '<fe-room>%s</fe-room>' % Output.strRoomlevel(self, session)
 
 def write(output, sessions):
+    def writeDay(session):
+        try:
+            str = output.fillTemplate(output.template['day'], session)
+            output.f.write(str + '\n')
+        except KeyError:
+            pass
+
+    def writeSession(session):
+        str = output.fillTemplate(output.template['session'], session)
+        str = output.strSession(session, str)
+        output.f.write(str + '\n')
+
     curday = None
     # TODO: It would be more efficient to write a 'featured' array as we
     # build the 'sessions' list. Or even add a 'featured' attribute to the
@@ -183,9 +184,9 @@ def write(output, sessions):
                 nextday = s
                 curday = s.time.day
             if s.time.hour > 2 and nextday:
-                output.writeDay(s)
+                writeDay(s)
                 nextday = None
-            output.writeSession(s)
+            writeSession(s)
 
 if __name__ == '__main__':
     def research(sessions):
