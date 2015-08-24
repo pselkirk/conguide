@@ -27,10 +27,10 @@ class Output(pocketprogram.Output):
 
     def __init__(self, fn, fd=None):
         pocketprogram.Output.__init__(self, fn, fd)
-        self.__readconfig()
+        Output._readconfig(self)
 
-    def __readconfig(self):
-        Output.__readconfig = lambda x: None
+    def _readconfig(self):
+        Output._readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('featured template'):
@@ -51,14 +51,13 @@ class TextOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
 
-    def __readconfig(self):
-        TextOutput.__readconfig = lambda x: None
-        TextOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template text'):
-                TextOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -67,7 +66,7 @@ class TextOutput(Output):
         return re.sub('</?i>', '*', Output.cleanup(self, text))
 
     def strDAY(self, session):
-        return '\n%s' % session.time.day.upper()
+        return '\n%s' % str(session.time.day).upper()
 
     def strDay(self, session):
         return '\n%s' % session.time.day
@@ -79,17 +78,16 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
-        title = Output.convention + ' Featured Panels &amp; Events'
+        self._readconfig()
+        title = self.convention + ' Featured Panels &amp; Events'
         self.f.write(config.html_header % (title, '', title,
                                            config.source_date))
 
-    def __readconfig(self):
-        HtmlOutput.__readconfig = lambda x: None
-        HtmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template html'):
-                HtmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -114,17 +112,16 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
-        self.__readconfig()
+        self._readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<featured>')
 
-    def __readconfig(self):
-        XmlOutput.__readconfig = lambda x: None
-        XmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template xml'):
-                XmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 

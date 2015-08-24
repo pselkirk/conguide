@@ -47,7 +47,7 @@ class Output(object):
     """ Parent class for TextOutput etc. in schedule.py etc. """
 
     def __init__(self, fn, fd=None, codec='utf-8'):
-        Output.__readconfig(self)
+        Output._readconfig(self)
         if fd:
             self.f = fd
             self.leaveopen = True
@@ -56,8 +56,8 @@ class Output(object):
             self.f = codecs.open(fn, 'w', codec)
             self.leaveopen = False
 
-    def __readconfig(self):
-        Output.__readconfig = lambda x: None
+    def _readconfig(self):
+        Output._readconfig = lambda x: None
         # get some basic configuration from the config file
         Output.convention = config.get('convention', 'convention')
         Output.goh = {}
@@ -121,15 +121,14 @@ class Output(object):
                 fields[i] = self.fillTemplate(tag, session)
                 if fields[i]:
                     ok = True
-            else:
+            elif re.match(r'\w+', tag):
                 try:
-                    if re.match(r'\w+', tag):
-                        if tag.isupper():
-                            fields[i] = eval('self.str%s(session)' % tag)
-                        elif tag.islower():
-                            fields[i] = eval('self.str%s(session)' % tag.capitalize())
-                        if fields[i]:
-                            ok = True
+                    if tag.islower():
+                        fields[i] = eval('self.str%s(session)' % tag.capitalize())
+                    else:
+                        fields[i] = eval('self.str%s(session)' % tag)
+                    if fields[i]:
+                        ok = True
                 except AttributeError:
                     pass
         if ok:
@@ -225,7 +224,9 @@ class Output(object):
 
 if __name__ == '__main__':
     import cmdline
+    import bios
     import featured
+    import grid
     import participant
     import schedule
     import session

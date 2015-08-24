@@ -27,10 +27,10 @@ class Output(pocketprogram.Output):
 
     def __init__(self, fn, fd=None):
         pocketprogram.Output.__init__(self, fn, fd)
-        self.__readconfig()
+        Output._readconfig(self)
 
-    def __readconfig(self):
-        Output.__readconfig = lambda x: None
+    def _readconfig(self):
+        Output._readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('xref template'):
@@ -50,21 +50,17 @@ class Output(pocketprogram.Output):
             ss.append(self.fillTemplate(self.template['session'], s))
         return ', '.join(ss)
 
-    def strSession(self, session):
-        return str(session.index)
-
 class TextOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
 
-    def __readconfig(self):
-        TextOutput.__readconfig = lambda x: None
-        TextOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template text'):
-                TextOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -72,16 +68,15 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         title = self.convention + ' Program Participant Cross-Reference'
         self.f.write(config.html_header % (title, '', title, config.source_date))
 
-    def __readconfig(self):
-        HtmlOutput.__readconfig = lambda x: None
-        HtmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template html'):
-                HtmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -112,17 +107,16 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
-        self.__readconfig()
+        self._readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<xrefs>')
 
-    def __readconfig(self):
-        XmlOutput.__readconfig = lambda x: None
-        XmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template xml'):
-                XmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 

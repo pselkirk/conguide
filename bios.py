@@ -26,10 +26,10 @@ class Output(pocketprogram.Output):
 
     def __init__(self, fn, fd=None):
         pocketprogram.Output.__init__(self, fn, fd)
-        self.__readconfig()
+        Output._readconfig(self)
 
-    def __readconfig(self):
-        Output.__readconfig = lambda x: None
+    def _readconfig(self):
+        Output._readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('bios template'):
@@ -112,12 +112,11 @@ class TextOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         import textwrap
         self.wrapper = textwrap.TextWrapper(76)
 
-    def __readconfig(self):
-        TextOutput.__readconfig = lambda x: None
+    def _readconfig(self):
         TextOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template text'):
@@ -145,13 +144,12 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         title = self.convention + ' Program Participant Bios'
         self.f.write(config.html_header % (title, '', title,
                                            config.source_date))
 
-    def __readconfig(self):
-        HtmlOutput.__readconfig = lambda x: None
+    def _readconfig(self):
         HtmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template html'):
@@ -208,13 +206,12 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
-        self.__readconfig()
+        self._readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<bios>')
 
-    def __readconfig(self):
-        XmlOutput.__readconfig = lambda x: None
+    def _readconfig(self):
         XmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template xml'):
@@ -250,7 +247,7 @@ def write(output, participants):
 
 if __name__ == '__main__':
     import argparse
-    
+
     import cmdline
     import participant
     import session

@@ -30,10 +30,10 @@ class Output(pocketprogram.Output):
 
     def __init__(self, fn, fd=None):
         pocketprogram.Output.__init__(self, fn, fd)
-        self.__readconfig()
+        Output._readconfig(self)
 
-    def __readconfig(self):
-        Output.__readconfig = lambda x: None
+    def _readconfig(self):
+        Output._readconfig = lambda x: None
         try:
             Output.default_duration = Duration(config.get('schedule default duration', 'duration'))
         except (config.NoSectionError, config.NoOptionError):
@@ -107,16 +107,15 @@ class TextOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         import textwrap
         self.wrapper = textwrap.TextWrapper(76)
 
-    def __readconfig(self):
-        TextOutput.__readconfig = lambda x: None
-        TextOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template text'):
-                TextOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -157,7 +156,7 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         title = self.convention + ' Schedule'
         self.f.write(config.html_header % (title, '', title, config.source_date))
         dd = []
@@ -166,12 +165,11 @@ class HtmlOutput(Output):
         self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % ' - '.join(dd))
         self.curday = None
 
-    def __readconfig(self):
-        HtmlOutput.__readconfig = lambda x: None
-        HtmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template html'):
-                HtmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -222,18 +220,17 @@ class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
-        self.__readconfig()
+        self._readconfig()
         self.zeroDuration = Duration('0')
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<schedule>')
 
-    def __readconfig(self):
-        XmlOutput.__readconfig = lambda x: None
-        XmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template xml'):
-                XmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -250,7 +247,7 @@ class XmlOutput(Output):
         return '<ss-session>%s</ss-session>' % str
 
     def strDAY(self, session):
-        return '<ss-day>%s</ss-day>' % session.time.day.upper()
+        return '<ss-day>%s</ss-day>' % str(session.time.day).upper()
 
     def strDay(self, session):
         return '<ss-day>%s</ss-day>' % session.time.day

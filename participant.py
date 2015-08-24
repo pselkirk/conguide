@@ -23,7 +23,7 @@ import config
 class Participant(object):
 
     def __init__(self, name):
-        self.__readconfig()
+        self._readconfig()
 
         self.name = name
         self.sessions = []
@@ -52,8 +52,8 @@ class Participant(object):
             # mash it together and  make it case-insensitive
             self.sortkey = ' '.join([last] + first).lower()
 
-    def __readconfig(self):
-        Participant.__readconfig = lambda x: None
+    def _readconfig(self):
+        Participant._readconfig = lambda x: None
         Participant.sortname = {}
         try:
             for name, sortkey in config.items('participant sort name'):

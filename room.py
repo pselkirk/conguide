@@ -33,15 +33,7 @@ class Level(object):
 
         Level.levels[name] = self
 
-    # Unlike other modules, this uses a single underscore to avoid name
-    # mangling, otherwise
-    #     Level._readconfig(self)
-    # gets mangled to
-    #     Level._readconfig(self)
     def _readconfig(self):
-        # reset this immediately, so we don't end up in a recursive loop,
-        # where we try to instantiate Room below, which call right back
-        # into _readconfig.
         Level._readconfig = lambda x: None
         Level.levels = {}
         Room.rooms = {}
@@ -62,7 +54,7 @@ class Level(object):
                     #Level.levels[name].rooms.append(Room.rooms[rname])
                     r = Room(rname, l)
                     l.rooms.append(r)
-    
+
             m = re.match(r'room (.*)', section)
             if m:
                 name = m.group(1)
@@ -82,7 +74,7 @@ class Level(object):
                     Room.rooms[name].gridrooms = rooms
                 except config.NoOptionError:
                     pass
-    
+
     def __lt__(self, other):
         return (other and (self.index < other.index))
 
@@ -95,7 +87,7 @@ class Room(Level):
     index = 0
 
     def __init__(self, name, level=None):
-        Level._readconfig(self)
+        self._readconfig()
         self.index = Room.index
         Room.index += 1
         self.level = level

@@ -16,6 +16,8 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+import re
+
 import config
 from participant import Participant
 from room import Level, Room
@@ -27,7 +29,7 @@ class Session(object):
     curtime = ('', None)
 
     def __init__(self, row, participants=None):
-        self.__readconfig()
+        self._readconfig()
         if row['room'] in Session.chroom:
             row['room'] = Session.chroom[row['room']]
         if row['sessionid'] in Session.chroom:
@@ -145,8 +147,8 @@ class Session(object):
             p = participants[name]
             self.moderators.append(p)
 
-    def __readconfig(self):
-        Session.__readconfig = lambda x: None
+    def _readconfig(self):
+        Session._readconfig = lambda x: None
         Session.chroom = {}
         try:
             for name, rename in config.items('session change room'):

@@ -50,10 +50,10 @@ class Output(pocketprogram.Output):
 
     def __init__(self, fn, fd=None, codec=None):
         pocketprogram.Output.__init__(self, fn, fd)
-        self.__readconfig()
+        Output._readconfig(self)
 
-    def __readconfig(self):
-        Output.__readconfig = lambda x: None
+    def _readconfig(self):
+        Output._readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('grid template'):
@@ -120,7 +120,7 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         title = self.convention + ' Schedule Grid'
         self.f.write(config.html_header % \
                      (title,
@@ -135,7 +135,7 @@ class HtmlOutput(Output):
                      ' - '.join(dd))
         self.f.write('<br /><br />\n')
 
-    def __readconfig(self):
+    def _readconfig(self):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template html'):
@@ -217,7 +217,7 @@ class IndesignOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn, codec='cp1252')
-        self.__readconfig()
+        self._readconfig()
         self.f.write('<ASCII-WIN>\r\n<Version:8><FeatureSet:InDesign-Roman>')
 
         if self.fixed:
@@ -227,7 +227,7 @@ class IndesignOutput(Output):
                     nrow += 1
             self.cheight = (self.theight - self.hheight) / nrow
 
-    def __readconfig(self):
+    def _readconfig(self):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template indesign'):
@@ -382,11 +382,11 @@ class XmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         self.f.write('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n')
         self.f.write('<Root><Story>')
 
-    def __readconfig(self):
+    def _readconfig(self):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template xml'):
@@ -560,8 +560,8 @@ def write(output, unused=None):
                     # b) If the session is less than 15 minutes, and falls
                     # entirely in the second half of the slot (e.g. 4:20-4:30),
                     # we need to pull back the start time.
-                    elif endmin >=15 and endmin <= 30 or \
-                         endmin >=45 and endmin <= 60:
+                    elif endmin >= 15 and endmin <= 30 or \
+                         endmin >= 45 and endmin <= 60:
                         off -= 1
 
                     # c) If the session is less than 30 minutes, and crosses

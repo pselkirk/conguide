@@ -21,16 +21,17 @@ import re
 
 import config
 import pocketprogram
+from room import Room
 import session
 
 class Output(pocketprogram.Output):
 
     def __init__(self, fn, fd=None):
         pocketprogram.Output.__init__(self, fn, fd)
-        self.__readconfig()
+        Output._readconfig(self)
 
-    def __readconfig(self):
-        Output.__readconfig = lambda x: None
+    def _readconfig(self):
+        Output._readconfig = lambda x: None
         Output.template = {}
         try:
             for key, value in config.items('tracks template'):
@@ -89,14 +90,13 @@ class TextOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
 
-    def __readconfig(self):
-        TextOutput.__readconfig = lambda x: None
-        TextOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template text'):
-                TextOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -108,17 +108,16 @@ class HtmlOutput(Output):
 
     def __init__(self, fn):
         Output.__init__(self, fn)
-        self.__readconfig()
+        self._readconfig()
         title = Output.convention + ' Schedule, by Area'
         self.f.write(config.html_header % (title, '', title,
                                            config.source_date))
 
-    def __readconfig(self):
-        HtmlOutput.__readconfig = lambda x: None
-        HtmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template html'):
-                HtmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -145,24 +144,23 @@ class HtmlOutput(Output):
 
     def strTitle(self, session):
         title = Output.strTitle(self, session)
-        return '<a href="%s#%s">%s</a></dd>\n' % \
+        return '<a href="%s#%s">%s</a>\n' % \
             (config.get('output files html', 'schedule'), session.sessionid, title)
 
 class XmlOutput(Output):
 
     def __init__(self, fn, fd=None):
         Output.__init__(self, fn, fd)
-        self.__readconfig()
+        self._readconfig()
         if not self.leaveopen:
             self.f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         self.f.write('<tracks>')
 
-    def __readconfig(self):
-        XmlOutput.__readconfig = lambda x: None
-        XmlOutput.template = copy.copy(Output.template)
+    def _readconfig(self):
+        self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template xml'):
-                XmlOutput.template[key] = config.parseTemplate(value)
+                self.template[key] = config.parseTemplate(value)
         except config.NoSectionError:
             pass
 
