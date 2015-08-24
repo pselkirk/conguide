@@ -27,7 +27,6 @@ import time
 import config
 import featured
 import participant
-from room import Room
 import session
 from times import Day
 

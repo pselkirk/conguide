@@ -24,7 +24,6 @@ import re
 import config
 from participant import Participant
 from session import Session
-from times import Day
 
 def csv_reader(fn):
     """Create a CSV reader. This works around differences between Python 2.7 and

@@ -20,8 +20,6 @@ import argparse
 
 import config
 import session
-from participant import Participant
-import times
 
 if not config.PY3:
     str = unicode

@@ -48,9 +48,9 @@ def read(fn):
 pb = []
 for p in read(config.get('input files', 'bios')):
     pubsname = p['pubsname']
-    pubsname = re.sub('\s+', ' ', pubsname)
-    pubsname = re.sub('^\s+', '', pubsname)
-    pubsname = re.sub('\s+$', '', pubsname)
+    pubsname = re.sub(r'\s+', ' ', pubsname)
+    pubsname = re.sub(r'^\s+', '', pubsname)
+    pubsname = re.sub(r'\s+$', '', pubsname)
     if pubsname in participant.Participant.chname:
         pubsname = participant.Participant.chname[pubsname]
     pb.append(pubsname)

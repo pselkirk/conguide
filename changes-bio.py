@@ -21,8 +21,6 @@ import argparse
 import cmdline
 import config
 import participant
-import session
-import times
 
 parent = cmdline.cmdlineParser(modes=False)
 parser = argparse.ArgumentParser(add_help=False, parents=[parent])

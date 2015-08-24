@@ -19,9 +19,7 @@
 import argparse
 
 import config
-from participant import Participant
 import session
-import times
 
 nitems = []
 day = {}
