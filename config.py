@@ -172,12 +172,12 @@ def parseTemplate(template):
                 break
             else:
                 # split token into words and non-words
-                tokens += re.split('(\W+)', a)
+                tokens += re.split(r'([\w-]+)', a)
         return (tokens, list)
     # split template into brackets and non-brackets
-    list = re.split('([\[\]])', template)
+    list = re.split(r'([\[\]])', template)
     (tokens, unused) = xyzzy(list)
-    return tokens        
+    return tokens
 
 # exception classes, so callers don't have to know about configparser
 # (or ConfigParser)

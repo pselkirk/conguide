@@ -42,7 +42,6 @@ import re
 import time
 
 import config
-from times import Duration
 
 class Output(object):
     """ Parent class for TextOutput etc. in schedule.py etc. """
@@ -125,17 +124,21 @@ class Output(object):
             else:
                 try:
                     if re.match(r'\w+', tag):
-                        fields[i] = eval('self.str%s(session)' % tag.capitalize())
+                        if tag.isupper():
+                            fields[i] = eval('self.str%s(session)' % tag)
+                        elif tag.islower():
+                            fields[i] = eval('self.str%s(session)' % tag.capitalize())
                         if fields[i]:
                             ok = True
-                            if tag.isupper():
-                                fields[i] = fields[i].upper()
                 except AttributeError:
                     pass
         if ok:
             return ''.join(fields)
         else:
             return ''
+
+    def strDAY(self, session):
+        return str(session.time.day).upper()
 
     def strDay(self, session):
         return str(session.time.day)
@@ -166,6 +169,24 @@ class Output(object):
 
     def strRoom(self, session):
         return self.cleanup(str(session.room))
+
+    def strRoomlevel(self, session):
+        """Convenience function combining room and level in the Arisia form.
+        This allows the whole thing to be wrapped in one xml element,
+        e.g. '<ss-room>Grand A (1W)</ss-room>'. If we use a template like
+        'room[ (level)]', we end up with the parentheses outside of any
+        element, e.g. '<ss-room>Grand A</ss-room> (<ss-room>1W</ss-room>)'.
+        The alternative is to put all the xml markup in the template
+        definition in the config file, but that gets ugly and hard to maintain
+        pretty quickly. And we don't even want to think about embedding tagged
+        text markup in the config file.
+        """
+        room = Output.strRoom(self, session)
+        level = Output.strLevel(self, session)
+        if level:
+            return '%s (%s)' % (room, level)
+        else:
+            return room
 
     def strUsage(self, session):
         if session.room.usage:
@@ -203,10 +224,8 @@ class Output(object):
 
 
 if __name__ == '__main__':
-    import bios
     import cmdline
     import featured
-    import grid
     import participant
     import schedule
     import session

@@ -249,6 +249,9 @@ class XmlOutput(Output):
     def strSession(self, session, str):
         return '<ss-session>%s</ss-session>' % str
 
+    def strDAY(self, session):
+        return '<ss-day>%s</ss-day>' % session.time.day.upper()
+
     def strDay(self, session):
         return '<ss-day>%s</ss-day>' % session.time.day
 
@@ -281,6 +284,9 @@ class XmlOutput(Output):
             return '<ss-room>%s</ss-room>' % self.cleanup(str(session.room.level))
         else:
             return ''
+
+    def strRoomlevel(self, session):
+        return '<ss-room>%s</ss-room>' % Output.strRoomlevel(self, session)
 
     def strIcon(self, session):
         if self.icons:
