@@ -121,23 +121,37 @@ class Output(object):
                 fields[i] = self.fillTemplate(tag, session)
                 if fields[i]:
                     ok = True
-            elif re.match(r'\w+', tag):
-                try:
-                    if tag.islower():
-                        fields[i] = eval('self.str%s(session)' % tag.capitalize())
+            else:
+                m = re.match(r'\((.*)\)', tag)
+                if m:
+                    parentheses = True
+                    tag = m.group(1)
+                else:
+                    parentheses = False                    
+                if re.match(r'\w+', tag):
+                    try:
+                        str = eval('self.str%s(session)' % tag.capitalize())
+                    except AttributeError:
+                        pass
                     else:
-                        fields[i] = eval('self.str%s(session)' % tag)
-                    if fields[i]:
-                        ok = True
-                except AttributeError:
-                    pass
+                        if str:
+                            ok = True
+                            if tag.isupper():
+                                str = str.upper()
+                            if parentheses:
+                                str = '(' + str + ')'
+                            try:
+                                str = eval('self.markup%s(session, str)' % tag.capitalize())
+                            except AttributeError:
+                                pass
+                            fields[i] = str
         if ok:
             return ''.join(fields)
         else:
             return ''
 
-    def strDAY(self, session):
-        return str(session.time.day).upper()
+    def strIndex(self, session):
+        return str(session.index)
 
     def strDay(self, session):
         return str(session.time.day)
@@ -145,20 +159,17 @@ class Output(object):
     def strTime(self, session):
         return str(session.time)
 
-    def strIndex(self, session):
-        return str(session.index)
+    def strDuration(self, session):
+        return str(session.duration)
 
     def strTitle(self, session):
         return self.cleanup(session.title)
 
     def strTrack(self, session):
-        return str(session.track)
+        return self.cleanup(str(session.track))
 
     def strType(self, session):
-        return str(session.type)
-
-    def strDuration(self, session):
-        return str(session.duration)
+        return self.cleanup(str(session.type))
 
     def strLevel(self, session):
         if session.room.level:
@@ -169,27 +180,9 @@ class Output(object):
     def strRoom(self, session):
         return self.cleanup(str(session.room))
 
-    def strRoomlevel(self, session):
-        """Convenience function combining room and level in the Arisia form.
-        This allows the whole thing to be wrapped in one xml element,
-        e.g. '<ss-room>Grand A (1W)</ss-room>'. If we use a template like
-        'room[ (level)]', we end up with the parentheses outside of any
-        element, e.g. '<ss-room>Grand A</ss-room> (<ss-room>1W</ss-room>)'.
-        The alternative is to put all the xml markup in the template
-        definition in the config file, but that gets ugly and hard to maintain
-        pretty quickly. And we don't even want to think about embedding tagged
-        text markup in the config file.
-        """
-        room = Output.strRoom(self, session)
-        level = Output.strLevel(self, session)
-        if level:
-            return '%s (%s)' % (room, level)
-        else:
-            return room
-
     def strUsage(self, session):
         if session.room.usage:
-            return session.room.usage
+            return self.cleanup(session.room.usage)
         else:
             return ''
 
@@ -203,14 +196,20 @@ class Output(object):
         if session.participants:
             pp = []
             for p in session.participants:
-                #name = str(p)
-                name = p.__str__()
+                name = self.strParticipant(p)
+                try:
+                    name = self.markupParticipant(p, name)
+                except AttributeError:
+                    pass
                 if p in session.moderators:
                     name += u'\u00A0(m)'
                 pp.append(name)
-            return self.cleanup(', '.join(pp))
+            return ', '.join(pp)
         else:
             return ''
+
+    def strParticipant(self, participant):
+        return self.cleanup(participant.__str__())
 
     def strTags(self, session):
         try:

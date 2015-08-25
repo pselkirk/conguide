@@ -123,11 +123,11 @@ class TextOutput(Output):
         # convert italics
         return re.sub(r'</?i>', '*', Output.cleanup(self, text))
 
-    def strSession(self, session, str):
-        return '%s\n' % str
+    def markupSession(self, session, text):
+        return '%s\n' % text
 
-    def strIndex(self, session):
-        return '[%s]' % session.index
+    def markupIndex(self, session, text):
+        return '[%s]' % text
 
     #def strDuration(self, session):
     #    if session.duration != self.default_duration:
@@ -185,34 +185,22 @@ class HtmlOutput(Output):
         text = text.replace('\n', '<br/>\n')
         return text
 
-    def strSession(self, session, str):
-        return '<p><a name="%s"></a>\n<dl>%s</dl></p>\n' % \
-            (session.sessionid, str)
+    def markupSession(self, session, text):
+        return '<p><a name="%s"></a>\n<dl>%s</dl></p>' % (session.sessionid, text)
 
-    def strTrack(self, session):
-        return self.cleanup(session.track)
-
-    def strParticipants(self, session):
-        if session.participants:
-            pp = []
-            for p in session.participants:
-                name = p.__str__()
-                try:
-                    href = config.get('output files html', 'bios')
-                except config.NoOptionError:
-                    try:
-                        href = config.get('output files html', 'xref')
-                    except config.NoOptionError:
-                        href = None
-                if href:
-                    name = '<a href="%s#%s">%s</a>' % \
-                           (href, re.sub(r'\W', '', name), name)
-                if p in session.moderators:
-                    name += '&nbsp;(m)'
-                pp.append(name)
-            return ', '.join(pp)
+    def markupParticipant(self, participant, name):
+        try:
+            href = config.get('output files html', 'bios')
+        except config.NoOptionError:
+            try:
+                href = config.get('output files html', 'xref')
+            except config.NoOptionError:
+                href = None
+        if href:
+            return '<a href="%s#%s">%s</a>' % \
+                (href, re.sub(r'\W', '', name), name)
         else:
-            return ''
+            return name
 
 class XmlOutput(Output):
 
@@ -243,47 +231,46 @@ class XmlOutput(Output):
         # convert ampersand
         return Output.cleanup(self, text).replace('&', '&amp;')
 
-    def strSession(self, session, str):
-        return '<ss-session>%s</ss-session>' % str
+    def markupSession(self, session, text):
+        return '<ss-session>%s</ss-session>' % text
 
-    def strDAY(self, session):
-        return '<ss-day>%s</ss-day>' % str(session.time.day).upper()
+    def markupDay(self, session, text):
+        return '<ss-day>%s</ss-day>' % text
 
-    def strDay(self, session):
-        return '<ss-day>%s</ss-day>' % session.time.day
-
-    def strTime(self, session):
-        return '<ss-time>%s</ss-time>' % session.time
+    def markupTime(self, session, text):
+        return '<ss-time>%s</ss-time>' % text
 
     def strIndex(self, session):
         if (session.index):
-            return '<ss-index>%d</ss-index>' % session.index
+            return str(session.index)
         else:
             return ''
 
+    def markupIndex(self, session, text):
+        return '<ss-index>%s</ss-index>' % text
+
     def strTitle(self, session):
         # need a special tag for italics in titles, because weights
-        title = re.sub(r'<(/?)i>', r'<\1i-title>', session.title)
-        return '<ss-title>%s</ss-title>' % self.cleanup(title)
+        return re.sub(r'<(/?)i>', r'<\1i-title>', session.title)
+
+    def markupTitle(self, session, text):
+        return '<ss-title>%s</ss-title>' % text
 
     def strDuration(self, session):
         if session.duration != self.zeroDuration and \
            session.duration != self.default_duration:
-            return '<ss-duration>%s</ss-duration>' % session.duration
+            return str(session.duration)
         else:
             return ''
 
-    def strRoom(self, session):
-        return '<ss-room>%s</ss-room>' % self.cleanup(str(session.room))
+    def markupDuration(self, session, text):
+        return '<ss-duration>%s</ss-duration>' % text
 
-    def strLevel(self, session):
-        if session.room.level:
-            return '<ss-room>%s</ss-room>' % self.cleanup(str(session.room.level))
-        else:
-            return ''
+    def markupRoom(self, session, text):
+        return '<ss-room>%s</ss-room>' % text
 
-    def strRoomlevel(self, session):
-        return '<ss-room>%s</ss-room>' % Output.strRoomlevel(self, session)
+    def markupLevel(self, session, text):
+        return '<ss-room>%s</ss-room>' % text
 
     def strIcon(self, session):
         if self.icons:
@@ -293,22 +280,20 @@ class XmlOutput(Output):
                     icon = k
                     break
             if icon:
-                return '<ss-icon>%s</ss-icon>' % icon
+                return icon
         return ''
 
-    def strDescription(self, session):
-        if session.description:
-            return '<ss-description>%s</ss-description>' % \
-                self.cleanup(session.description)
-        else:
-            return ''
+    def markupIcon(self, session, text):
+        return '<ss-icon>%s</ss-icon>' % text
+
+    def markupDescription(self, session, text):
+        return '<ss-description>%s</ss-description>' % text
 
     def strParticipants(self, session):
         if session.sessionid in self.nopartic:
             return ''
-        str = Output.strParticipants(self, session)
         # Prune participants to save space.
-        if str and prune and self.prune and eval(self.prune):
+        if prune and self.prune and eval(self.prune):
             if config.debug:
                 pp = []
                 for p in session.participants:
@@ -316,7 +301,10 @@ class XmlOutput(Output):
                 print('%s: prune participants %s' % \
                       (session.title, ', '.join(pp)))
             return ''
-        return '<ss-participants>%s</ss-participants>' % str
+        return Output.strParticipants(self, session)
+
+    def markupParticipants(self, session, text):
+        return '<ss-participants>%s</ss-participants>' % text
 
     def strTags(self, session):
         if session.tags:
@@ -328,25 +316,25 @@ def write(output, sessions):
 
     def writeDay(session):
         try:
-            str = output.fillTemplate(output.template['day'], session)
-            output.f.write(str + '\n')
+            text = output.fillTemplate(output.template['day'], session)
+            output.f.write(text + '\n')
         except KeyError:
             pass
 
     def writeTime(session):
         try:
-            str = output.fillTemplate(output.template['time'], session)
-            output.f.write(str + '\n')
+            text = output.fillTemplate(output.template['time'], session)
+            output.f.write(text + '\n')
         except KeyError:
             pass
 
     def writeSession(session):
-        str = output.fillTemplate(output.template['session'], session)
+        text = output.fillTemplate(output.template['session'], session)
         # remove blank lines	# XXX make this a config option
-        #str = re.sub('\n+', '\n', str)
-        #str = re.sub('\n$', '', str)
-        str = output.strSession(session, str)
-        output.f.write(str + '\n')
+        #text = re.sub('\n+', '\n', text)
+        #text = re.sub('\n$', '', text)
+        text = output.markupSession(session, text)
+        output.f.write(text + '\n')
 
     curday = curtime = None
     for s in sessions:

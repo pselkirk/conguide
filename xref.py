@@ -39,10 +39,10 @@ class Output(pocketprogram.Output):
             pass
 
     def strXref(self, participant):
-        return self.fillTemplate(self.template['xref'], participant) + '\n'
+        return self.markupXref(self.fillTemplate(self.template['xref'], participant)) + '\n'
 
-    def strName(self, participant):
-        return participant.__str__()
+    def markupXref(self, text):
+        return text
 
     def strSessions(self, participant):
         ss = []
@@ -88,8 +88,7 @@ class HtmlOutput(Output):
         # convert ampersand
         return text.replace('&', '&amp;')
 
-    def strName(self, participant):
-        name = participant.__str__()
+    def markupParticipant(self, participant, name):
         return '<a name="%s"></a>%s' % (re.sub(r'\W', '', name), name)
 
     def strSessions(self, participant):
@@ -98,8 +97,7 @@ class HtmlOutput(Output):
             ss.append(self.fillTemplate(self.template['session'], s))
         return '\n'.join(ss)
 
-    def strTitle(self, session):
-        title = Output.strTitle(self, session)
+    def markupTitle(self, session, title):
         return '<a href="%s#%s">%s</a>' % \
             (config.get('output files html', 'schedule'), session.sessionid, title)
 
@@ -125,15 +123,13 @@ class XmlOutput(Output):
         if not self.leaveopen:
             Output.__del__(self)
 
-    def strXref(self, participant):
-        return '<xref>%s</xref>\n' % \
-            self.fillTemplate(self.template['xref'], participant)
+    def markupXref(self, text):
+        return '<xref>%s</xref>' % text
 
-    def strName(self, participant):
-        return '<xr-name>%s</xr-name>' % participant
+    def markupParticipant(self, participant, name):
+        return '<xr-name>%s</xr-name>' % name
 
-    def strSessions(self, participant):
-        sessions = Output.strSessions(self, participant)
+    def markupSessions(self, participant, sessions):
         return '<xr-sessions>%s</xr-sessions>' % sessions
 
 def write(output, participants):

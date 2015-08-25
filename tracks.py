@@ -57,13 +57,21 @@ class Output(pocketprogram.Output):
         except (config.NoSectionError, config.NoOptionError):
             pass
 
-    def strTrackNames(self, tracks):
+    def strTrackList(self, tracks):
         return ''
 
-    def strTrack(self, trsessions):
-        return self.fillTemplate(self.template['track'], trsessions) + '\n\n'
+    def strTrackSessions(self, trsessions):
+        try:
+            text = self.fillTemplate(self.template['track'], trsessions)
+        except KeyError:
+            return ''
+        text = self.markupTrackSessions(text)
+        return text + '\n'
 
-    def strName(self, trsessions):
+    def markupTrackSessions(self, text):
+        return text
+
+    def strTrack(self, trsessions):
         name = trsessions[0]
         return self.cleanup(name)
 
@@ -104,6 +112,9 @@ class TextOutput(Output):
         # convert italics
         return re.sub(r'</?i>', '*', Output.cleanup(self, text))
 
+    def markupTrackSessions(self, text):
+        return '%s\n' % text
+
 class HtmlOutput(Output):
 
     def __init__(self, fn):
@@ -129,7 +140,7 @@ class HtmlOutput(Output):
         # convert ampersand
         return Output.cleanup(self, text).replace('&', '&amp;')
 
-    def strTrackNames(self, tracks):
+    def strTrackList(self, tracks):
         str = '<ul>\n'
         for t in tracks:
             str += '<li><a href="#%s">%s</a></li>\n' % \
@@ -137,15 +148,13 @@ class HtmlOutput(Output):
         str += '</ul>\n<dl>'
         return str
 
-    def strName(self, trsessions):
+    def markupTrack(self, trsessions, text):
         name = trsessions[0]
-        return '<a name="%s">%s</a>' % \
-            (re.sub(r'\W', '', name), self.cleanup(name))
+        return '<a name="%s">%s</a>' % (re.sub(r'\W', '', name), text)
 
-    def strTitle(self, session):
-        title = Output.strTitle(self, session)
+    def markupTitle(self, session, text):
         return '<a href="%s#%s">%s</a>\n' % \
-            (config.get('output files html', 'schedule'), session.sessionid, title)
+            (config.get('output files html', 'schedule'), session.sessionid, text)
 
 class XmlOutput(Output):
 
@@ -173,17 +182,17 @@ class XmlOutput(Output):
         # convert ampersand
         return Output.cleanup(self, text).replace('&', '&amp;')
 
-    def strTrack(self, trsessions):
-        return '<track>%s</track>\n' % Output.strTrack(self, trsessions)
+    def markupTrackSessions(self, text):
+        return '<track>%s</track>' % text
 
-    def strName(self, trsessions):
-        return '<tr-name>%s</tr-name>\n' % Output.strName(self, trsessions)
+    def markupTrack(self, trsessions, text):
+        return '<tr-name>%s</tr-name>' % text
 
-    def strIndex(self, session):
-        return '<tr-index>%d</tr-index>' % session.index
+    def markupIndex(self, session, text):
+        return '<tr-index>%s</tr-index>' % text
 
-    def strTitle(self, session):
-        return '<tr-title>%s</tr-title>' % Output.strTitle(self, session)
+    def markupTitle(self, session, text):
+        return '<tr-title>%s</tr-title>' % text
 
 def write(output, sessions):
     tracks = {}
@@ -200,10 +209,10 @@ def write(output, sessions):
         except KeyError:
             tracks[t] = [session]
 
-    output.f.write(output.strTrackNames(sorted(tracks)))
+    output.f.write(output.strTrackList(sorted(tracks)))
 
     for k, v in sorted(tracks.items()):
-        output.f.write(output.strTrack((k, v)))
+        output.f.write(output.strTrackSessions((k, v)))
 
 if __name__ == '__main__':
     import cmdline

@@ -44,8 +44,8 @@ class Output(pocketprogram.Output):
         except config.NoSectionError:
             pass
 
-    def strSession(self, session, str):
-        return str
+    def markupSession(self, session, text):
+        return text
 
 class TextOutput(Output):
 
@@ -65,14 +65,11 @@ class TextOutput(Output):
         # convert italics
         return re.sub('</?i>', '*', Output.cleanup(self, text))
 
-    def strDAY(self, session):
-        return '\n%s' % str(session.time.day).upper()
+    def markupDay(self, session, text):
+        return '\n%s' % text
 
-    def strDay(self, session):
-        return '\n%s' % session.time.day
-
-    def strIndex(self, session):
-        return '[%s]' % session.index
+    def markupIndex(self, session, text):
+        return '[%s]' % text
 
 class HtmlOutput(Output):
 
@@ -99,14 +96,9 @@ class HtmlOutput(Output):
         # convert ampersand
         return Output.cleanup(self, text).replace('&', '&amp;')
 
-    def strSession(self, session, str):
-        return '<p><a name="%s"></a>%s</p>\n' % \
-            (session.sessionid, str)
-
-    def strTitle(self, session):
-        title = Output.strTitle(self, session)
+    def markupTitle(self, session, text):
         return '<a href="%s#%s">%s</a>' % \
-            (config.get('output files html', 'schedule'), session.sessionid, title)
+            (config.get('output files html', 'schedule'), session.sessionid, text)
 
 class XmlOutput(Output):
 
@@ -134,42 +126,36 @@ class XmlOutput(Output):
         # convert ampersand
         return Output.cleanup(self, text).replace('&', '&amp;')
 
-    def strSession(self, session, str):
-        return '<fe-session>%s</fe-session>' % str
+    def markupSession(self, session, text):
+        return '<fe-session>%s</fe-session>' % text
 
-    def strDAY(self, session):
-        return '<fe-day>%s</fe-day>' % str(session.time.day).upper()
+    def markupDay(self, session, text):
+        return '<fe-day>%s</fe-day>' % text
 
-    def strDay(self, session):
-        return '<fe-day>%s</fe-day>' % str(session.time.day)
+    def markupIndex(self, session, text):
+        return '<fe-index>%s</fe-index>' % text
 
-    def strIndex(self, session):
-        return '<fe-index>%d</fe-index>' % session.index
+    def markupTime(self, session, text):
+        return '<fe-time>%s</fe-time>' % text
 
-    def strTime(self, session):
-        return '<fe-time>%s</fe-time>' % session.time
+    def markupTitle(self, session, text):
+        return '<fe-title>%s</fe-title>' % text
 
-    def strTitle(self, session):
-        return '<fe-title>%s</fe-title>' % self.cleanup(session.title)
+    def markupRoom(self, session, text):
+        return '<fe-room>%s</fe-room>' % text
 
-    def strRoom(self, session):
-        return '<fe-room>%s</fe-room>' % session.room
-
-    def strRoomlevel(self, session):
-        return '<fe-room>%s</fe-room>' % Output.strRoomlevel(self, session)
+    def markupLevel(self, session, text):
+        return '<fe-room>%s</fe-room>' % text
 
 def write(output, sessions):
     def writeDay(session):
-        try:
-            str = output.fillTemplate(output.template['day'], session)
-            output.f.write(str + '\n')
-        except KeyError:
-            pass
+        text = output.fillTemplate(output.template['day'], session)
+        output.f.write(text + '\n')
 
     def writeSession(session):
-        str = output.fillTemplate(output.template['session'], session)
-        str = output.strSession(session, str)
-        output.f.write(str + '\n')
+        text = output.fillTemplate(output.template['session'], session)
+        text = output.markupSession(session, text)
+        output.f.write(text + '\n')
 
     curday = None
     # TODO: It would be more efficient to write a 'featured' array as we
