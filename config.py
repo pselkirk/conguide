@@ -28,7 +28,7 @@ if not PY3:
     sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
 # default config file
-CFG = 'arisia.cfg'
+CFG = 'conguide.cfg'
 # TODO: If there is exactly one .cfg file in the working directory, use
 # that by default.
 
