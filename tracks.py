@@ -20,14 +20,14 @@ import copy
 import re
 
 import config
-import pocketprogram
+import conguide
 from room import Room
 import session
 
-class Output(pocketprogram.Output):
+class Output(conguide.Output):
 
     def __init__(self, fn, fd=None):
-        pocketprogram.Output.__init__(self, fn, fd)
+        conguide.Output.__init__(self, fn, fd)
         Output._readconfig(self)
 
     def _readconfig(self):

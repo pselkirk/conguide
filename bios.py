@@ -20,12 +20,12 @@ import copy
 import re
 
 import config
-import pocketprogram
+import conguide
 
-class Output(pocketprogram.Output):
+class Output(conguide.Output):
 
     def __init__(self, fn, fd=None):
-        pocketprogram.Output.__init__(self, fn, fd)
+        conguide.Output.__init__(self, fn, fd)
         Output._readconfig(self)
 
     def _readconfig(self):
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     import participant
     import session
 
-    # --infile in cmdline.py is pocketprogram.csv,
+    # --infile in cmdline.py is conguide.csv,
     # but here we want the bios file
     parent = cmdline.cmdlineParser()
     parser = argparse.ArgumentParser(add_help=False, parents=[parent])

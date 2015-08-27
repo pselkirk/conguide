@@ -20,7 +20,7 @@ import copy
 import re
 
 import config
-import pocketprogram
+import conguide
 from room import Room
 from times import Day, Time, Duration
 
@@ -46,10 +46,10 @@ class Slice(object):
              self.end.__str__(mode='24hr'))
 
 # ----------------------------------------------------------------
-class Output(pocketprogram.Output):
+class Output(conguide.Output):
 
     def __init__(self, fn, fd=None, codec=None):
-        pocketprogram.Output.__init__(self, fn, fd)
+        conguide.Output.__init__(self, fn, fd)
         Output._readconfig(self)
 
     def _readconfig(self):

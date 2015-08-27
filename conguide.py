@@ -18,7 +18,7 @@
 
 """A front-end driver module to generate Convention Guide content.
 
-| usage: pocketprogram.py [-?] [-c CFG] [-d] [-q] [-t] [-h] [-x] [-i] [-a]
+| usage: conguide.py [-?] [-c CFG] [-d] [-q] [-t] [-h] [-x] [-i] [-a]
 | 
 | optional arguments:
 |   -?, --help            show this help message and exit
@@ -256,15 +256,15 @@ if __name__ == '__main__':
 
     if args.xml:
         try:
-            f = codecs.open(config.get('output files xml', 'pocketprogram'),
+            f = codecs.open(config.get('output files xml', 'conguide'),
                             'w', 'utf-8', 'replace')
         except KeyError:
             pass
         else:
-            f.write('<?xml version="1.0" encoding="UTF-8"?>\n<pocketprogram>\n')
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n<conguide>\n')
             schedule.write(schedule.XmlOutput(None, f), sessions)
             featured.write(featured.XmlOutput(None, f), sessions)
             tracks.write(tracks.XmlOutput(None, f), sessions)
             xref.write(xref.XmlOutput(None, f), participants)
-            f.write('</pocketprogram>\n')
+            f.write('</conguide>\n')
             f.close()
