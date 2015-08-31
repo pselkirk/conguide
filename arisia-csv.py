@@ -21,9 +21,7 @@
 import csv
 import re
 
-import config
-from participant import Participant
-from session import Session
+from conguide import config, participant, session
 
 def csv_reader(fn):
     """Create a CSV reader. This works around differences between Python 2.7 and
@@ -60,7 +58,7 @@ def read(fn):
         if row['participants']:
             # chname has to operate on the full participants string
             # because some of the target names have commas in them
-            for k, v in Participant.chname.items():
+            for k, v in participant.Participant.chname.items():
                 row['participants'] = row['participants'].replace(k, v)
             mods = []
             partic = re.split(r', ?', row['participants'])
@@ -81,8 +79,7 @@ def read(fn):
             row[k] = cleanup(row[k], minimal)
 
         # make a new session from this data
-        session = Session(row, participants)
-        sessions.append(session)
+        sessions.append(session.Session(row, participants))
 
     # sort
     sessions = sorted(sessions)
@@ -129,7 +126,7 @@ def read_bios(fn, participants):
             row[key] = cleanup(row[key])
         pubsname = row['pubsname']
         try:
-            pubsname = Participant.chname[pubsname]
+            pubsname = participant.Participant.chname[pubsname]
         except (AttributeError, KeyError):
             pass
         try:
@@ -137,7 +134,7 @@ def read_bios(fn, participants):
         except KeyError:
             if not config.quiet:
                 print('warning: new participant %s' % pubsname)
-            p = Participant(pubsname)
+            p = participant.Participant(pubsname)
             participants[pubsname] = p
         p.firstname = row['firstname']
         p.lastname = row['lastname']
@@ -153,10 +150,10 @@ if __name__ == '__main__':
     # Read [participant change name] here because we want to check the
     # chname dict before instantiating the first participant, or even the
     # first session.
-    Participant.chname = {}
+    participant.Participant.chname = {}
     try:
         for name, rename in config.items('participant change name'):
-            Participant.chname[name] = rename
+            participant.Participant.chname[name] = rename
     except config.NoSectionError:
         pass
 

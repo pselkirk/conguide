@@ -20,14 +20,14 @@ import copy
 import re
 
 import config
-import conguide
+import output
 from room import Room
 import session
 
-class Output(conguide.Output):
+class Output(output.Output):
 
     def __init__(self, fn, fd=None):
-        conguide.Output.__init__(self, fn, fd)
+        output.Output.__init__(self, fn, fd)
         Output._readconfig(self)
 
     def _readconfig(self):
@@ -222,12 +222,12 @@ if __name__ == '__main__':
 
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
-            output = eval('%sOutput' % mode.capitalize())
+            outfunc = eval('%sOutput' % mode.capitalize())
             if args.outfile:
-                write(output(args.outfile), sessions)
+                write(outfunc(args.outfile), sessions)
             else:
                 try:
-                    write(output(config.get('output files ' + mode, 'tracks')),
+                    write(outfunc(config.get('output files ' + mode, 'tracks')),
                           sessions)
                 except config.NoOptionError:
                     pass

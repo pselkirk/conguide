@@ -20,12 +20,12 @@ import copy
 import re
 
 import config
-import conguide
+import output
 
-class Output(conguide.Output):
+class Output(output.Output):
 
     def __init__(self, fn, fd=None):
-        conguide.Output.__init__(self, fn, fd)
+        output.Output.__init__(self, fn, fd)
         Output._readconfig(self)
 
     def _readconfig(self):
@@ -252,7 +252,7 @@ if __name__ == '__main__':
     import participant
     import session
 
-    # --infile in cmdline.py is conguide.csv,
+    # --infile in cmdline.py is pocketprogram.csv,
     # but here we want the bios file
     parent = cmdline.cmdlineParser()
     parser = argparse.ArgumentParser(add_help=False, parents=[parent])
@@ -266,12 +266,12 @@ if __name__ == '__main__':
 
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
-            output = eval('%sOutput' % mode.capitalize())
+            outfunc = eval('%sOutput' % mode.capitalize())
             if args.outfile:
-                write(output(args.outfile), participants)
+                write(outfunc(args.outfile), participants)
             else:
                 try:
-                    write(output(config.get('output files ' + mode, 'bios')),
+                    write(outfunc(config.get('output files ' + mode, 'bios')),
                           participants)
                 except config.NoOptionError:
                     pass

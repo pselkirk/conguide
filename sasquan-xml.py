@@ -53,6 +53,8 @@ The XML schema is like this::
 import re
 import xml.etree.ElementTree
 
+from conguide import config, participant, session
+
 import config
 from participant import Participant
 from session import Session
@@ -91,8 +93,8 @@ def read(fn):
                         elif b.tag == 'people':
                             for c in b:
                                 name = c.findtext('name')
-                                if name in Participant.chname:
-                                    name = Participant.chname[name]
+                                if name in participant.Participant.chname:
+                                    name = participant.Participant.chname[name]
                                 row['participants'].append(name)
                                 if c.tag == 'moderator':
                                     row['moderators'].append(name)
@@ -129,8 +131,7 @@ def read(fn):
                 row[k] = cleanup(row[k], minimal)
 
             # make a new session from this data
-            session = Session(row, participants)
-            sessions.append(session)
+            sessions.append(session.Session(row, participants))
 
     # sort
     sessions = sorted(sessions)
@@ -192,10 +193,10 @@ if __name__ == '__main__':
     # Read [participant change name] here because we want to check the
     # chname dict before instantiating the first participant, or even the
     # first session.
-    Participant.chname = {}
+    participant.Participant.chname = {}
     try:
         for name, rename in config.items('participant change name'):
-            Participant.chname[name] = rename
+            participant.Participant.chname[name] = rename
     except config.NoSectionError:
         pass
 

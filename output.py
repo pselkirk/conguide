@@ -16,25 +16,7 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-"""A front-end driver module to generate Convention Guide content.
-
-| usage: conguide.py [-?] [-c CFG] [-d] [-q] [-t] [-h] [-x] [-i] [-a]
-| 
-| optional arguments:
-|   -?, --help            show this help message and exit
-|   -c CFG, --config CFG  config file (default "arisia.cfg")
-|   -d, --debug           add debugging/trace information
-|   -q, --quiet           suppress warning messages
-|   -t, --text            text output
-|   -h, --html            html output
-|   -x, --xml             InDesign xml output
-|   -i, --indesign        InDesign tagged text output
-|   -a, --all             all output modes
-
-Depending on configuration, this generates schedule, program participant
-cross-reference (xref), featured sessions, and track list.
-
-"""
+"""Base class for output classes."""
 
 import codecs
 import copy
@@ -220,51 +202,3 @@ class Output(object):
         except AttributeError:
             return ''
 
-
-if __name__ == '__main__':
-    import cmdline
-    import bios
-    import featured
-    import grid
-    import participant
-    import schedule
-    import session
-    import tracks
-    import xref
-
-    args = cmdline.cmdline()
-    (sessions, participants) = session.read(config.get('input files', 'schedule'))
-    try:
-        participant.read(config.get('input files', 'bios'), participants)
-    except config.NoOptionError:
-        pass
-
-    for mode in ('text', 'html', 'xml', 'indesign'):
-        if eval('args.' + mode):
-            for report in ('schedule', 'featured', 'tracks', 'xref', 'bios', 'grid'):
-                try:
-                    writer = eval(report + '.write')
-                    output = eval('%s.%sOutput' % (report, mode.capitalize()))
-                    outfile = config.get('output files ' + mode, report)
-                    if report in ('xref', 'bios'):
-                        source = participants
-                    else:
-                        source = sessions
-                    writer(output(outfile), source)
-                except (AttributeError, KeyError, config.NoOptionError):
-                    pass
-
-    if args.xml:
-        try:
-            f = codecs.open(config.get('output files xml', 'conguide'),
-                            'w', 'utf-8', 'replace')
-        except KeyError:
-            pass
-        else:
-            f.write('<?xml version="1.0" encoding="UTF-8"?>\n<conguide>\n')
-            schedule.write(schedule.XmlOutput(None, f), sessions)
-            featured.write(featured.XmlOutput(None, f), sessions)
-            tracks.write(tracks.XmlOutput(None, f), sessions)
-            xref.write(xref.XmlOutput(None, f), participants)
-            f.write('</conguide>\n')
-            f.close()
