@@ -42,8 +42,7 @@ import sys
 from conguide import cmdline, config, bios, featured, grid, output, participant, schedule, session, tracks, xref
 
 # search the working directory for [input file importer]
-#sys.path[0:0] = '.'
-sys.path = ['.', '/usr/local/lib/python2.7/dist-packages/conguide'] + sys.path
+sys.path[0:0] = '.'
 
 args = cmdline.cmdline()
 (sessions, participants) = session.read(config.get('input files', 'schedule'))

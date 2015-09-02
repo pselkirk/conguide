@@ -203,5 +203,8 @@ def read(fn):
 
     import importlib
     value = config.get('input file importer', 'reader')
-    filereader = importlib.import_module(value)
+    try:
+        filereader = importlib.import_module(value)
+    except ImportError:
+        filereader = importlib.import_module('.' + value, 'conguide')
     return filereader.read(fn)
