@@ -138,7 +138,7 @@ class HtmlOutput(Output):
     def _readconfig(self):
         self.template = copy.copy(Output.template)
         try:
-            for key, value in config.items('schedule template html'):
+            for key, value in config.items('grid template html'):
                 self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
@@ -230,7 +230,7 @@ class IndesignOutput(Output):
     def _readconfig(self):
         self.template = copy.copy(Output.template)
         try:
-            for key, value in config.items('schedule template indesign'):
+            for key, value in config.items('grid template indesign'):
                 self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
@@ -389,7 +389,7 @@ class XmlOutput(Output):
     def _readconfig(self):
         self.template = copy.copy(Output.template)
         try:
-            for key, value in config.items('schedule template xml'):
+            for key, value in config.items('grid template xml'):
                 self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
@@ -622,9 +622,7 @@ def write(output, unused=None):
         row = room.gridrow
         output.f.write(output.strRowStart())
         try:
-            rname = output.fillTemplate(
-                output.template['grid', 'room', output.name],
-                room.gridsessions[0])
+            rname = output.fillTemplate(output.template['room'], room.gridsessions[0])
         except KeyError:
             rname = str(room)
         output.f.write(output.strRowHeaderCell(rname))
