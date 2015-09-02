@@ -186,16 +186,28 @@ class XmlOutput(Output):
         return Output.cleanup(self, text).replace('&', '&amp;')
 
     def markupTrackSessions(self, text):
-        return '<track>%s</track>' % text
+        if text:
+            return '<track>%s</track>' % text
+        else:
+            return ''
 
     def markupTrack(self, trsessions, text):
-        return '<tr-name>%s</tr-name>' % text
+        if text:
+            return '<tr-name>%s</tr-name>' % text
+        else:
+            return ''
 
     def markupIndex(self, session, text):
-        return '<tr-index>%s</tr-index>' % text
+        if text:
+            return '<tr-index>%s</tr-index>' % text
+        else:
+            return ''
 
     def markupTitle(self, session, text):
-        return '<tr-title>%s</tr-title>' % text
+        if text:
+            return '<tr-title>%s</tr-title>' % text
+        else:
+            return ''
 
 def write(output, sessions):
     tracks = {}

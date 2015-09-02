@@ -233,29 +233,44 @@ class XmlOutput(Output):
         return Output.cleanup(self, text).replace('&', '&amp;')
 
     def markupSession(self, session, text):
-        return '<ss-session>%s</ss-session>' % text
+        if text:
+            return '<ss-session>%s</ss-session>' % text
+        else:
+            return ''
 
     def markupDay(self, session, text):
-        return '<ss-day>%s</ss-day>' % text
+        if text:
+            return '<ss-day>%s</ss-day>' % text
+        else:
+            return ''
 
     def markupTime(self, session, text):
-        return '<ss-time>%s</ss-time>' % text
+        if text:
+            return '<ss-time>%s</ss-time>' % text
+        else:
+            return ''
 
     def strIndex(self, session):
-        if (session.index):
+        if session.index:
             return str(session.index)
         else:
             return ''
 
     def markupIndex(self, session, text):
-        return '<ss-index>%s</ss-index>' % text
+        if text:
+            return '<ss-index>%s</ss-index>' % text
+        else:
+            return ''
 
     def strTitle(self, session):
         # need a special tag for italics in titles, because weights
         return re.sub(r'<(/?)i>', r'<\1i-title>', session.title)
 
     def markupTitle(self, session, text):
-        return '<ss-title>%s</ss-title>' % text
+        if text:
+            return '<ss-title>%s</ss-title>' % text
+        else:
+            return ''
 
     def strDuration(self, session):
         if session.duration != self.zeroDuration and \
@@ -265,13 +280,22 @@ class XmlOutput(Output):
             return ''
 
     def markupDuration(self, session, text):
-        return '<ss-duration>%s</ss-duration>' % text
+        if text:
+            return '<ss-duration>%s</ss-duration>' % text
+        else:
+            return ''
 
     def markupRoom(self, session, text):
-        return '<ss-room>%s</ss-room>' % text
+        if text:
+            return '<ss-room>%s</ss-room>' % text
+        else:
+            return ''
 
     def markupLevel(self, session, text):
-        return '<ss-room>%s</ss-room>' % text
+        if text:
+            return '<ss-room>%s</ss-room>' % text
+        else:
+            return ''
 
     def strIcon(self, session):
         if self.icons:
@@ -285,10 +309,16 @@ class XmlOutput(Output):
         return ''
 
     def markupIcon(self, session, text):
-        return '<ss-icon>%s</ss-icon>' % text
+        if text:
+            return '<ss-icon>%s</ss-icon>' % text
+        else:
+            return ''
 
     def markupDescription(self, session, text):
-        return '<ss-description>%s</ss-description>' % text
+        if text:
+            return '<ss-description>%s</ss-description>' % text
+        else:
+            return ''
 
     def strParticipants(self, session):
         if session.sessionid in self.nopartic:
@@ -305,7 +335,10 @@ class XmlOutput(Output):
         return Output.strParticipants(self, session)
 
     def markupParticipants(self, session, text):
-        return '<ss-participants>%s</ss-participants>' % text
+        if text:
+            return '<ss-participants>%s</ss-participants>' % text
+        else:
+            return ''
 
     def strTags(self, session):
         if session.tags:
