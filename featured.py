@@ -34,7 +34,7 @@ class Output(output.Output):
         Output.template = {}
         try:
             for key, value in config.items('featured template'):
-                Output.template[key] = config.parseTemplate(value)
+                Output.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
         Output.featured = []
@@ -57,7 +57,7 @@ class TextOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template text'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -84,7 +84,7 @@ class HtmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template html'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -113,7 +113,7 @@ class XmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('featured template xml'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 

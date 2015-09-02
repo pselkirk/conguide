@@ -33,7 +33,7 @@ class Output(output.Output):
         Output.template = {}
         try:
             for key, value in config.items('bios template'):
-                Output.template[key] = config.parseTemplate(value)
+                Output.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
         Output.boldnames = {}
@@ -120,7 +120,7 @@ class TextOutput(Output):
         TextOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template text'):
-                TextOutput.template[key] = config.parseTemplate(value)
+                TextOutput.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -153,7 +153,7 @@ class HtmlOutput(Output):
         HtmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template html'):
-                HtmlOutput.template[key] = config.parseTemplate(value)
+                HtmlOutput.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -215,7 +215,7 @@ class XmlOutput(Output):
         XmlOutput.template = copy.copy(Output.template)
         try:
             for key, value in config.items('bios template xml'):
-                XmlOutput.template[key] = config.parseTemplate(value)
+                XmlOutput.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 

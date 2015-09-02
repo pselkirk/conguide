@@ -152,33 +152,6 @@ def set(section, option, value):
     except configparser.NoSectionError as e:
         raise NoSectionError(e)
 
-def parseTemplate(template):
-    # parse a template string into a list of tokens,
-    # with optional sections as sub-lists
-    def xyzzy(list):
-        tokens = []
-        while list:
-            a = list.pop(0)
-            if not a:
-                # split() can insert empty tokens into the list
-                continue
-            elif a == '[':
-                # begin optional section: process into sub-list
-                (toks, residue) = xyzzy(list)
-                tokens.append(toks)	# sub-list
-                list = residue
-            elif a == ']':
-                # end optional section: return sub-list and remaining unprocessed list
-                break
-            else:
-                # split token into words and non-words
-                tokens += re.split(r'([\w()-]+)', a)
-        return (tokens, list)
-    # split template into brackets and non-brackets
-    list = re.split(r'([\[\]])', template)
-    (tokens, unused) = xyzzy(list)
-    return tokens
-
 # exception classes, so callers don't have to know about configparser
 # (or ConfigParser)
 class NoSectionError(configparser.NoSectionError):

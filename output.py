@@ -22,6 +22,7 @@ import codecs
 import copy
 import re
 import time
+import types
 
 import config
 
@@ -88,6 +89,61 @@ class Output(object):
 
         return text
 
+    def parenthesize(self, text):
+        if text:
+            return '(%s)' % text
+        else:
+            return ''
+
+    def parseTemplate(self, template):
+        # parse a template string into a list of tokens,
+        # with optional sections as sub-lists
+        def xyzzy(list):
+            tokens = []
+            while list:
+                a = list.pop(0)
+                if not a:
+                    # split() can insert empty tokens into the list
+                    continue
+                elif a == '[':
+                    # begin optional section: process into sub-list
+                    (toks, residue) = xyzzy(list)
+                    tokens.append(toks)	# sub-list
+                    list = residue
+                elif a == ']':
+                    # end optional section: return sub-list and remaining unprocessed list
+                    break
+                else:
+                    # split token into words and non-words
+                    tokens += re.split(r'([\w()-]+)', a)
+            return (tokens, list)
+        # split template into brackets and non-brackets
+        list = re.split(r'([\[\]])', template)
+        (tokens, unused) = xyzzy(list)
+        return self.compileTemplate(tokens)
+
+    def compileTemplate(self, template):
+        newTemplate = []
+        for token in template:
+            if isinstance(token, list):
+                token = self.compileTemplate(token)
+            else:
+                tokname = token
+                m = re.match(r'\((.*)\)', token)
+                if m:
+                    parens = True
+                    token = m.group(1)
+                else:
+                    parens = False
+                if re.match(r'\w+', token):
+                    codestring = 'self.str%s(session)' % token.capitalize()
+                    if parens:
+                        codestring = 'self.parenthesize(%s)' % codestring
+                    codestring = 'self.markup%s(session, %s)' % (token.capitalize(), codestring)
+                    token = (compile(codestring, '<string>', 'eval'), tokname)
+            newTemplate.append(token)
+        return newTemplate                    
+
     # Fill a template (list of fields, with optional elements as sub-lists).
     # At each level, count the number of lexemes that expand into non-empty
     # strings. If nothing expands, return the empty string; else return a join
@@ -96,37 +152,30 @@ class Output(object):
     # XXX This treats the top-level list as an optional list, so if nothing
     # expands, it blows away any static text as well.
     def fillTemplate(self, template, session):
-        fields = copy.deepcopy(template)
+        fields = []
         ok = False
-        for i, tag in enumerate(fields):
-            if type(tag) is list:
-                fields[i] = self.fillTemplate(tag, session)
-                if fields[i]:
+        for token in template:
+            if isinstance(token, list):
+                # sub-list of optional elements
+                value = self.fillTemplate(token, session)
+                if value:
+                    fields.append(value)
                     ok = True
+            elif isinstance(token, tuple):
+                # e.g. markupIndex(session, strIndex(session))
+                # text is the literal token in the config template.
+                # html markup causes us to try e.g. strDd()
+                # XXX change '<text>' to process as literal above
+                (code, text) = token
+                try:
+                    value = eval(code)
+                    if value:
+                        fields.append(value)
+                        ok = True
+                except AttributeError:
+                    fields.append(text)
             else:
-                m = re.match(r'\((.*)\)', tag)
-                if m:
-                    parentheses = True
-                    tag = m.group(1)
-                else:
-                    parentheses = False                    
-                if re.match(r'\w+', tag):
-                    try:
-                        str = eval('self.str%s(session)' % tag.capitalize())
-                    except AttributeError:
-                        pass
-                    else:
-                        if str:
-                            ok = True
-                            if tag.isupper():
-                                str = str.upper()
-                            if parentheses:
-                                str = '(' + str + ')'
-                            try:
-                                str = eval('self.markup%s(session, str)' % tag.capitalize())
-                            except AttributeError:
-                                pass
-                            fields[i] = str
+                fields.append(token)
         if ok:
             return ''.join(fields)
         else:
@@ -135,23 +184,44 @@ class Output(object):
     def strIndex(self, session):
         return str(session.index)
 
+    def markupIndex(self, session, text):
+        return text
+
     def strDay(self, session):
         return str(session.time.day)
+
+    def markupDay(self, session, text):
+        return text
 
     def strTime(self, session):
         return str(session.time)
 
+    def markupTime(self, session, text):
+        return text
+
     def strDuration(self, session):
         return str(session.duration)
+
+    def markupDuration(self, session, text):
+        return text
 
     def strTitle(self, session):
         return self.cleanup(session.title)
 
+    def markupTitle(self, session, text):
+        return text
+
     def strTrack(self, session):
         return self.cleanup(str(session.track))
 
+    def markupTrack(self, session, text):
+        return text
+
     def strType(self, session):
         return self.cleanup(str(session.type))
+
+    def markupType(self, session, text):
+        return text
 
     def strLevel(self, session):
         if session.room.level:
@@ -159,8 +229,14 @@ class Output(object):
         else:
             return ''
 
+    def markupLevel(self, session, text):
+        return text
+
     def strRoom(self, session):
         return self.cleanup(str(session.room))
+
+    def markupRoom(self, session, text):
+        return text
 
     def strUsage(self, session):
         if session.room.usage:
@@ -168,11 +244,20 @@ class Output(object):
         else:
             return ''
 
+    def markupUsage(self, session, text):
+        return text
+
     def strIcons(self, session):
         return ''
 
+    def markupIcons(self, session, text):
+        return text
+
     def strDescription(self, session):
         return self.cleanup(session.description)
+
+    def markupDescription(self, session, text):
+        return text
 
     def strParticipants(self, session):
         if session.participants:
@@ -190,8 +275,14 @@ class Output(object):
         else:
             return ''
 
+    def markupParticipants(self, session, text):
+        return text
+
     def strParticipant(self, participant):
         return self.cleanup(participant.__str__())
+
+    def markupParticipant(self, participant, text):
+        return text
 
     def strTags(self, session):
         try:
@@ -201,4 +292,7 @@ class Output(object):
                 return ''
         except AttributeError:
             return ''
+
+    def markupTags(self, session, text):
+        return text
 

@@ -34,7 +34,7 @@ class Output(output.Output):
         Output.template = {}
         try:
             for key, value in config.items('xref template'):
-                Output.template[key] = config.parseTemplate(value)
+                Output.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -50,6 +50,15 @@ class Output(output.Output):
             ss.append(self.fillTemplate(self.template['session'], s))
         return ', '.join(ss)
 
+    def markupSessions(self, participant, text):
+        return text
+
+    def strParticipant(self, participant):
+        return output.Output.strParticipant(self, participant)
+
+    def markupParticipant(self, participant, text):
+        return output.Output.markupParticipant(self, participant, text)
+
 class TextOutput(Output):
 
     def __init__(self, fn):
@@ -60,7 +69,7 @@ class TextOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template text'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -76,7 +85,7 @@ class HtmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template html'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -114,7 +123,7 @@ class XmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('xref template xml'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 

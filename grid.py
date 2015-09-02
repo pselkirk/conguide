@@ -57,7 +57,7 @@ class Output(output.Output):
         Output.template = {}
         try:
             for key, value in config.items('grid template'):
-                Output.template[key] = config.parseTemplate(value)
+                Output.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -139,7 +139,7 @@ class HtmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template html'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
         try:
@@ -231,7 +231,7 @@ class IndesignOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template indesign'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
         try:
@@ -390,7 +390,7 @@ class XmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template xml'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
         try:

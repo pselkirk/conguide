@@ -35,7 +35,7 @@ class Output(output.Output):
         Output.template = {}
         try:
             for key, value in config.items('tracks template'):
-                Output.template[key] = config.parseTemplate(value)
+                Output.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
         Output.classifiers = []
@@ -81,6 +81,9 @@ class Output(output.Output):
             ss.append(self.fillTemplate(self.template['session'], s))
         return '\n'.join(ss)
 
+    def markupSessions(self, trsessions, text):
+        return text
+
     def strTitle(self, session):
         # XXX local policy - process [tracks title prune] config
         # remove redundant title info
@@ -104,7 +107,7 @@ class TextOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template text'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -128,7 +131,7 @@ class HtmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template html'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -169,7 +172,7 @@ class XmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('tracks template xml'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 

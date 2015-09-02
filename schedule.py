@@ -21,6 +21,7 @@ import re
 
 import config
 import output
+from room import Room
 from times import Day, Duration
 import session
 
@@ -41,7 +42,7 @@ class Output(output.Output):
         Output.template = {}
         try:
             for key, value in config.items('schedule template'):
-                Output.template[key] = config.parseTemplate(value)
+                Output.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -52,9 +53,9 @@ class Output(output.Output):
                 expr = expr.replace('track', 'session.track')
                 expr = expr.replace('type', 'session.type')
                 expr = expr.replace('sessionid', 'session.sessionid')
-                expr = expr.replace(' in ', ' in config.')
+                expr = expr.replace(' in ', ' in Output.')
                 expr = re.sub(r'room == (\'\w+\')',
-                              r'session.room == config.rooms[\1]', expr)
+                              r'session.room == Room.rooms[\1]', expr)
                 Output.icons.append((char, expr))
         except config.NoSectionError:
             pass
@@ -115,7 +116,7 @@ class TextOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template text'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -169,7 +170,7 @@ class HtmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template html'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
@@ -218,7 +219,7 @@ class XmlOutput(Output):
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('schedule template xml'):
-                self.template[key] = config.parseTemplate(value)
+                self.template[key] = self.parseTemplate(value)
         except config.NoSectionError:
             pass
 
