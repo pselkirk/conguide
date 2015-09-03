@@ -171,6 +171,8 @@ parser_guidebook.add_argument('--infile', action='store',
                               help='input file name')
 parser_guidebook.add_argument('--check', action='store_true',
                               help='check the generated guidebook csv files')
+parser_guidebook.add_argument('-v', '--verbose', action='store_true',
+                              help='verbose output')
 parser_guidebook.set_defaults(func=guidebook.main)
 
 # count

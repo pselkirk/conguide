@@ -27,11 +27,16 @@ import time
 import config
 import featured
 import participant
-import session
+from room import Room
+import session as SESSION
 from times import Day
 
 def main(args):
-    (sessions, participants) = session.read(config.get('input files', 'schedule'))
+    if args.check:
+        check(args)
+        return
+
+    (sessions, participants) = SESSION.read(config.get('input files', 'schedule'))
     participant.read(config.get('input files', 'bios'), participants)
 
     sched = open('guidebook.csv', 'w')
@@ -125,3 +130,56 @@ def main(args):
     sched.close()
     links.close()
     bios.close()
+
+def check(args):
+
+    def read(fn):
+        if config.PY3:
+            f = open(fn, 'rt', encoding='utf-8', newline='')
+        else:
+            f = open(fn, 'rb')
+        reader = csv.DictReader(f)
+        rows = []
+        for row in reader:
+            if not config.PY3:
+                for key in row:
+                    row[key] = row[key].decode('utf-8')
+            rows.append(row)
+        return rows
+
+    titles = {}
+    for row in read('guidebook.csv'):
+        title = row['Session Title']
+        if title in titles:
+            print('duplicate session title "%s"' % title)
+        else:
+            titles[title] = 0
+
+    names = {}
+    for row in read('guidebook-bios.csv'):
+        name = row['Name']
+        if name in names:
+            print('duplicate name "%s"' % name)
+        else:
+            names[name] = 0
+
+    for row in read('guidebook-links.csv'):
+        name = row['Item Name (Optional)']
+        title = row['Link To Session Name (Optional)']
+        if not name in names:
+            print('name "%s" not found in guidebook-bios.csv' % name)
+        else:
+            names[name] += 1
+        if not title in titles:
+            print('title "%s" not found in guidebook.csv' % title)
+        else:
+            titles[title] += 1
+
+    for name, count in names.items():
+        if not count:
+            print('no sessions for "%s"' % name)
+
+    if args.verbose:
+        for title, count in titles.items():
+            if not count:
+                print('no participants for "%s"' % title)
