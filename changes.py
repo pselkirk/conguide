@@ -25,14 +25,19 @@ if not config.PY3:
     str = unicode
 
 def main(args):
-    sessions = [{}, {}]
-    participants = [{}, {}]
-    
     if not args.files or len(args.files) > 2:
         print('specify one or two data files')
         exit(1)
-    elif len(args.files) == 1:
+
+    if args.bios:
+        changes_bios(args)
+        return
+    
+    if len(args.files) == 1:
         args.files.append(config.get('input files', 'schedule'))
+    
+    sessions = [{}, {}]
+    participants = [{}, {}]
     
     def read(fn):
         if not config.quiet:
@@ -152,3 +157,64 @@ def main(args):
     if ch_participants:
         print('\nparticipant changes (%d):\n%s' % \
               (len(ch_participants), '\n'.join(ch_participants)))
+
+def changes_bios(args):
+    import participant
+
+    if len(args.files) == 1:
+        args.files.append(config.get('input files', 'bios'))
+
+    def read(fn):
+        participants = {}
+        for p in participant.read(fn, {}).values():
+            participants[p.badgeid] = p
+        return participants
+
+    config.quiet = True
+    participants = [read(args.files[0]), read(args.files[1])]
+
+    added = []
+    removed = []
+    ch_name = []
+    ch_pubsname = []
+    ch_bio = []
+
+    def pheader(p):
+        name = '%s %s' % (p.firstname, p.lastname)
+        string = '%s: %s' % (p.badgeid, name)
+        if p.name != name:
+            string += ' (%s)' % p.name
+        return string
+
+    for p in sorted(participants[1].values()):
+        if not p.badgeid in participants[0]:
+            added.append(pheader(p))
+
+    for p in sorted(participants[0].values()):
+        ph = pheader(p)
+        if args.debug:
+            print(ph)
+        p1 = participants[1].get(p.badgeid)
+        if not p1:
+            removed.append(ph)
+            continue
+        if p1.firstname != p.firstname or p1.lastname != p.lastname:
+            ch_name.append('%s -> %s %s' % (ph, p1.firstname, p1.lastname))
+        if p1.name != p.name:
+            ch_pubsname.append('%s: %s -> %s' % (ph, p.name, p1.name))
+        if p1.bio != p.bio:
+            if args.verbose:
+                ch_bio.append('%s: %s -> %s' % (ph, p.bio, p1.bio))
+            else:
+                ch_bio.append(ph)
+
+    if added:
+        print('\nadded participants:\n%s' % '\n'.join(added))
+    if removed:
+        print('\nremoved participants:\n%s' % '\n'.join(removed))
+    if ch_name:
+        print('\nname changes:\n%s' % '\n'.join(ch_name))
+    if ch_pubsname:
+        print('\npubsname changes:\n%s' % '\n'.join(ch_pubsname))
+    if ch_bio:
+        print('\nbio changes:\n%s' % '\n'.join(ch_bio))
