@@ -156,12 +156,12 @@ def write(output, participants):
         if p.sessions:
             output.f.write(output.strXref(p))
 
-if __name__ == '__main__':
-    import cmdline
-
-    args = cmdline.cmdline(io=True)
+def main(args):
     (sessions, participants) = session.read(config.get('input files', 'schedule'))
-
+    if args.all:
+        args.text = True
+        args.html = True
+        args.xml = True
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             outfunc = eval('%sOutput' % mode.capitalize())

@@ -192,7 +192,7 @@ def write(output, sessions):
                 nextday = None
             writeSession(s)
 
-if __name__ == '__main__':
+def main(args):
     def research(sessions):
         # research - list all sessions in major-draw tracks, plus all sessions
         # with at least one GOH participant, formatted for cut-and-paste into
@@ -240,26 +240,22 @@ if __name__ == '__main__':
             out('### %s' % research[i], ss[i])
         out("### GOH participant(s)", gohpartic)
 
-    import argparse
-    import cmdline
-
-    parent = cmdline.cmdlineParser(io=True)
-    parser = argparse.ArgumentParser(add_help=False, parents=[parent])
-    parser.add_argument('--research', action='store_true',
-                        help='identify likely candidates for "featured" list')
-    args = cmdline.cmdline(parser, io=True)
     (sessions, participants) = session.read(config.get('input files', 'schedule'))
-
-    for mode in ('text', 'html', 'xml'):
-        if eval('args.' + mode):
-            outfunc = eval('%sOutput' % mode.capitalize())
-            if args.research:
-                research(sessions)
-            elif args.outfile:
-                write(outfunc(args.outfile), sessions)
-            else:
-                try:
-                    write(outfunc(config.get('output files ' + mode, 'featured')),
-                          sessions)
-                except config.NoOptionError:
-                    pass
+    if args.all:
+        args.text = True
+        args.html = True
+        args.xml = True
+    if hasattr(args, 'research'):
+        research(sessions)
+    else:
+        for mode in ('text', 'html', 'xml'):
+            if eval('args.' + mode):
+                outfunc = eval('%sOutput' % mode.capitalize())
+                if args.outfile:
+                    write(outfunc(args.outfile), sessions)
+                else:
+                    try:
+                        write(outfunc(config.get('output files ' + mode, 'featured')),
+                              sessions)
+                    except config.NoOptionError:
+                        pass

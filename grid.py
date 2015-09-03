@@ -24,12 +24,6 @@ import output
 from room import Room
 from times import Day, Time, Duration
 
-# TODO:
-# - docstrings
-# - config for "major" room threshold
-# - add session.grid_duration for config.grid_noprint sessions
-
-# ----------------------------------------------------------------
 class Slice(object):
     # start and end are Time (with day)
 
@@ -45,7 +39,6 @@ class Slice(object):
             (self.name, self.start.__str__(mode='24hr'),
              self.end.__str__(mode='24hr'))
 
-# ----------------------------------------------------------------
 class Output(output.Output):
 
     def __init__(self, fn, fd=None, codec=None):
@@ -113,7 +106,6 @@ class Output(output.Output):
     def strCellBehind(self):
         return ''
 
-# ----------------------------------------------------------------
 class HtmlOutput(Output):
 
     name = 'html'
@@ -204,7 +196,6 @@ class HtmlOutput(Output):
     def strGrayCell(self, ncol):
         return '<td colspan="%d" class="gray">&nbsp;</td>\n' % ncol
 
-# ----------------------------------------------------------------
 class IndesignOutput(Output):
 
     name = 'indesign'
@@ -219,13 +210,6 @@ class IndesignOutput(Output):
         Output.__init__(self, fn, codec='cp1252')
         self._readconfig()
         self.f.write('<ASCII-WIN>\r\n<Version:8><FeatureSet:InDesign-Roman>')
-
-        if self.fixed:
-            nrow = 0
-            for room in set(Room.rooms.values()):
-                if room.major:
-                    nrow += 1
-            self.cheight = (self.theight - self.hheight) / nrow
 
     def _readconfig(self):
         self.template = copy.copy(Output.template)
@@ -371,7 +355,6 @@ class IndesignOutput(Output):
     def strCellBehind(self):
         return '<CellStart:1,1><CellEnd:>'
 
-# ----------------------------------------------------------------
 # InDesign XML suffers from the severe deficiency that you can't control the
 # height of a cell, which makes it really annoying to try to produce fixed-
 # size tables, as we do for Arisia. It might be useful for variable-size
@@ -498,7 +481,6 @@ class XmlOutput(Output):
         #<Cell aid:table="cell" aid:crows="1" aid:ccols="15" aid5:cellstyle="Grid gray"></Cell>
         return self.strCellStart('gray', 1, ncol) + self.strCellEnd()
 
-# ----------------------------------------------------------------
 def write(output, unused=None):
 
     def activeRoom(room, start, end):
@@ -529,8 +511,12 @@ def write(output, unused=None):
                 room.gridsessions = []
             except AttributeError:
                 pass
+        nrow = 0
         for room in sorted(set(Room.rooms.values())):
             room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
+            if room.major:
+                nrow += 1
+
             # declare an array of half-hour blocks
             room.gridrow = [None for j in range((len(Day.days) + 1) * 24 * 2)]
             for session in room.gridsessions:
@@ -598,6 +584,11 @@ def write(output, unused=None):
                     except (TypeError, AttributeError):
                         room.gridrow[off] = [session]
                     off += 1
+        # only really meaningful for IndesignOutput
+        try:
+            output.cheight = (output.theight - output.hheight) / nrow
+        except AttributeError:
+            pass
 
     def writeTable(gridslice):
         output.f.write(output.strTableTitle(gridslice))
@@ -694,14 +685,13 @@ def write(output, unused=None):
             if activeGrid(gridslice):
                 writeTable(gridslice)
 
-# ----------------------------------------------------------------
-if __name__ == '__main__':
-    import cmdline
+def main(args):
     import session
-
-    args = cmdline.cmdline(io=True)
     (sessions, participants) = session.read(config.get('input files', 'schedule'))
-
+    if args.all:
+        args.html = True
+        args.indesign = True
+        args.xml = True
     for mode in ('html', 'indesign', 'xml'):
         if eval('args.' + mode):
             outfunc = eval('%sOutput' % mode.capitalize())

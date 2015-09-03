@@ -229,12 +229,12 @@ def write(output, sessions):
     for k, v in sorted(tracks.items()):
         output.f.write(output.strTrackSessions((k, v)))
 
-if __name__ == '__main__':
-    import cmdline
-
-    args = cmdline.cmdline(io=True)
+def main(args):
     (sessions, participants) = session.read(config.get('input files', 'schedule'))
-
+    if args.all:
+        args.text = True
+        args.html = True
+        args.xml = True
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             outfunc = eval('%sOutput' % mode.capitalize())

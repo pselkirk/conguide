@@ -10,9 +10,11 @@ small:
 [x] default config file = conguide.cfg
 [] environment variable for cmdline defaults (-q -c sasquan.cfg)
 [x] separate conguide.py into base class for reports, and main UI driver (/usr/bin)
+[] make changes-bio a sub-report of changes
+[] make guidebook-check a sub-report of guidebook
 
 medium:
-[] drive individual scripts from conguide, e.g. 'conguide schedule'
+[x] drive individual scripts from conguide, e.g. 'conguide schedule'
 [] package/install
 [] profiling, optimization
 

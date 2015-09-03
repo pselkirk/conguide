@@ -245,25 +245,15 @@ def write(output, participants):
     for p in sorted(participants.values()):
         output.writeBio(p)
 
-if __name__ == '__main__':
-    import argparse
-
-    import cmdline
-    import participant
-    import session
-
-    # --infile in cmdline.py is pocketprogram.csv,
-    # but here we want the bios file
-    parent = cmdline.cmdlineParser()
-    parser = argparse.ArgumentParser(add_help=False, parents=[parent])
-    parser.add_argument('--infile', action='store', help='input file name')
-    parser.add_argument('--outfile', action='store', help='output file name')
-    args = cmdline.cmdline(parser)
+def main(args):
     (sessions, participants) = session.read(config.get('input files', 'schedule'))
     if not args.infile:
         args.infile = config.get('input files', 'bios')
     participant.read(args.infile, participants)
-
+    if args.all:
+        args.text = True
+        args.html = True
+        args.xml = True
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             outfunc = eval('%sOutput' % mode.capitalize())

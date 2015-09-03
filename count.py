@@ -74,34 +74,11 @@ def count(fn, i):
             for t in s.tags:
                 incr(tag, t, i)
 
-parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
-                    help='config file (default "%s")' % config.CFG)
-parser.add_argument('-d', '--debug', action='store_true',
-                    help='add debugging/trace information')
-parser.add_argument('-q', '--quiet', action='store_true',
-                    help='don\t print warning messages')
-parser.add_argument('-v', '--verbose', action='store_true',
-                    help='verbose output')
-parser.add_argument('files', nargs=argparse.REMAINDER,
-                    help='one or more snapshots of pocketprogram.csv')
-args = parser.parse_args()
-config.debug = args.debug
-config.quiet = args.quiet
-config.cfgfile = args.cfg
-verbose = args.verbose
-
-if not args.files:
-    count(config.get('input files', 'schedule'), 0)
-else:
-    for i, fn in enumerate(args.files):
-        count(fn, i)
-
-def report(name, hash):
+def report(name, hash, limit):
     print('\n%s (%d)' % (name, len(hash)))
     for key in sorted(hash):
-        while (len(hash[key]) < len(args.files)):
-            hash[key].append(0)
+        while (len(hash[key]) < limit):
+            hash[key].append(0)        # pad
         for val in hash[key]:
             if config.PY3:
                 exec("print(val, end='\t')")
@@ -109,23 +86,31 @@ def report(name, hash):
                 exec("print '%d\t' % val,")
         print(key)
 
-for n in nitems:
-    if config.PY3:
-        exec("print(n, end='\t')")
+def main(args):
+    if not args.files:
+        count(config.get('input files', 'schedule'), 0)
     else:
-        exec("print '%d\t' % n,")
-print('program items')
-report('day', day)
-report('time', time)
-if (args.verbose):
-    report('duration', duration)
-report('level', level)
-report('room', room)
-report('level,room', levelroom)
-if (args.verbose):
-    report('track', track)
-    report('type', type)
-report('track,type', tracktype)
-report('tag', tag)
-if (args.verbose):
-    report('participants', partic)
+        for i, fn in enumerate(args.files):
+            count(fn, i)
+
+    for n in nitems:
+        if config.PY3:
+            exec("print(n, end='\t')")
+        else:
+            exec("print '%d\t' % n,")
+    print('program items')
+    limit = len(args.files)
+    report('day', day, limit)
+    report('time', time, limit)
+    if (args.verbose):
+        report('duration', duration, limit)
+    report('level', level, limit)
+    report('room', room, limit)
+    report('level,room', levelroom, limit)
+    if (args.verbose):
+        report('track', track, limit)
+        report('type', type, limit)
+    report('track,type', tracktype, limit)
+    report('tag', tag, limit)
+    if (args.verbose):
+        report('participants', partic, limit)

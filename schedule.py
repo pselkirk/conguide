@@ -25,7 +25,7 @@ from room import Room
 from times import Day, Duration
 import session
 
-prune = True
+prune = False
 
 class Output(output.Output):
 
@@ -106,7 +106,7 @@ class TextOutput(Output):
 
     name = 'text'
 
-    def __init__(self, fn):
+    def __init__(self, fn=None):
         Output.__init__(self, fn)
         self._readconfig()
         import textwrap
@@ -155,7 +155,7 @@ class HtmlOutput(Output):
 
     name = 'html'
 
-    def __init__(self, fn):
+    def __init__(self, fn=None):
         Output.__init__(self, fn)
         self._readconfig()
         title = self.convention + ' Schedule'
@@ -381,19 +381,15 @@ def write(output, sessions):
             curtime = s.time
         writeSession(s)
 
-if __name__ == '__main__':
-    import argparse
-
-    import cmdline
-
-    parent = cmdline.cmdlineParser(io=True)
-    parser = argparse.ArgumentParser(add_help=False, parents=[parent])
-    parser.add_argument('--no-prune', dest='prune', action='store_false',
-                        help='don\'t prune participants to save space (xml only)')
-    args = cmdline.cmdline(parser, io=True)
-    prune = args.prune
+def main(args):
+    global prune
+    if hasattr(args, 'prune'):
+        prune = args.prune
     (sessions, participants) = session.read(config.get('input files', 'schedule'))
-
+    if args.all:
+        args.text = True
+        args.html = True
+        args.xml = True
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             outfunc = eval('%sOutput' % mode.capitalize())
