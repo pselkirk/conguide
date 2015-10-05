@@ -193,10 +193,7 @@ def main(args):
             goh[name] = True
 
         def is_goh(s):
-            for p in s.participants:
-                if p.name in goh:
-                    return True
-            return False
+            return any(filter(lambda p: p.name in goh, s.participants))
 
         def out(label, a):
             print(label)

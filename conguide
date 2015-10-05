@@ -134,6 +134,8 @@ parser_featured = subparsers.add_parser('featured', add_help=False,
                                         help='generate the "featured event" listing')
 add_modes(parser_featured, ['t', 'h', 'x', 'a'])
 add_io(parser_featured)
+parser_featured.add_argument('--research', action='store_true',
+                             help='identify likely candidates for "featured" list')
 parser_featured.set_defaults(func=featured.main)
 
 # tracks
