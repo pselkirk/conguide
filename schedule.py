@@ -38,7 +38,7 @@ class Output(output.Output):
         try:
             Output.default_duration = Duration(config.get('schedule default duration', 'duration'))
         except (config.NoSectionError, config.NoOptionError):
-            pass
+            Output.default_duration = None
         Output.template = {}
         try:
             for key, value in config.items('schedule template'):
