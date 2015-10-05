@@ -90,10 +90,7 @@ class Output(object):
         return text
 
     def parenthesize(self, text):
-        if text:
-            return '(%s)' % text
-        else:
-            return ''
+        return '(%s)' % text if text else ''
 
     def parseTemplate(self, template):
         # parse a template string into a list of tokens,
@@ -176,10 +173,7 @@ class Output(object):
                     fields.append(text)
             else:
                 fields.append(token)
-        if ok:
-            return ''.join(fields)
-        else:
-            return ''
+        return ''.join(fields) if ok else ''
 
     def strIndex(self, session):
         return str(session.index)
@@ -224,10 +218,7 @@ class Output(object):
         return text
 
     def strLevel(self, session):
-        if session.room.level:
-            return self.cleanup(str(session.room.level))
-        else:
-            return ''
+        return self.cleanup(str(session.room.level)) if session.room.level else ''
 
     def markupLevel(self, session, text):
         return text
@@ -239,10 +230,7 @@ class Output(object):
         return text
 
     def strUsage(self, session):
-        if session.room.usage:
-            return self.cleanup(session.room.usage)
-        else:
-            return ''
+        return self.cleanup(session.room.usage) if session.room.usage else ''
 
     def markupUsage(self, session, text):
         return text
@@ -286,10 +274,7 @@ class Output(object):
 
     def strTags(self, session):
         try:
-            if session.tags:
-                return '#%s' % ', #'.join(session.tags)
-            else:
-                return ''
+            return '#%s' % ', #'.join(session.tags) if session.tags else ''
         except AttributeError:
             return ''
 

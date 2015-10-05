@@ -133,22 +133,13 @@ class XmlOutput(Output):
             Output.__del__(self)
 
     def markupXref(self, text):
-        if text:
-            return '<xref>%s</xref>' % text
-        else:
-            return ''
+        return '<xref>%s</xref>' % text if text else ''
 
     def markupParticipant(self, participant, name):
-        if name:
-            return '<xr-name>%s</xr-name>' % name
-        else:
-            return ''
+        return '<xr-name>%s</xr-name>' % name if name else ''
 
     def markupSessions(self, participant, sessions):
-        if sessions:
-            return '<xr-sessions>%s</xr-sessions>' % sessions
-        else:
-            return ''
+        return '<xr-sessions>%s</xr-sessions>' % sessions if sessions else ''
 
 def write(output, participants):
 

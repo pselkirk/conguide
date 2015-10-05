@@ -127,46 +127,25 @@ class XmlOutput(Output):
         return Output.cleanup(self, text).replace('&', '&amp;')
 
     def markupSession(self, session, text):
-        if text:
-            return '<fe-session>%s</fe-session>' % text
-        else:
-            return ''
+        return '<fe-session>%s</fe-session>' % text if text else ''
 
     def markupDay(self, session, text):
-        if text:
-            return '<fe-day>%s</fe-day>' % text
-        else:
-            return ''
+        return '<fe-day>%s</fe-day>' % text if text else ''
 
     def markupIndex(self, session, text):
-        if text:
-            return '<fe-index>%s</fe-index>' % text
-        else:
-            return ''
+        return '<fe-index>%s</fe-index>' % text if text else ''
 
     def markupTime(self, session, text):
-        if text:
-            return '<fe-time>%s</fe-time>' % text
-        else:
-            return ''
+        return '<fe-time>%s</fe-time>' % text if text else ''
 
     def markupTitle(self, session, text):
-        if text:
-            return '<fe-title>%s</fe-title>' % text
-        else:
-            return ''
+        return '<fe-title>%s</fe-title>' % text if text else ''
 
     def markupRoom(self, session, text):
-        if text:
-            return '<fe-room>%s</fe-room>' % text
-        else:
-            return ''
+        return '<fe-room>%s</fe-room>' % text if text else ''
 
     def markupLevel(self, session, text):
-        if text:
-            return '<fe-room>%s</fe-room>' % text
-        else:
-            return ''
+        return '<fe-room>%s</fe-room>' % text if text else ''
 
 def write(output, sessions):
     def writeDay(session):
