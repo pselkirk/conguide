@@ -239,7 +239,7 @@ class XmlOutput(Output):
 
     def strTitle(self, session):
         # need a special tag for italics in titles, because weights
-        return re.sub(r'<(/?)i>', r'<\1i-title>', session.title)
+        return re.sub(r'<(/?)i>', r'<\1i-title>', Output.strTitle(self, session))
 
     def markupTitle(self, session, text):
         return '<ss-title>%s</ss-title>' % text if text else ''
