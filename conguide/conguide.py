@@ -56,6 +56,7 @@ import guidebook
 import count
 import changes
 import problems
+import backup
 
 # search the working directory for [input file importer]
 sys.path[0:0] = '.'
@@ -222,6 +223,13 @@ def main():
     parser_problems.add_argument('--duration', action='store', default='12hr',
                                  help='what duration is "too long" (default 12hr)')
     parser_problems.set_defaults(func=problems.main)
+
+    # backup
+    parser_backup = subparsers.add_parser('backup',
+                                         help='back up important files')
+    parser_backup.add_argument('files', nargs=argparse.REMAINDER,
+                               help='extra files to back up')
+    parser_backup.set_defaults(func=backup.main)
 
     # parse that command line
     args = parser.parse_args()
