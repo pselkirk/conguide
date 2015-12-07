@@ -16,6 +16,8 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+from __future__ import print_function
+
 import argparse
 
 import config
@@ -80,10 +82,7 @@ def report(name, hash, limit):
         while (len(hash[key]) < limit):
             hash[key].append(0)        # pad
         for val in hash[key]:
-            if config.PY3:
-                exec("print(val, end='\t')")
-            else:
-                exec("print '%d\t' % val,")
+            print(val, end='\t')
         print(key)
 
 def main(args):
@@ -94,10 +93,7 @@ def main(args):
             count(fn, i)
 
     for n in nitems:
-        if config.PY3:
-            exec("print(n, end='\t')")
-        else:
-            exec("print '%d\t' % n,")
+        print(n, end='\t')
     print('program items')
     limit = len(args.files)
     report('day', day, limit)

@@ -69,6 +69,9 @@ class Session(object):
 
         try:
             level = row['level']
+        except KeyError:
+            level = None
+        else:
             try:
                 level = Level.levels[level]
             except AttributeError:
@@ -89,8 +92,6 @@ class Session(object):
                 level = Level(row['level'])
                 Level.levels[level.name] = level
                 Level.levels[level.name] = level
-        except KeyError:
-            level = None
 
         try:
             room = Room.rooms[row['room']]
