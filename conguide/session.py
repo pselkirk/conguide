@@ -207,5 +207,5 @@ def read(fn):
     try:
         filereader = importlib.import_module(value)
     except ImportError:
-        filereader = importlib.import_module('.' + value, 'conguide')
+        filereader = importlib.import_module('conguide.' + value)
     return filereader.read(fn)
