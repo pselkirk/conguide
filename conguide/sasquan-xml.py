@@ -59,11 +59,16 @@ import config
 from participant import Participant
 from session import Session
 
+sessions = []
+participants = {}
+
 def read(fn):
     """ Read an XML file, return a list of sessions and a dict of participants. """
 
-    sessions = []
-    participants = {}
+    global sessions, participants
+
+    if sessions:
+        return (sessions, participants)
 
     #for timeslot in xml.etree.ElementTree.parse(fn).getroot():
     parser = xml.etree.ElementTree.XMLParser(encoding='utf-8')

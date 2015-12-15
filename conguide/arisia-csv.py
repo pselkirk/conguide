@@ -23,6 +23,9 @@ import re
 
 from conguide import config, participant, session
 
+sessions = []
+participants = {}
+
 def csv_reader(fn):
     """Create a CSV reader. This works around differences between Python 2.7 and
     3.x handling of UTF-8.
@@ -43,8 +46,10 @@ def csv_reader(fn):
 def read(fn):
     """ Read a CSV file, return a list of sessions and a dict of participants. """
 
-    sessions = []
-    participants = {}
+    global sessions, participants
+
+    if sessions:
+        return (sessions, participants)
 
     reader = csv_reader(fn)
     for row in reader:
