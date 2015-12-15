@@ -57,7 +57,7 @@ import count
 import changes
 import problems
 import backup
-from __init__ import __version__
+from __init__ import __prog__, __version__
 
 # search the working directory for [input file importer]
 sys.path[0:0] = '.'
@@ -114,7 +114,7 @@ def add_io(parser):
 
 def main():
     # command line
-    parser = argparse.ArgumentParser(add_help=False, prog='conguide')
+    parser = argparse.ArgumentParser(add_help=False, prog=__prog__)
     parser.set_defaults(func=all_reports)
     subparsers = parser.add_subparsers()
 
