@@ -28,12 +28,10 @@ Of course you need InDesign, Illustrator (for the maps), and Photoshop
 
 (Or you could run Scribus, Inkscape, and Gimp; let me know how that goes.)
 
-At various points, this code has been tested with python 2.7 and 3.4.
-
 On native Windows, I use Cygwin's python. However, I've recently switched
 to running Windows 7 in a virtual machine on Ubuntu Linux. I run all the
 python scripts in Linux, and import the generated files into InDesign in
-the VM. See
+the VM. (This is not insane!) See
 http://www.prtfl.io/muellerwolfram/blog/2013/1/23/how-to-use-photoshop-in-ubuntu
 for hints about how to set this up.
 
@@ -54,7 +52,7 @@ along.
 Data Sources
 ------------
 
-pocketprogram.csv - This is the primary data file, the result of
+``pocketprogram.csv`` - This is the primary data file, the result of
 running a database report.
 
 Log into Zambia (zambia.arisia.org). Make sure you've got the Staff View,
@@ -77,9 +75,9 @@ any two data dumps.
 scheduled each day, etc. This can be run against a single data dump, or
 multiple data dumps, if you want to compare.
 
-``conguide featured`` - When run with '--research', this identifies likely
-candidates for the "Featured Events" list, formatted for easy insertion
-into the [featured] section of arisia.cfg.
+``conguide featured`` - When run with ``--research``, this identifies
+likely candidates for the "Featured Events" list, formatted for easy
+insertion into the ``[featured]`` section of conguide.cfg.
 
 
 Generating the Output Files
@@ -121,7 +119,7 @@ window into the schedule story. This should import the xml data into
 the story, and apply all the paragraph and character styles.
 
 Post-Import Cleanup
-```````````````````
+~~~~~~~~~~~~~~~~~~~
 
 Look for long title lines, or even titles that bump into the room
 name. First select the title and room, and try to adjust the tracking,
@@ -223,7 +221,7 @@ Other content
 -------------
 
 Cover
-`````
+~~~~~
 
 We get some bit of GOH artwork from the Publications div head. This is
 often last-minute, and may involve some scrounging among the scraps
@@ -238,12 +236,12 @@ cover, in a font that complements the artwork. When laying out the
 cover, don't forget to leave room for the bleed tab labels.
 
 Maps
-````
+~~~~
 
 The maps are created and edited in Illustrator. I've carefully
-organized each one into 3 layers: Lines (i.e. walls), Hotel labels
+organized each one into 3 layers: ``Lines`` (i.e. walls), ``Hotel labels``
 (room names, icons for bathrooms, escalators, and the like), and
-Arisia labels (how we're using each room, or locations of desks in
+``Arisia labels`` (how we're using each room, or locations of desks in
 lobbies).
 
 The maps are roughly but not obsessively to scale. There is
@@ -253,7 +251,7 @@ map, in the InDesign file. This allows us to move and tweak individual
 maps to fit on the printed page.
 
 Quick Reference
-```````````````
+~~~~~~~~~~~~~~~
 
 The QR is the what/when/where of the con, outside of the panel rooms.
 Skip considers this the most important 2 pages that we publish.
@@ -267,10 +265,10 @@ entire concom meeting to this (and inevitably uncover issues that need
 to be dealt with).
 
 Ads
-````
+~~~
 
 Dealers list, Artists list
-``````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Other deliverables
