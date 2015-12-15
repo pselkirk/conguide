@@ -278,7 +278,11 @@ class IndesignOutput(Output):
     def strTableTitle(self, gridslice):
         # This feels the wrong place to do this, but it's the first time
         # the IndesignOutput class gets to see the gridslice.
-        if not self.fixed:
+        if self.fixed:
+            nrow = len(filter(lambda room: room.major, set(Room.rooms.values())))
+            self.cheight = (self.theight - self.hheight) / nrow
+            print nrow
+        else:
             self.cheight = (self.theight - self.hheight) \
                            / len(gridslice.rooms)
             if self.cheight > self.cheight_max:
@@ -511,11 +515,9 @@ def write(output, unused=None):
                 room.gridsessions = []
             except AttributeError:
                 pass
-        nrow = 0
+
         for room in sorted(set(Room.rooms.values())):
             room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
-            if room.major:
-                nrow += 1
 
             # declare an array of half-hour blocks
             room.gridrow = [None for j in range((len(Day.days) + 1) * 24 * 2)]
@@ -584,11 +586,6 @@ def write(output, unused=None):
                     except (TypeError, AttributeError):
                         room.gridrow[off] = [session]
                     off += 1
-        # only really meaningful for IndesignOutput
-        try:
-            output.cheight = (output.theight - output.hheight) / nrow
-        except AttributeError:
-            pass
 
     def writeTable(gridslice):
         output.f.write(output.strTableTitle(gridslice))
