@@ -21,7 +21,7 @@ import re
 
 import config
 import output
-from room import Room
+from room import Level, Room
 from times import Day, Time, Duration
 
 class Slice(object):
@@ -42,7 +42,7 @@ class Slice(object):
 class Output(output.Output):
 
     def __init__(self, fn, fd=None, codec=None):
-        output.Output.__init__(self, fn, fd)
+        output.Output.__init__(self, fn, fd, codec)
         Output._readconfig(self)
 
     def _readconfig(self):
@@ -176,7 +176,7 @@ class HtmlOutput(Output):
     def strRowEnd(self):
         return '</tr>\n'
 
-    def strRowHeaderCell(self, text):
+    def strRowHeaderCell(self, text, room=None):
         if text:
             text = text.replace('\n', '<br />')
         return self.strHeaderCell(text)
@@ -189,7 +189,7 @@ class HtmlOutput(Output):
             text = '&nbsp;'
         return '<th>%s</th>' % text
 
-    def strTextCell(self, nrow, ncol, text):
+    def strTextCell(self, nrow, ncol, text, room=None):
         return '<td rowspan="%d" colspan="%d" class="white">%s</td>\n' % \
             (nrow, ncol, text)
 
@@ -210,6 +210,23 @@ class IndesignOutput(Output):
         Output.__init__(self, fn, codec='cp1252')
         self._readconfig()
         self.f.write('<ASCII-WIN>\r\n<Version:8><FeatureSet:InDesign-Roman>')
+
+        for level in set(Level.levels.values()):
+            rooms = filter(lambda room: room.major, level.rooms)
+            try:
+                rooms[-1].last = True
+            except IndexError:
+                pass
+
+        if self.fixed:
+            nrow = len(filter(lambda room: room.major, set(Room.rooms.values())))
+            self.cheight = (self.theight - self.hheight) / nrow
+        else:
+            self.cheight = (self.theight - self.hheight) / len(gridslice.rooms)
+            if self.cheight > self.cheight_max:
+                self.cheight = self.cheight_max
+            elif self.cheight < self.cheight_min:
+                self.cheight = self.cheight_min
 
     def _readconfig(self):
         self.template = copy.copy(Output.template)
@@ -276,19 +293,6 @@ class IndesignOutput(Output):
         return self.cleanup(title)
 
     def strTableTitle(self, gridslice):
-        # This feels the wrong place to do this, but it's the first time
-        # the IndesignOutput class gets to see the gridslice.
-        if self.fixed:
-            nrow = len(filter(lambda room: room.major, set(Room.rooms.values())))
-            self.cheight = (self.theight - self.hheight) / nrow
-            print nrow
-        else:
-            self.cheight = (self.theight - self.hheight) \
-                           / len(gridslice.rooms)
-            if self.cheight > self.cheight_max:
-                self.cheight = self.cheight_max
-            elif self.cheight < self.cheight_min:
-                self.cheight = self.cheight_min
         return '<ParaStyle:Headline>%s\r\n' % gridslice.name
 
     def strTableStart(self, gridslice):
@@ -319,14 +323,16 @@ class IndesignOutput(Output):
     def strRowEnd(self):
         return '<RowEnd:>'
 
-    def strCellStart(self, tag, nrow, ncol):
+    def strCellStart(self, tag, nrow, ncol, cstyle_extra=None):
+        if cstyle_extra:
+            tag += cstyle_extra
         return '<CellStyle:Grid %s><CellStart:%d,%d>' % (tag, nrow, ncol)
 
     def strCellEnd(self):
         return '<CellEnd:>'
 
-    def strCell(self, tag, nrow, ncol, text):
-        str = self.strCellStart(tag, nrow, ncol)
+    def strCell(self, tag, nrow, ncol, text, cstyle_extra=None):
+        str = self.strCellStart(tag, nrow, ncol, cstyle_extra)
         if text:
             str += '<ParaStyle:Grid %s>%s' % (tag, text)
         str += self.strCellEnd()
@@ -338,19 +344,30 @@ class IndesignOutput(Output):
     def strTableHeaderCell(self, text):
         return self.strCell('time', 1, 1, text)
 
-    def strRowHeaderCell(self, text):
+    def strRowHeaderCell(self, text, room=None):
         if text:
+            # flag it if it's a minor room with scheduled sessions
+            if not room.major:
+                text = '<CharStyle:Red>' + text + '<CharStyle:>'
             # convert room usage styling
             text = text.replace('\n', '\r\n')
             text = text.replace('<i>', '<CharStyle:Room italic>')
             text = text.replace('</i>', '<CharStyle:>')
-        return self.strCell('room', 1, 1, text)
+        if room and not hasattr(room, 'last'):
+            cstyle_extra = ' no bottom'
+        else:
+            cstyle_extra = None
+        return self.strCell('room', 1, 1, text, cstyle_extra)
 
-    def strTextCell(self, nrow, ncol, text):
+    def strTextCell(self, nrow, ncol, text, room=None):
         if text:
             text = text.replace('\n', '\r\n')
             text = text.replace('<i>', '<CharStyle:Body italic>')
             text = text.replace('</i>', '<CharStyle:>')
+            # add roomname to minor rooms, to make it easier to move
+            # cell contents around in indesign
+            if room and not room.major:
+                text += '<CharStyle:Body italic> (%s)<CharStyle:>' % room.pubsname
         return self.strCell('text', nrow, ncol, text)
 
     def strGrayCell(self, ncol):
@@ -471,12 +488,12 @@ class XmlOutput(Output):
         #<Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="37.8864" aid5:cellstyle="Grid time"><time aid:pstyle="Grid time">8:30a</time></Cell>
         return self.strCell('time', 1, 1, self.cwidth, text)
 
-    def strRowHeaderCell(self, text):
+    def strRowHeaderCell(self, text, room=None):
         #<Cell aid:table="cell" aid:crows="1" aid:ccols="1" aid:ccolwidth="74.0448" aid5:cellstyle="Grid room"><room aid:pstyle="Grid room">Alcott</room></Cell>
         text = text.replace('<i>', '<i aid:cstyle="Room italic">')
         return self.strCell('room', 1, 1, self.hwidth, text)
 
-    def strTextCell(self, nrow, ncol, text):
+    def strTextCell(self, nrow, ncol, text, room=None):
         #<Cell aid:table="cell" aid:crows="1" aid:ccols="3" aid5:cellstyle="Grid text"><text aid:pstyle="Grid text">How to Survive the Nerd Convention Apocalypse</text></Cell>
         text = text.replace('<i>', '<i aid:cstyle="Body italic">')
         return self.strCell('text', nrow, ncol, None, text)
@@ -501,91 +518,6 @@ def write(output, unused=None):
 
     def offset(time):
         return (time.day.index * 24 * 2) + (time.hour * 2) + int((time.minute + 15) / 30)
-
-    def matrix():
-        for room in sorted(set(Room.rooms.values())):
-            room.gridsessions = room.sessions
-            try:
-                for r in room.gridrooms:
-                    sessions = []
-                    for s in room.sessions:
-                        s.room = r
-                        sessions.append(s)
-                    r.gridsessions += sessions
-                room.gridsessions = []
-            except AttributeError:
-                pass
-
-        for room in sorted(set(Room.rooms.values())):
-            room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
-
-            # declare an array of half-hour blocks
-            room.gridrow = [None for j in range((len(Day.days) + 1) * 24 * 2)]
-            for session in room.gridsessions:
-                if output.noprint and eval(output.noprint):
-                    if output.name == 'xml' or output.name == 'indesign':
-                        continue
-                    else:
-                        # XXX more local policy
-                        # XXX may also screw up anything else using session data after this
-                        session.duration = Duration('30min')
-                off = offset(session.time)
-                end = offset(session.time + session.duration)
-                if off == end:
-                    # This is a short session, where start and end round to
-                    # the same time. This can happen for a few reasons,
-                    # outlined below.
-                    startmin = session.time.minute
-                    endmin = startmin + session.duration.minute
-
-                    # a) If the session is less than 15 minutes, and falls
-                    # entirely in the first half of the slot (e.g. 4:00-4:10),
-                    # we need to push out the end time.
-                    if startmin < 15 or \
-                       startmin >= 30 and startmin < 45:
-                        end += 1
-
-                    # b) If the session is less than 15 minutes, and falls
-                    # entirely in the second half of the slot (e.g. 4:20-4:30),
-                    # we need to pull back the start time.
-                    elif endmin >= 15 and endmin <= 30 or \
-                         endmin >= 45 and endmin <= 60:
-                        off -= 1
-
-                    # c) If the session is less than 30 minutes, and crosses
-                    # an hour or half-hour boundary, we need to figure out
-                    # which slot it's more "in".
-                    else:
-                        if startmin < 30:
-                            # session crosses a half-hour boundary
-                            before = 30 - startmin
-                            after = endmin - 30
-                        else:
-                            # session crosses an hour boundary
-                            before = 60 - startmin
-                            after = endmin - 60
-                        if before > after:
-                            off -= 1
-                        else:
-                            end += 1
-                    # Note: This doesn't account for all short sessions.
-                    # If a session is less than 30 minutes, but crosses a
-                    # 15-minute mark (e.g. 4:05-4:25), start and end get
-                    # rounded in different directions, and it's handled the
-                    # same as a half-hour session.
-
-                while off < min(end, len(room.gridrow)):
-                    try:
-                        # two sessions share the same cell
-                        # iff they start at the same time
-                        if session.time - room.gridrow[off][0].time < Duration('30min'):
-                            room.gridrow[off].append(session)
-                        else:
-                            room.gridrow[off] = [session]
-                        #room.gridrow[off].append(session)
-                    except (TypeError, AttributeError):
-                        room.gridrow[off] = [session]
-                    off += 1
 
     def writeTable(gridslice):
         output.f.write(output.strTableTitle(gridslice))
@@ -613,7 +545,7 @@ def write(output, unused=None):
             rname = output.fillTemplate(output.template['room'], room.gridsessions[0])
         except KeyError:
             rname = str(room)
-        output.f.write(output.strRowHeaderCell(rname))
+        output.f.write(output.strRowHeaderCell(rname, room))
         j = gridslice.startIndex
         while j < gridslice.endIndex:
             ncol = colspan(gridslice, i, j)
@@ -647,7 +579,7 @@ def write(output, unused=None):
                 if s.time < gridslice.start:
                     title += '<i> (%s)</i>' % str(s.time).replace(':00', '')
                 titles.append(title)
-            output.f.write(output.strTextCell(nrow, ncol, ', '.join(titles)))
+            output.f.write(output.strTextCell(nrow, ncol, ', '.join(titles), room))
 
     def colspan(gridslice, i, j):
         row = gridslice.rooms[i].gridrow
@@ -672,15 +604,107 @@ def write(output, unused=None):
             gridslice.endIndex = offset(gridslice.end)
             gridslice.rooms = []
             for room in sorted(set(Room.rooms.values())):
-                try:
-                    unused = room.gridrow
-                except AttributeError:
-                    matrix()
                 if activeRoom(room, gridslice.startIndex, gridslice.endIndex) or \
                    (output.fixed and room.major):
                     gridslice.rooms.append(room)
             if activeGrid(gridslice):
                 writeTable(gridslice)
+
+matrix_done = False
+def matrix():
+    global matrix_done
+    if matrix_done:
+        return
+    matrix_done = True
+
+    def offset(time):
+        return (time.day.index * 24 * 2) + (time.hour * 2) + int((time.minute + 15) / 30)
+
+    for room in sorted(set(Room.rooms.values())):
+        room.gridsessions = room.sessions
+        try:
+            for r in room.gridrooms:
+                sessions = []
+                for s in room.sessions:
+                    s.room = r
+                    sessions.append(s)
+                r.gridsessions += sessions
+            room.gridsessions = []
+        except AttributeError:
+            pass
+
+    for room in sorted(set(Room.rooms.values())):
+        room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
+
+        # declare an array of half-hour blocks
+        room.gridrow = [None for j in range((len(Day.days) + 1) * 24 * 2)]
+        for session in room.gridsessions:
+            # config doesn't get read until we instantiate an output class.
+            # [grid no print] items can screw with counts for "major" rooms.
+            ##if output.noprint and eval(output.noprint):
+            ##    if output.name == 'xml' or output.name == 'indesign':
+            ##        continue
+            ##    else:
+            ##        # XXX more local policy
+            ##        # XXX may also screw up anything else using session data after this
+            ##        session.duration = Duration('30min')
+            off = offset(session.time)
+            end = offset(session.time + session.duration)
+            if off == end:
+                # This is a short session, where start and end round to
+                # the same time. This can happen for a few reasons,
+                # outlined below.
+                startmin = session.time.minute
+                endmin = startmin + session.duration.minute
+
+                # a) If the session is less than 15 minutes, and falls
+                # entirely in the first half of the slot (e.g. 4:00-4:10),
+                # we need to push out the end time.
+                if startmin < 15 or \
+                   startmin >= 30 and startmin < 45:
+                    end += 1
+
+                # b) If the session is less than 15 minutes, and falls
+                # entirely in the second half of the slot (e.g. 4:20-4:30),
+                # we need to pull back the start time.
+                elif endmin >= 15 and endmin <= 30 or \
+                     endmin >= 45 and endmin <= 60:
+                    off -= 1
+
+                # c) If the session is less than 30 minutes, and crosses
+                # an hour or half-hour boundary, we need to figure out
+                # which slot it's more "in".
+                else:
+                    if startmin < 30:
+                        # session crosses a half-hour boundary
+                        before = 30 - startmin
+                        after = endmin - 30
+                    else:
+                        # session crosses an hour boundary
+                        before = 60 - startmin
+                        after = endmin - 60
+                    if before > after:
+                        off -= 1
+                    else:
+                        end += 1
+                # Note: This doesn't account for all short sessions.
+                # If a session is less than 30 minutes, but crosses a
+                # 15-minute mark (e.g. 4:05-4:25), start and end get
+                # rounded in different directions, and it's handled the
+                # same as a half-hour session.
+
+            while off < min(end, len(room.gridrow)):
+                try:
+                    # two sessions share the same cell
+                    # iff they start at the same time
+                    if session.time - room.gridrow[off][0].time < Duration('30min'):
+                        room.gridrow[off].append(session)
+                    else:
+                        room.gridrow[off] = [session]
+                    #room.gridrow[off].append(session)
+                except (TypeError, AttributeError):
+                    room.gridrow[off] = [session]
+                off += 1
 
 def main(args):
     import session
@@ -689,6 +713,7 @@ def main(args):
         args.html = True
         args.indesign = True
         args.xml = True
+    matrix()
     for mode in ('html', 'indesign', 'xml'):
         if eval('args.' + mode):
             outfunc = eval('%sOutput' % mode.capitalize())
