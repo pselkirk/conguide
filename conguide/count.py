@@ -52,7 +52,7 @@ def count(fn, i):
 
     nitems.append(0)
 
-    (sessions, participants) = session.read(fn)
+    (sessions, participants) = session.read(fn, reset=True)
 
     for s in sessions:
         nitems[i] += 1

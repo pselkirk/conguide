@@ -42,7 +42,7 @@ def main(args):
     def read(fn):
         if not config.quiet:
             print('---- %s ----' % fn)
-        (sessions, participants) = session.read(fn)
+        (sessions, participants) = session.read(fn, reset=True)
         session_hash = {}
         for s in sessions:
             if args.by_title:

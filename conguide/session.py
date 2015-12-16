@@ -191,7 +191,7 @@ class Session(object):
                       (self.room < other.room)) or \
                      (self.index < other.index)))))))
 
-def read(fn):
+def read(fn, reset=False):
     # Read [participant change name] here because we want to check the
     # chname dict before instantiating the first participant, or even the
     # first session.
@@ -208,4 +208,7 @@ def read(fn):
         filereader = importlib.import_module(value)
     except ImportError:
         filereader = importlib.import_module('conguide.' + value)
+    if reset:
+        filereader.sessions = []
+        filereader.participants = {}
     return filereader.read(fn)
