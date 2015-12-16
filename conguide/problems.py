@@ -11,7 +11,8 @@ import session
 from times import Duration
 
 def main(args):
-    (sessions, participants) = session.read(config.get('input files', 'schedule'))
+    fn = args.infile or config.get('input files', 'schedule')
+    (sessions, participants) = session.read(fn)
     
     def check(text, func, duration=False):
         found = False

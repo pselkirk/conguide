@@ -21,6 +21,8 @@ import re
 
 import config
 import output
+import participant
+import session
 
 class Output(output.Output):
 
@@ -247,9 +249,8 @@ def write(output, participants):
 
 def main(args):
     (sessions, participants) = session.read(config.get('input files', 'schedule'))
-    if not args.infile:
-        args.infile = config.get('input files', 'bios')
-    participant.read(args.infile, participants)
+    fn = args.infile or config.get('input files', 'bios')
+    participant.read(fn, participants)
     if args.all:
         args.text = True
         args.html = True

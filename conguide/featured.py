@@ -216,7 +216,9 @@ def main(args):
             out('### %s' % research[i], ss[i])
         out("### GOH participant(s)", gohpartic)
 
-    (sessions, participants) = session.read(config.get('input files', 'schedule'))
+    fn = args.infile or config.get('input files', 'schedule')
+    (sessions, participants) = session.read(fn)
+
     if args.all:
         args.text = True
         args.html = True

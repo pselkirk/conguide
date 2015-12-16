@@ -43,9 +43,6 @@ class Output(object):
         Output._readconfig = lambda x: None
         # get some basic configuration from the config file
         Output.convention = config.get('convention', 'convention')
-        Output.goh = {}
-        for name in re.split(r',\s*', config.get('convention', 'goh')):
-            Output.goh[name] = True
         try:
             Output.start = time.strptime(config.get('convention', 'start'), '%Y-%m-%d')
             # time.struct_time(tm_year=2014, tm_mon=1, tm_mday=17, tm_hour=0,

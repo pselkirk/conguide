@@ -69,6 +69,7 @@ def all_reports(args):
     featured.main(args)
     tracks.main(args)
     grid.main(args)
+    bios.main(args)
     if args.xml:
         try:
             f = codecs.open(config.get('output files xml', 'conguide'),
@@ -239,14 +240,11 @@ def main():
     config.debug = args.debug
     config.quiet = args.quiet
     config.cfgfile = args.cfg
-    try:
-        if args.infile:
-            config.set('input files', 'schedule', args.infile)
-        else:
-            args.infile = config.get('input files', 'schedule')
-    except AttributeError:
-        pass
-    config.source_date = time.ctime(os.path.getmtime(config.get('input files', 'schedule')))
+
+    if not hasattr(args, 'infile'):
+        args.infile = None
+    fn = args.infile or config.get('input files', 'schedule')
+    config.source_date = time.ctime(os.path.getmtime(fn))
 
     # run the reports
     args.func(args)

@@ -23,6 +23,7 @@ import config
 import output
 from room import Level, Room
 from times import Day, Time, Duration
+import session
 
 class Slice(object):
     # start and end are Time (with day)
@@ -41,7 +42,7 @@ class Slice(object):
 
 class Output(output.Output):
 
-    def __init__(self, fn, fd=None, codec=None):
+    def __init__(self, fn, fd=None, codec='utf-8'):
         output.Output.__init__(self, fn, fd, codec)
         Output._readconfig(self)
 
@@ -707,8 +708,8 @@ def matrix():
                 off += 1
 
 def main(args):
-    import session
-    (sessions, participants) = session.read(config.get('input files', 'schedule'))
+    fn = args.infile or config.get('input files', 'schedule')
+    (sessions, participants) = session.read(fn)
     if args.all:
         args.html = True
         args.indesign = True

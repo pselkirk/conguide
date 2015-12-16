@@ -218,7 +218,8 @@ def write(output, sessions):
         output.f.write(output.strTrackSessions((k, v)))
 
 def main(args):
-    (sessions, participants) = session.read(config.get('input files', 'schedule'))
+    fn = args.infile or config.get('input files', 'schedule')
+    (sessions, participants) = session.read(fn)
     if args.all:
         args.text = True
         args.html = True
