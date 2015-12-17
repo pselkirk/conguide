@@ -5,7 +5,6 @@
 import argparse
 import re
 
-import cmdline
 import config
 import session
 from times import Duration
@@ -37,7 +36,7 @@ def main(args):
     
     check('room "Other"', lambda s: s.room.name == 'Other')
     check('all uppercase', lambda s: s.title.isupper())
-    check('bogus m-dash', lambda s: re.search(r'\S-\s', s.title))
+    #check('bogus m-dash', lambda s: re.search(r'\S-\s', s.title))
     check('day in title', lambda s: re.search(r'\wday\W', s.title))
     check('[bracket text] in title', lambda s: re.search(r'[\[\]]', s.title))
     check('lowercase words in title', lower)

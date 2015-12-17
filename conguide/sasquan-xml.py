@@ -190,10 +190,16 @@ def cleanup(field, minimal=False):
     return field
 
 if __name__ == '__main__':
-    import cmdline
+    import argparse
 
+    parser = argparse.ArgumentParser()
     config.CFG = 'sasquan.cfg'
-    args = cmdline.cmdline(io=True, modes=False)
+    parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
+                        help='config file (default "%s")' % config.CFG)
+    parser.add_argument('--infile', action='store',
+                        help='input file name')
+    args = parser.parse_args()
+    config.cfgfile = args.cfg
 
     # Read [participant change name] here because we want to check the
     # chname dict before instantiating the first participant, or even the
@@ -205,7 +211,7 @@ if __name__ == '__main__':
     except config.NoSectionError:
         pass
 
-    (sessions, participants) = read(args.infile)
+    (sessions, participants) = read(args.infile or config.get('input files', 'schedule'))
 
     for s in sessions:
         print('%04d' % s.index)

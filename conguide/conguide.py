@@ -241,8 +241,6 @@ def main():
     config.quiet = args.quiet
     config.cfgfile = args.cfg
 
-    if not hasattr(args, 'infile'):
-        args.infile = None
     fn = args.infile or config.get('input files', 'schedule')
     config.source_date = time.ctime(os.path.getmtime(fn))
 

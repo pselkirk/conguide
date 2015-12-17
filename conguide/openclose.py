@@ -13,17 +13,24 @@
 import argparse
 import re
 
-import cmdline
 import config
 import session
 from times import Day, Duration
 
-parent = cmdline.cmdlineParser(modes=False)
-parser = argparse.ArgumentParser(add_help=False, parents=[parent])
+parser = argparse.ArgumentParser()
+parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
+                    help='config file (default "%s")' % config.CFG)
+parser.add_argument('-q', '--quiet', action='store_true',
+                    help='suppress warning messages')
+parser.add_argument('--infile', action='store',
+                    help='input file name')
 parser.add_argument('--raw', action='store_true',
                     help='print raw opening and closing entries')
-args = cmdline.cmdline(parser, modes=False)
-session.read(config.get('input files', 'schedule'))
+args = parser.parse_args()
+config.cfgfile = args.cfg
+config.quiet = args.quiet
+
+session.read(args.infile or config.get('input files', 'schedule'))
 
 exprs = []
 try:

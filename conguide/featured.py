@@ -177,9 +177,6 @@ def main(args):
         # with at least one GOH participant, formatted for cut-and-paste into
         # arisia.cfg. Note this is just a starting point, and often misses
         # things like the Masquerade.
-        #
-        # XXX one current glitch is that cmdline.py will barf if --research
-        # is given without an output mode, even though we don't use it
         research = []
         try:
             for unused, expr in config.items('featured research'):

@@ -3,19 +3,41 @@
 """ find overnight sessions (entirely within 'late night' slices) """
 # fold this into grid.py eventually
 
+import argparse
 import re
 
-import cmdline
 import config
 import session
 from times import Day, Time
 
+parser = argparse.ArgumentParser(add_help=False)
+parser.add_argument('-?', '--help', action='help',
+                    help='show this help message and exit')
+parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
+                    help='config file (default "%s")' % config.CFG)
+parser.add_argument('-q', '--quiet', action='store_true',
+                    help='suppress warning messages')
+parser.add_argument('-h', '--html', action='store_true',
+                    help='html output')
+parser.add_argument('-x', '--xml', action='store_true',
+                    help='InDesign xml output')
+parser.add_argument('-i', '--indesign', action='store_true',
+                    help='InDesign tagged text output')
+parser.add_argument('--infile', action='store',
+                    help='input file name')
+args = parser.parse_args()
+config.cfgfile = args.cfg
+config.quiet = args.quiet
+if args.html + args.xml + args.indesign != 1:
+    print('error: exactly one output mode must be specified\n')
+    parser.print_help()
+    exit(1)
+
+session.read(args.infile or config.get('input files', 'schedule'))
+
 overnight = {}
 day = None
 t24 = Time('24:00')
-
-args = cmdline.cmdline()
-session.read(config.get('input files', 'schedule'))
 
 for mode in ('html', 'xml', 'indesign'):
     if eval('args.' + mode):

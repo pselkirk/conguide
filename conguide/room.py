@@ -104,9 +104,13 @@ class Room(Level):
         return self.pubsname
 
 if __name__ == '__main__':
-    import cmdline
+    import argparse
 
-    args = cmdline.cmdline(io=True, modes=False)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
+                        help='config file (default "%s")' % config.CFG)
+    args = parser.parse_args()
+    config.cfgfile = args.cfg
 
     # force reading of config
     r = Room('unused')
