@@ -112,7 +112,7 @@ class Time(object):
             else:
                 raise ValueError(
                     'invalid initialization string for Time: \'%s\'' % string)
-        self.session = []
+        self.sessions = []
         self.day = day
 
     def __lt__(self, other):

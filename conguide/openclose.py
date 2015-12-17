@@ -49,7 +49,7 @@ for day in Day.days:
     print(day)
     openclose = []
     for time in day.time:
-        for session in time.session:
+        for session in time.sessions:
             # [grid no print]
             # title ends with = 'Open', 'Opens', 'Close', 'Closes', 'Lunch', 'Dinner'
             if noprint and eval(noprint):

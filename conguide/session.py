@@ -63,7 +63,7 @@ class Session(object):
             Session.curtime = (row['time'], time)
             day.time.append(time)
         self.time = time
-        time.session.append(self)
+        time.sessions.append(self)
 
         self.duration = Duration(row['duration'])
 

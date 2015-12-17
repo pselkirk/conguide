@@ -54,7 +54,7 @@ for mode in ('html', 'xml', 'indesign'):
                         overnight = {}
                         for time in day.time:
                             if time >= start and time < end:
-                                for s in time.session:
+                                for s in time.sessions:
                                     if time + s.duration < end:
                                         try:
                                             overnight[s.room].append(s)
