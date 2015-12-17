@@ -78,10 +78,13 @@ class Output(output.Output):
     def strSessions(self, trsessions):
         ss = []
         for s in trsessions[1]:
-            ss.append(self.fillTemplate(self.template['session'], s))
+            ss.append(self.markupSession(self.fillTemplate(self.template['session'], s)))
         return '\n'.join(ss)
 
     def markupSessions(self, trsessions, text):
+        return text
+
+    def markupSession(self, text):
         return text
 
     def strTitle(self, session):
@@ -190,6 +193,9 @@ class XmlOutput(Output):
 
     def markupTrack(self, trsessions, text):
         return '<tr-name>%s</tr-name>' % text if text else ''
+
+    def markupSession(self, text):
+        return '<tr-session>%s</tr-session>' % text if text else ''
 
     def markupIndex(self, session, text):
         return '<tr-index>%s</tr-index>' % text if text else ''
