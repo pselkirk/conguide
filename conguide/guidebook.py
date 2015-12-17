@@ -31,6 +31,70 @@ from room import Room
 import session as SESSION
 from times import Day
 
+def check(args):
+
+    def read(fn):
+        if config.PY3:
+            f = open(fn, 'rt', encoding='utf-8', newline='')
+        else:
+            f = open(fn, 'rb')
+        reader = csv.DictReader(f)
+        rows = []
+        for row in reader:
+            if not config.PY3:
+                for key in row:
+                    row[key] = row[key].decode('utf-8')
+            rows.append(row)
+        return rows
+
+    titles = {}
+    for row in read('guidebook.csv'):
+        title = row['Session Title']
+        if title in titles:
+            print('duplicate session title "%s"' % title)
+        else:
+            titles[title] = 0
+
+    names = {}
+    for row in read('guidebook-bios.csv'):
+        name = row['Name']
+        if name in names:
+            print('duplicate name "%s"' % name)
+        else:
+            names[name] = 0
+
+    for row in read('guidebook-links.csv'):
+        name = row['Item Name (Optional)']
+        title = row['Link To Session Name (Optional)']
+        if not name in names:
+            print('name "%s" not found in guidebook-bios.csv' % name)
+        else:
+            names[name] += 1
+        if not title in titles:
+            print('title "%s" not found in guidebook.csv' % title)
+        else:
+            titles[title] += 1
+
+    for name, count in names.items():
+        if not count:
+            print('no sessions for "%s"' % name)
+
+    if args.verbose:
+        for title, count in titles.items():
+            if not count:
+                print('no participants for "%s"' % title)
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('guidebook',
+                                   help='generate the csv files for Guidebook')
+    parser.add_argument('--infile', action='store',
+                                  help='input file name')
+    parser.add_argument('--check', action='store_true',
+                                  help='check the generated guidebook csv files')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                                  help='verbose output')
+    parser.set_defaults(func=main)
+
 def main(args):
     if args.check:
         check(args)
@@ -130,56 +194,3 @@ def main(args):
     sched.close()
     links.close()
     bios.close()
-
-def check(args):
-
-    def read(fn):
-        if config.PY3:
-            f = open(fn, 'rt', encoding='utf-8', newline='')
-        else:
-            f = open(fn, 'rb')
-        reader = csv.DictReader(f)
-        rows = []
-        for row in reader:
-            if not config.PY3:
-                for key in row:
-                    row[key] = row[key].decode('utf-8')
-            rows.append(row)
-        return rows
-
-    titles = {}
-    for row in read('guidebook.csv'):
-        title = row['Session Title']
-        if title in titles:
-            print('duplicate session title "%s"' % title)
-        else:
-            titles[title] = 0
-
-    names = {}
-    for row in read('guidebook-bios.csv'):
-        name = row['Name']
-        if name in names:
-            print('duplicate name "%s"' % name)
-        else:
-            names[name] = 0
-
-    for row in read('guidebook-links.csv'):
-        name = row['Item Name (Optional)']
-        title = row['Link To Session Name (Optional)']
-        if not name in names:
-            print('name "%s" not found in guidebook-bios.csv' % name)
-        else:
-            names[name] += 1
-        if not title in titles:
-            print('title "%s" not found in guidebook.csv' % title)
-        else:
-            titles[title] += 1
-
-    for name, count in names.items():
-        if not count:
-            print('no sessions for "%s"' % name)
-
-    if args.verbose:
-        for title, count in titles.items():
-            if not count:
-                print('no participants for "%s"' % title)

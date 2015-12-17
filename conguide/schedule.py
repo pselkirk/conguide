@@ -19,6 +19,7 @@
 import copy
 import re
 
+import conguide
 import config
 import output
 from room import Room
@@ -331,6 +332,15 @@ def write(output, sessions):
             writeTime(s)
             curtime = s.time
         writeSession(s)
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('schedule', add_help=False,
+                                   help='generate the "TV Guide" style listing')
+    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
+    conguide.add_io(parser)
+    parser.add_argument('--no-prune', dest='prune', action='store_false',
+                                 help='don\'t prune participants to save space (xml only)')
+    parser.set_defaults(func=main)
 
 def main(args):
     global prune

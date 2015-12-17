@@ -19,6 +19,7 @@
 import copy
 import re
 
+import conguide
 import config
 import output
 import participant
@@ -246,6 +247,13 @@ class XmlOutput(Output):
 def write(output, participants):
     for p in sorted(participants.values()):
         output.writeBio(p)
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('bios', add_help=False,
+                                   help='generate the program participant bios')
+    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
+    conguide.add_io(parser)
+    parser.set_defaults(func=main)
 
 def main(args):
     (sessions, participants) = session.read(config.get('input files', 'schedule'))

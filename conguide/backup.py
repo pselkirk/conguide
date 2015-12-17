@@ -18,11 +18,19 @@
 
 """ Back up important files. """
 
+import argparse
 import os, os.path
 import re
 import time
 
 import config
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('backup',
+                                   help='back up important files')
+    parser.add_argument('files', nargs=argparse.REMAINDER,
+                               help='extra files to back up')
+    parser.set_defaults(func=main)
 
 def main(args):
     debug = args.debug

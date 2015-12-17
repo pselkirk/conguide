@@ -9,6 +9,15 @@ import config
 import session
 from times import Duration
 
+def add_args(subparsers):
+    parser = subparsers.add_parser('problems',
+                                   help='find common problems in the data file')
+    parser.add_argument('--infile', action='store',
+                                 help='input file name')
+    parser.add_argument('--duration', action='store', default='12hr',
+                                 help='what duration is "too long" (default 12hr)')
+    parser.set_defaults(func=main)
+
 def main(args):
     fn = args.infile or config.get('input files', 'schedule')
     (sessions, participants) = session.read(fn)

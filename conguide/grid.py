@@ -19,6 +19,7 @@
 import copy
 import re
 
+import conguide
 import config
 import output
 from room import Level, Room
@@ -706,6 +707,13 @@ def matrix():
                 except (TypeError, AttributeError):
                     room.gridrow[off] = [session]
                 off += 1
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('grid', add_help=False,
+                                   help='generate the daily grids')
+    conguide.add_modes(parser, ['h', 'x', 'i', 'a'])
+    conguide.add_io(parser)
+    parser.set_defaults(func=main)
 
 def main(args):
     fn = args.infile or config.get('input files', 'schedule')

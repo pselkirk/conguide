@@ -19,6 +19,7 @@
 import copy
 import re
 
+import conguide
 import config
 import output
 import session
@@ -170,6 +171,15 @@ def write(output, sessions):
                 writeDay(s)
                 nextday = None
             writeSession(s)
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('featured', add_help=False,
+                                   help='generate the "featured event" listing')
+    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
+    conguide.add_io(parser)
+    parser.add_argument('--research', action='store_true',
+                                 help='identify likely candidates for "featured" list')
+    parser.set_defaults(func=main)
 
 def main(args):
     def research(sessions):

@@ -24,15 +24,7 @@ import session
 if not config.PY3:
     str = unicode
 
-def main(args):
-    if not args.files or len(args.files) > 2:
-        print('specify one or two data files')
-        exit(1)
-
-    if args.bios:
-        changes_bios(args)
-        return
-    
+def changes(args):
     if len(args.files) == 1:
         args.files.append(config.get('input files', 'schedule'))
     
@@ -218,3 +210,28 @@ def changes_bios(args):
         print('\npubsname changes:\n%s' % '\n'.join(ch_pubsname))
     if ch_bio:
         print('\nbio changes:\n%s' % '\n'.join(ch_bio))
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('changes',
+                                   help='compare data snapshots')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                                help='verbose output')
+    parser.add_argument('-s', '--sessionid', action='store_true',
+                                help='print session id')
+    parser.add_argument('-t', '--by_title', action='store_true',
+                                help='use session title instead of sessionid')
+    parser.add_argument('-b', '--bios', action='store_true',
+                                help='compare bios files rather than schedule files')
+    parser.add_argument('files', nargs=argparse.REMAINDER,
+                                help='one or more database files')
+    parser.set_defaults(func=main)
+
+def main(args):
+    if not args.files or len(args.files) > 2:
+        print('specify one or two data files')
+        exit(1)
+
+    if args.bios:
+        changes_bios(args)
+    else:
+        changes(args)

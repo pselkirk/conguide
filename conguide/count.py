@@ -85,6 +85,15 @@ def report(name, hash, limit):
             print(val, end='\t')
         print(key)
 
+def add_args(subparsers):
+    parser = subparsers.add_parser('count',
+                                   help='count sessions, rooms, etc.')
+    parser.add_argument('-v', '--verbose', action='store_true',
+                              help='verbose output')
+    parser.add_argument('files', nargs=argparse.REMAINDER,
+                              help='one or more data snapshots')
+    parser.set_defaults(func=main)
+
 def main(args):
     if not args.files:
         count(config.get('input files', 'schedule'), 0)

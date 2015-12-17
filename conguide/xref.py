@@ -19,6 +19,7 @@
 import copy
 import re
 
+import conguide
 import config
 import output
 import session
@@ -146,6 +147,13 @@ def write(output, participants):
     for p in sorted(participants.values()):
         if p.sessions:
             output.f.write(output.strXref(p))
+
+def add_args(subparsers):
+    parser = subparsers.add_parser('xref', add_help=False,
+                                   help='generate the program participant index')
+    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
+    conguide.add_io(parser)
+    parser.set_defaults(func=main)
 
 def main(args):
     fn = args.infile or config.get('input files', 'schedule')
