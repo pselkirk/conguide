@@ -1,10 +1,10 @@
 small:
 [x] go back to having session.read() return a list of sessions
 [x] templates for xref, featured, tracks
-[] templates for bios
+[x] templates for bios
 [] debug/warn wrapper functions
 [] harmonize configuration that gets eval'd
-[] test with Windows (Cygwin, CPython, ActivePython)
+[x] test with Windows (Cygwin, CPython, ActivePython)
 [] policy configs (e.g. "major" room threshold)
 [x] pocketprogram => conguide
 [x] default config file = conguide.cfg
@@ -18,7 +18,7 @@ small:
 
 medium:
 [x] drive individual scripts from conguide, e.g. 'conguide schedule'
-[] package/install
+[x] package/install
 [] profiling, optimization
 
 large:
