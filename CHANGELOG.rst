@@ -1,8 +1,20 @@
 Changelog
 =========
 
+0.9.2 (2015-12-17)
+------------------
+
+Fix
+~~~
+
+- Restore the way the InDesign doc expects to see the tracks in xml.
+
+- Fix the config for bios templates.
+
 0.9.1 (2015-12-16)
 ------------------
+
+First upload to PyPI.
 
 New
 ~~~

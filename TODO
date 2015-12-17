@@ -14,7 +14,7 @@ small:
 [x] make guidebook-check a sub-report of guidebook
 [] make each subcommand module responsible for its own subparser
 [] argument groups
-[] remove cmdline.py, convert anything that uses it
+[x] remove cmdline.py, convert anything that uses it
 
 medium:
 [x] drive individual scripts from conguide, e.g. 'conguide schedule'
