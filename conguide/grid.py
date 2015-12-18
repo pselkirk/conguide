@@ -554,7 +554,7 @@ def write(output, unused=None):
             # if this session was previously listed in an adjacent room, skip
             if row[j] and (i > 0) and \
                (gridslice.rooms[i-1].gridrow[j] == row[j]):
-                for i in range(ncol):
+                for k in range(ncol):
                     output.f.write(output.strCellBehind())
             else:
                 nrow = rowspan(gridslice, i, j)
