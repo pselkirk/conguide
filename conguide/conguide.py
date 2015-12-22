@@ -64,6 +64,8 @@ sys.path[0:0] = '.'
 
 def all_reports(args):
     # generate all reports
+    if args.all or (args.text + args.html + args.indesign + args.xml == 0):
+        args.text = args.html = args.indesign = args.xml = True
     schedule.main(args)
     xref.main(args)
     featured.main(args)

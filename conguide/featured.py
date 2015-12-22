@@ -225,11 +225,8 @@ def main(args):
 
     fn = args.infile or config.get('input files', 'schedule')
     (sessions, participants) = session.read(fn)
-
-    if args.all:
-        args.text = True
-        args.html = True
-        args.xml = True
+    if args.all or (args.text + args.html + args.xml == 0):
+        args.text = args.html = args.xml = True
     if hasattr(args, 'research'):
         research(sessions)
     else:

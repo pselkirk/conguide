@@ -718,10 +718,8 @@ def add_args(subparsers):
 def main(args):
     fn = args.infile or config.get('input files', 'schedule')
     (sessions, participants) = session.read(fn)
-    if args.all:
-        args.html = True
-        args.indesign = True
-        args.xml = True
+    if args.all or (args.html + args.indesign + args.xml == 0):
+        args.html = args.indesign = args.xml = True
     matrix()
     for mode in ('html', 'indesign', 'xml'):
         if eval('args.' + mode):

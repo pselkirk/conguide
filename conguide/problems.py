@@ -43,14 +43,21 @@ def main(args):
                 return True
         return False
     
+    def upper(s):
+        for w in s.title.split(' '):
+            if w.isupper() and len(w) > 3 and not re.search(r'\d', w) and \
+               w != 'SF/F' and w != 'LARP' and w != 'RPG' and w != 'BDSM' and w != 'D&D':
+                return True
+        return False
+    
     check('room "Other"', lambda s: s.room.name == 'Other')
-    check('all uppercase', lambda s: s.title.isupper())
     #check('bogus m-dash', lambda s: re.search(r'\S-\s', s.title))
+    check('lowercase words in title', lower)
+    check('uppercase words in title', upper)
     check('day in title', lambda s: re.search(r'\wday\W', s.title))
     check('[bracket text] in title', lambda s: re.search(r'[\[\]]', s.title))
-    check('lowercase words in title', lower)
-    #check('no description', lambda s: not s.description)
-    #check('no period', lambda s: re.search(r'\w$', s.description))
+    check('no description', lambda s: not s.description)
+    check('no period', lambda s: re.search(r'\w$', s.description))
     check('no duration', lambda s: s.duration == Duration('0'))
     check('negative duration', lambda s: s.duration < Duration('0'))
     check('long duration', lambda s: s.duration >= Duration(args.duration), duration=True)
