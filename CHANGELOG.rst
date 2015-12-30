@@ -10,6 +10,11 @@ Change
 - If report commands are run without an output mode specified, default to
   all modes rather than none. (e.g. ``conguide all`` == ``conguide all -a``)
 
+Fix
+~~~
+
+- Don't panic if duration field is empty.
+
 0.9.2 (2015-12-17)
 ------------------
 

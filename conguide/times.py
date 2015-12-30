@@ -207,16 +207,15 @@ class Duration(Time):
     """
     def __init__(self, string):
         self.day = None
+        self.hour = self.minute = 0
+        if not string:
+            return
         m = re.match(r'(\d{,2}) ?hr', string, flags=re.IGNORECASE)
         if m:
             self.hour = int(m.group(1))
-        else:
-            self.hour = 0
         m = re.search(r'(\d{,2}) ?min', string, flags=re.IGNORECASE)
         if m:
             self.minute = int(m.group(1))
-        else:
-            self.minute = 0
         if self.hour == 0 and self.minute == 0:
             # maybe this is in time format
             m = re.match(r'(\d{,2}):(\d{,2})', string)
