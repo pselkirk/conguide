@@ -61,7 +61,7 @@ for mode in ('html', 'xml', 'indesign'):
                                         except KeyError:
                                             overnight[s.room] = [s]
                                         if not s.room.usage:
-                                            s.room.usage = s.type.capitalize()
+                                            s.room.usage = '%s/%s' % (s.track, s.type)
                         if overnight:
                             print(Day.days[i-1])
                             for room in sorted(overnight):

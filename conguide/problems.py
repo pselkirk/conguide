@@ -57,7 +57,7 @@ def main(args):
     check('day in title', lambda s: re.search(r'\wday\W', s.title))
     check('[bracket text] in title', lambda s: re.search(r'[\[\]]', s.title))
     check('no description', lambda s: not s.description)
-    check('no period', lambda s: re.search(r'\w$', s.description))
+    check('no period', lambda s: (s.participants and re.search(r'\w$', s.description)))
     check('no duration', lambda s: s.duration == Duration('0'))
     check('negative duration', lambda s: s.duration < Duration('0'))
     check('long duration', lambda s: s.duration >= Duration(args.duration), duration=True)
