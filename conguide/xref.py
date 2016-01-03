@@ -133,6 +133,10 @@ class XmlOutput(Output):
         if not self.leaveopen:
             Output.__del__(self)
 
+    def cleanup(self, text):
+        # convert ampersand
+        return text.replace('&', '&amp;')
+
     def markupXref(self, text):
         return '<xref>%s</xref>' % text if text else ''
 
