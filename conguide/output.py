@@ -130,7 +130,10 @@ class Output(object):
                 else:
                     parens = False
                 if re.match(r'\w+', token):
-                    codestring = 'self.str%s(session)' % token.capitalize()
+                    if token.isupper():
+                        codestring = 'self.str%s(session, True)' % token.capitalize()
+                    else:
+                        codestring = 'self.str%s(session)' % token.capitalize()
                     if parens:
                         codestring = 'self.parenthesize(%s)' % codestring
                     codestring = 'self.markup%s(session, %s)' % (token.capitalize(), codestring)
@@ -172,83 +175,93 @@ class Output(object):
                 fields.append(token)
         return ''.join(fields) if ok else ''
 
-    def strIndex(self, session):
+    def strIndex(self, session, upper=False):
         return str(session.index)
 
     def markupIndex(self, session, text):
         return text
 
-    def strDay(self, session):
-        return str(session.time.day)
+    def strDay(self, session, upper=False):
+        text = str(session.time.day)
+        return text.upper() if upper else text
 
     def markupDay(self, session, text):
         return text
 
-    def strTime(self, session):
-        return str(session.time)
+    def strTime(self, session, upper=False):
+        text = str(session.time)
+        return text.upper() if upper else text
 
     def markupTime(self, session, text):
         return text
 
-    def strDuration(self, session):
-        return str(session.duration)
+    def strDuration(self, session, upper=False):
+        text = str(session.duration)
+        return text.upper() if upper else text
 
     def markupDuration(self, session, text):
         return text
 
-    def strTitle(self, session):
-        return self.cleanup(session.title)
+    def strTitle(self, session, upper=False):
+        text = self.cleanup(session.title)
+        return text.upper() if upper else text
 
     def markupTitle(self, session, text):
         return text
 
-    def strTrack(self, session):
-        return self.cleanup(str(session.track))
+    def strTrack(self, session, upper=False):
+        text = self.cleanup(str(session.track))
+        return text.upper() if upper else text
 
     def markupTrack(self, session, text):
         return text
 
-    def strType(self, session):
-        return self.cleanup(str(session.type))
+    def strType(self, session, upper=False):
+        text = self.cleanup(str(session.type))
+        return text.upper() if upper else text
 
     def markupType(self, session, text):
         return text
 
-    def strLevel(self, session):
-        return self.cleanup(str(session.room.level)) if session.room.level else ''
+    def strLevel(self, session, upper=False):
+        text = self.cleanup(str(session.room.level)) if session.room.level else ''
+        return text.upper() if upper else text
 
     def markupLevel(self, session, text):
         return text
 
-    def strRoom(self, session):
-        return self.cleanup(str(session.room))
+    def strRoom(self, session, upper=False):
+        text = self.cleanup(str(session.room))
+        return text.upper() if upper else text
 
     def markupRoom(self, session, text):
         return text
 
-    def strUsage(self, session):
-        return self.cleanup(session.room.usage) if session.room.usage else ''
+    def strUsage(self, session, upper=False):
+        text = self.cleanup(session.room.usage) if session.room.usage else ''
+        return text.upper() if upper else text
 
     def markupUsage(self, session, text):
         return text
 
-    def strIcons(self, session):
+    def strIcons(self, session, upper=False):
         return ''
 
     def markupIcons(self, session, text):
         return text
 
-    def strDescription(self, session):
-        return self.cleanup(session.description)
+    def strDescription(self, session, upper=False):
+        text = self.cleanup(session.description)
+        return text.upper() if upper else text
 
     def markupDescription(self, session, text):
         return text
 
-    def strParticipants(self, session):
+    def strParticipants(self, session, upper=False):
         if session.participants:
             pp = []
             for p in session.participants:
-                name = self.strParticipant(p)
+                name = self.strParticipant(p, upper)
                 try:
                     name = self.markupParticipant(p, name)
                 except AttributeError:
@@ -263,13 +276,14 @@ class Output(object):
     def markupParticipants(self, session, text):
         return text
 
-    def strParticipant(self, participant):
-        return self.cleanup(participant.__str__())
+    def strParticipant(self, participant, upper=False):
+        text = self.cleanup(participant.__str__())
+        return text.upper() if upper else text
 
     def markupParticipant(self, participant, text):
         return text
 
-    def strTags(self, session):
+    def strTags(self, session, upper=False):
         try:
             return '#%s' % ', #'.join(session.tags) if session.tags else ''
         except AttributeError:

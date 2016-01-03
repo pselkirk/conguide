@@ -10,6 +10,8 @@ Change
 - Add config option to sort participants in schedule listing. (Zambia defaults
   to random ordering, Grenadine defaults to moderator first, then random.)
 
+- Restore support for uppercase rendering of fields in templates.
+
 Fix
 ~~~
 
