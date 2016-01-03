@@ -115,6 +115,15 @@ def get(section, option):
     except configparser.NoOptionError as e:
         raise NoOptionError(e)
 
+def getboolean(section, option):
+    readConfig(cfgfile)
+    try:
+        return cfg.getboolean(section, option)
+    except configparser.NoSectionError as e:
+        raise NoSectionError(e)
+    except configparser.NoOptionError as e:
+        raise NoOptionError(e)
+
 def getfloat(section, option):
     readConfig(cfgfile)
     try:

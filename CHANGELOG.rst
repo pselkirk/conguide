@@ -1,6 +1,21 @@
 Changelog
 =========
 
+0.9.4 (2016-01-02)
+------------------
+
+Change
+~~~~~~
+
+- Add config option to sort participants in schedule listing. (Zambia defaults
+  to random ordering, Grenadine defaults to moderator first, then random.)
+
+Fix
+~~~
+
+- Escape ampersand in xref xml output - participant names (group names) might
+  have an ampersand, who knew?
+
 0.9.3 (2015-12-30)
 ------------------
 

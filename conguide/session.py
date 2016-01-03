@@ -140,8 +140,8 @@ class Session(object):
                 participants[name] = p
             self.participants.append(p)
             p.sessions.append(self)
-        # XXX local policy
-        #self.participants = sorted(self.participants)
+        if Session.sort_participants:
+            self.participants = sorted(self.participants)
 
         self.moderators = []
         for name in row['moderators']:
@@ -179,6 +179,14 @@ class Session(object):
             for (sessionid, unused) in config.items('session do not print'):
                 Session.noprint[sessionid] = True
         except config.NoSectionError:
+            pass
+
+        # This is a schedule option, which would be more appropriately handled
+        # in session.py, but it's just easier to do the sorting here, once.
+        Session.sort_participants = False
+        try:
+            Session.sort_participants = config.getboolean('schedule sort participants', 'sort')
+        except (config.NoSectionError, config.NoOptionError):
             pass
 
     def __lt__(self, other):
