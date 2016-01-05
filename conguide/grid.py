@@ -622,20 +622,19 @@ def matrix():
     def offset(time):
         return (time.day.index * 24 * 2) + (time.hour * 2) + int((time.minute + 15) / 30)
 
-    for room in sorted(set(Room.rooms.values())):
+    # two passes to set up gridsessions:
+    # first, atomic rooms that are not subdivided, that will have a row in the grid
+    for room in filter(lambda room: not hasattr(room, 'gridrooms'), Room.rooms.values()):
         room.gridsessions = room.sessions
-        try:
-            for r in room.gridrooms:
-                sessions = []
-                for s in room.sessions:
-                    s.room = r
-                    sessions.append(s)
-                r.gridsessions += sessions
-            room.gridsessions = []
-        except AttributeError:
-            pass
+    # second, rooms that are combinations of other rooms
+    # e.g. Grand A and Grand B are sometimes used separately, sometimes together as Grand AB,
+    # so the grid will only have rows for A and B
+    for room in filter(lambda room: hasattr(room, 'gridrooms'), Room.rooms.values()):
+        for r in room.gridrooms:
+   	    r.gridsessions += room.sessions
+        room.gridsessions = []
 
-    for room in sorted(set(Room.rooms.values())):
+    for room in Room.rooms.values():
         room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
 
         # declare an array of half-hour blocks
