@@ -30,6 +30,8 @@ class Session(object):
 
     def __init__(self, row, participants=None):
         self._readconfig()
+        if row['sessionid'] in Session.noprint:
+            return	# importer will test for empty instance
         if row['room'] in Session.chroom:
             row['room'] = Session.chroom[row['room']]
         if row['sessionid'] in Session.chroom:

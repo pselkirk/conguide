@@ -136,7 +136,11 @@ def read(fn):
                 row[k] = cleanup(row[k], minimal)
 
             # make a new session from this data
-            sessions.append(session.Session(row, participants))
+            s = session.Session(row, participants)
+            # if session is in [session do not print], the instance doesn't get
+            # initialized, and we can drop it (should we explicitly delete it?)
+            if hasattr(s, 'sessionid'):
+                sessions.append(s)
 
     # sort
     sessions = sorted(sessions)
