@@ -227,7 +227,7 @@ def main(args):
     (sessions, participants) = session.read(fn)
     if args.all or (args.text + args.html + args.xml == 0):
         args.text = args.html = args.xml = True
-    if hasattr(args, 'research'):
+    if hasattr(args, 'research') and args.research:
         research(sessions)
     else:
         for mode in ('text', 'html', 'xml'):
