@@ -142,13 +142,16 @@ class Session(object):
                 participants[name] = p
             self.participants.append(p)
             p.sessions.append(self)
-        if Session.sort_participants:
-            self.participants = sorted(self.participants)
-
         self.moderators = []
         for name in row['moderators']:
             p = participants[name]
             self.moderators.append(p)
+        if Session.sort_participants:
+            if Session.sort_participants == 'yes' or Session.sort_participants == 'strict':
+                self.participants = sorted(self.participants)
+            elif Session.sort_participants == 'moderator':
+                self.participants = sorted(self.moderators) + \
+                                    sorted(set(self.participants).difference(self.moderators))
 
     def _readconfig(self):
         Session._readconfig = lambda x: None
@@ -185,9 +188,9 @@ class Session(object):
 
         # This is a schedule option, which would be more appropriately handled
         # in session.py, but it's just easier to do the sorting here, once.
-        Session.sort_participants = False
+        Session.sort_participants = None
         try:
-            Session.sort_participants = config.getboolean('schedule sort participants', 'sort')
+            Session.sort_participants = config.get('schedule sort participants', 'sort')
         except (config.NoSectionError, config.NoOptionError):
             pass
 

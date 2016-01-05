@@ -1,14 +1,14 @@
 Changelog
 =========
 
-0.9.4 (2016-01-02)
+0.9.4 (2016-01-05)
 ------------------
 
 Change
 ~~~~~~
 
-- Add config option to sort participants in schedule listing. (Zambia defaults
-  to random ordering, Grenadine defaults to moderator first, then random.)
+- Add a config option to sort participants in schedule listing.
+  Supported modes are strict sorting, and moderator-first.
 
 - Restore support for uppercase rendering of fields in templates.
 
@@ -17,6 +17,8 @@ Fix
 
 - Escape ampersand in xref xml output - participant names (group names) might
   have an ampersand, who knew?
+
+- Implement the code behind '[session do not print]'.
 
 0.9.3 (2015-12-30)
 ------------------
