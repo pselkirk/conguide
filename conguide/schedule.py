@@ -159,7 +159,6 @@ class HtmlOutput(Output):
         for day in Day.days:
             dd.append('<a href="#%s">%s</a>' % (day.name, day.name))
         self.f.write('<div class="center">\n<p><b>%s</b></p>\n</div>\n' % ' - '.join(dd))
-        self.curday = None
 
     def _readconfig(self):
         self.template = copy.copy(Output.template)
@@ -182,7 +181,7 @@ class HtmlOutput(Output):
         return text
 
     def markupSession(self, session, text):
-        return '<p><a name="%s"></a>\n<dl>%s</dl></p>' % (session.sessionid, text)
+        return '<p><a name="%s"></a>\n%s</p>' % (session.sessionid, text)
 
     def markupParticipant(self, participant, name):
         try:
