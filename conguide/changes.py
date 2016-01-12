@@ -65,7 +65,12 @@ def changes(args):
     
     for s in sorted(sessions[1].values()):
         if not s.sessionid in sessions[0]:
-            new.append(session_header(s))
+            if args.verbose:
+                new.append('%s:\n\t%s {%s}' % \
+                           (session_header(s), s.description,
+                            ', '.join(map(str, s.participants))))
+            else:
+                new.append(session_header(s))
     
     for s in sorted(sessions[0].values()):
         sh = session_header(s)
@@ -131,6 +136,9 @@ def changes(args):
     if ch_time:
         print('\ntime changes (%d):\n%s' % \
               (len(ch_time), '\n'.join(ch_time)))
+    if ch_duration:
+        print('\nduration changes (%d):\n%s' % \
+              (len(ch_duration), '\n'.join(ch_duration)))
     if ch_room:
         print('\nroom changes (%d):\n%s' % \
               (len(ch_room), '\n'.join(ch_room)))
