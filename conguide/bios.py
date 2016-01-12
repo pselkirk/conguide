@@ -46,7 +46,13 @@ class Output(output.Output):
         except config.NoSectionError:
             pass
 
-    def writeBio(self, participant):
+    def strBioEntry(self, participant):
+        return self.markupBioEntry(self.fillTemplate(self.template['bio'], participant)) + '\n'
+
+    def markupBioEntry(self, text):
+        return text
+
+    def strBio(self, participant):
         boldname = self.bold(participant)
         try:
             bio = participant.bio
@@ -107,9 +113,19 @@ class Output(output.Output):
                 if config.debug:
                     print('no match: ' + participant.name)
                 bio = u'%s\u2014%s' % (boldname, bio)
+        return self.cleanup(bio)
 
-        self.f.write(self.strBio(participant, bio))
-        self.f.write(self.strSessions(participant))
+    def markupBio(self, participant, text):
+        return text
+
+    def strSessions(self, participant):
+        ss = []
+        for s in participant.sessions:
+            ss.append(self.fillTemplate(self.template['session'], s))
+        return '\n'.join(ss)
+
+    def markupSessions(self, participant, text):
+        return text
 
 class TextOutput(Output):
 
@@ -134,14 +150,14 @@ class TextOutput(Output):
     def bold(self, text):
         return '**%s**' % text
 
-    def strBio(self, participant, bio):
-        return self.wrapper.fill(self.cleanup(bio)) + '\n'
+    def markupBioEntry(self, text):
+        return text + '\n'
 
-    def strSessions(self, participant):
-        ss = []
-        for s in participant.sessions:
-            ss.append(s.sessionid)
-        return '{%s}\n\n' % ', '.join(ss)
+    def markupBio(self, participant, bio):
+        return self.wrapper.fill(bio)
+
+    def markupSessions(self, participant, text):
+        return text.replace('\n', ', ')
 
 class HtmlOutput(Output):
 
@@ -171,9 +187,7 @@ class HtmlOutput(Output):
     def bold(self, text):
         return '<b>%s</b>' % text
 
-    def strBio(self, participant, bio):
-        bio = self.cleanup(bio)
-
+    def markupBio(self, participant, bio):
         # add a link to the participant's website or email address
         def repl(matchobj):
             url = matchobj.group(0)
@@ -194,16 +208,12 @@ class HtmlOutput(Output):
                      r'[a-zA-Z0-9\-_:\/\.~%]*)',
                      repl, bio, flags=re.I)
 
-        return '<a name="%s"></a>\n<p>%s ' % \
+        return '<a name="%s"></a>\n%s ' % \
             (re.sub(r'\W', '', participant.__str__()), bio)
 
-    def strSessions(self, participant):
-        ss = []
-        for s in participant.sessions:
-            ss.append('<dd><a href="%s#%s">%s</a>\n</dd>' % \
-                      (config.get('output files html', 'schedule'),
-                       s.sessionid, self.cleanup(s.title)))
-        return '<i>\n<dl>\n%s\n</dl>\n</i></p>\n' % '\n'.join(ss)
+    def markupTitle(self, session, title):
+        return '<a href="%s#%s">%s</a>' % \
+            (config.get('output files html', 'schedule'), session.sessionid, title)
 
 class XmlOutput(Output):
 
@@ -234,19 +244,14 @@ class XmlOutput(Output):
     def bold(self, text):
         return '<bold>%s</bold>' % text
 
-    def strBio(self, participant, bio):
-        # suppress empty bios
-        if bio == self.bold(participant.__str__()):
-            return ''
-        else:
-            return '<bio>%s</bio>\n' % self.cleanup(bio)
+    # XXX want local policy config to suppress empty bios
 
-    def strSessions(self, participant):
-        return ''
+    def markupBioEntry(self, text):
+        return '<bio>%s</bio>' % text
 
 def write(output, participants):
     for p in sorted(participants.values()):
-        output.writeBio(p)
+        output.f.write(output.strBioEntry(p))
 
 def add_args(subparsers):
     parser = subparsers.add_parser('bios', add_help=False,
