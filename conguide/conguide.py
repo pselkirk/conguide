@@ -57,6 +57,7 @@ import count
 import changes
 import problems
 import backup
+import dup
 from __init__ import __prog__, __version__
 
 # search the working directory for [input file importer]
@@ -64,7 +65,7 @@ sys.path[0:0] = '.'
 
 def all_reports(args):
     # generate all reports
-    if args.all or (args.text + args.html + args.indesign + args.xml == 0):
+    if args.text + args.html + args.indesign + args.xml == 0:
         args.text = args.html = args.indesign = args.xml = True
     schedule.main(args)
     xref.main(args)
@@ -153,6 +154,7 @@ def main():
     changes.add_args(subparsers)
     problems.add_args(subparsers)
     backup.add_args(subparsers)
+    dup.add_args(subparsers)
 
     # parse that command line
     args = parser.parse_args()

@@ -27,6 +27,8 @@ from times import Day, Duration
 import session
 
 prune = False
+dedup = False
+ses2idx = {}
 
 class Output(output.Output):
 
@@ -63,14 +65,14 @@ class Output(output.Output):
 
         Output.presentation = []
         try:
-            for (sessionid, unused) in config.items('schedule presentation'):
+            for sessionid, unused in config.items('schedule presentation'):
                 Output.presentation.append(sessionid)
         except config.NoSectionError:
             pass
 
         Output.combat = []
         try:
-            for (sessionid, unused) in config.items('schedule combat'):
+            for sessionid, unused in config.items('schedule combat'):
                 Output.combat.append(sessionid)
         except config.NoSectionError:
             pass
@@ -91,15 +93,25 @@ class Output(output.Output):
 
         Output.nopartic = []
         try:
-            for (sessionid, unused) in config.items('schedule no participants'):
+            for sessionid, unused in config.items('schedule no participants'):
                 Output.nopartic.append(sessionid)
         except config.NoSectionError:
             pass
 
         Output.nodescr = []
         try:
-            for (sessionid, unused) in config.items('schedule no description'):
+            for sessionid, unused in config.items('schedule no description'):
                 Output.nodescr.append(sessionid)
+        except config.NoSectionError:
+            pass
+
+        Output.dedup = {}
+        try:
+            for sessionid, src in config.items('schedule deduplicate'):
+                try:
+                    Output.dedup[sessionid] = src
+                except ValueError:
+                    pass
         except config.NoSectionError:
             pass
 
@@ -274,6 +286,14 @@ class XmlOutput(Output):
     def markupIcon(self, session, text):
         return '<ss-icon>%s</ss-icon>' % text if text else ''
 
+    def strDescription(self, session):
+        if dedup:
+            try:
+                return "See #%d for description." % ses2idx[Output.dedup[session.sessionid]]
+            except KeyError:
+                pass
+        return self.cleanup(session.description)
+
     def markupDescription(self, session, text):
         return '<ss-description>%s</ss-description>' % text if text else ''
 
@@ -286,8 +306,8 @@ class XmlOutput(Output):
                 pp = []
                 for p in session.participants:
                     pp.append(p.__str__())
-                print('%s: prune participants %s' % \
-                      (session.title, ', '.join(pp)))
+            return ''
+        if dedup and session.sessionid in Output.dedup:
             return ''
         return Output.strParticipants(self, session)
 
@@ -338,17 +358,33 @@ def add_args(subparsers):
     conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
     conguide.add_io(parser)
     parser.add_argument('--no-prune', dest='prune', action='store_false',
-                                 help='don\'t prune participants to save space (xml only)')
+                        help='don\'t prune participants to save space (xml only)')
+    parser.add_argument('--deduplicate', dest='dedup', action='store_true',
+                        help='Replace duplicate descriptions with "See #nnn for description." (xml only)')
     parser.set_defaults(func=main)
 
 def main(args):
-    global prune
-    if hasattr(args, 'prune'):
+    global prune, dedup, ses2idx
+    try:
         prune = args.prune
+    except AttributeError:
+        pass
+
+    try:
+        dedup = args.dedup
+    except AttributeError:
+        try:
+            dedup = config.getboolean('schedule deduplicate', 'deduplicate')
+        except:
+            pass
+
     fn = args.infile or config.get('input files', 'schedule')
     (sessions, participants) = session.read(fn)
     if args.all or (args.text + args.html + args.xml == 0):
         args.text = args.html = args.xml = True
+    if args.xml and dedup:
+        for s in sessions:
+            ses2idx[s.sessionid] = s.index
     for mode in ('text', 'html', 'xml'):
         if eval('args.' + mode):
             outfunc = eval('%sOutput' % mode.capitalize())
