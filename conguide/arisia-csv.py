@@ -60,7 +60,8 @@ def read(fn):
         row['tracks'] = [row['track']]
         row['tags'] = []
 
-        if row['participants']:
+        # second predicate is a bit of a hack - better to remove the list element in cleanup
+        if row['participants'] and row['participants'] != ' ':
             # chname has to operate on the full participants string
             # because some of the target names have commas in them
             for k, v in participant.Participant.chname.items():
