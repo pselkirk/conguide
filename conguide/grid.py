@@ -26,6 +26,9 @@ from room import Level, Room
 from times import Day, Time, Duration
 import session
 
+# Threshold for deciding whether a room is "major" (>= this number of sessions)
+major_threshold = 5
+
 class Slice(object):
     # start and end are Time (with day)
 
@@ -46,6 +49,8 @@ class Output(output.Output):
     def __init__(self, fn, fd=None, codec='utf-8'):
         output.Output.__init__(self, fn, fd, codec)
         Output._readconfig(self)
+        for room in Room.rooms.values():
+            room.major = False
 
     def _readconfig(self):
         Output._readconfig = lambda x: None
@@ -213,6 +218,9 @@ class IndesignOutput(Output):
         self._readconfig()
         self.f.write('<ASCII-WIN>\r\n<Version:8><FeatureSet:InDesign-Roman>')
 
+        for room in Room.rooms.values():
+            room.major = (len(room.gridsessions) >= major_threshold)
+
         for level in set(Level.levels.values()):
             rooms = filter(lambda room: room.major, level.rooms)
             try:
@@ -231,6 +239,7 @@ class IndesignOutput(Output):
                 self.cheight = self.cheight_min
 
     def _readconfig(self):
+        global major_threshold
         self.template = copy.copy(Output.template)
         try:
             for key, value in config.items('grid template indesign'):
@@ -242,6 +251,10 @@ class IndesignOutput(Output):
             self.fixed = (value == 'major')
         except (config.NoSectionError, config.NoOptionError):
             self.fixed = False
+        try:
+            major_threshold = int(config.get('grid indesign', 'major threshold'))
+        except (config.NoSectionError, config.NoOptionError):
+            pass
         try:
             self.twidth = config.getfloat('grid indesign', 'table width') * 72.0
         except config.NoOptionError:
@@ -581,7 +594,7 @@ def write(output, unused=None):
                 if s.time < gridslice.start:
                     title += '<i> (%s)</i>' % str(s.time).replace(':00', '')
                 titles.append(title)
-            output.f.write(output.strTextCell(nrow, ncol, ', '.join(titles), room))
+            output.f.write(output.strTextCell(nrow, ncol, '; '.join(titles), room))
 
     def colspan(gridslice, i, j):
         row = gridslice.rooms[i].gridrow
@@ -635,8 +648,6 @@ def matrix():
         room.gridsessions = []
 
     for room in Room.rooms.values():
-        room.major = (len(room.gridsessions) > 5)	# XXX make this threshold configurable
-
         # declare an array of half-hour blocks
         room.gridrow = [None for j in range((len(Day.days) + 1) * 24 * 2)]
         for session in room.gridsessions:
