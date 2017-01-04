@@ -1,6 +1,37 @@
 Changelog
 =========
 
+0.9.5 (2017-01-04)
+------------------
+
+New
+---
+
+- Add de-duplication. This includes a new ``dup`` command to detect
+  duplicate sessions, a new ``[schedule deduplicate]`` config section to
+  specify sessions, and code to replace text with ``See #nnn for
+  description``.
+
+- Add ``overnight`` command to list sessions that occur entirely within a
+  ``Late Night`` grid slice.
+
+- Add ``problems --short-description`` option.
+
+- Add ``count --terse option``.
+
+
+Change
+~~~~~~
+
+- Make 'major room' threshold configurable.
+
+Fix
+---
+
+- Avoid exception if ``[tracks title prune]`` doesn't exist.
+
+- Avoid creating a blank participant.
+
 0.9.4 (2016-01-05)
 ------------------
 
