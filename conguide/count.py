@@ -90,6 +90,8 @@ def add_args(subparsers):
                                    help='count sessions, rooms, etc.')
     parser.add_argument('-v', '--verbose', action='store_true',
                               help='verbose output')
+    parser.add_argument('-t', '--terse', action='store_true',
+                              help='terse output (only report the total)')
     parser.add_argument('files', nargs=argparse.REMAINDER,
                               help='one or more data snapshots')
     parser.set_defaults(func=main)
@@ -103,14 +105,16 @@ def main(args):
 
     for n in nitems:
         print(n, end='\t')
-    print('program items')
+    print('sessions')
+    if (args.terse):
+        return
     limit = len(args.files)
     report('day', day, limit)
     report('time', time, limit)
     if (args.verbose):
         report('duration', duration, limit)
-    report('level', level, limit)
-    report('room', room, limit)
+        report('level', level, limit)
+        report('room', room, limit)
     report('level,room', levelroom, limit)
     if (args.verbose):
         report('track', track, limit)
