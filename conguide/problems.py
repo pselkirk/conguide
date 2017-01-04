@@ -13,9 +13,11 @@ def add_args(subparsers):
     parser = subparsers.add_parser('problems',
                                    help='find common problems in the data file')
     parser.add_argument('--infile', action='store',
-                                 help='input file name')
-    parser.add_argument('--duration', action='store', default='12hr',
-                                 help='what duration is "too long" (default 12hr)')
+                        help='input file name')
+    parser.add_argument('--long-duration', action='store', dest='duration', default='12hr',
+                        help='what duration is "too long" (default 12hr)')
+    parser.add_argument('--short-description', type=int, action='store', dest='short', default=40,
+                        help = 'what description length is too short (default 40)')
     parser.set_defaults(func=main)
 
 def main(args):
@@ -54,10 +56,12 @@ def main(args):
     #check('bogus m-dash', lambda s: re.search(r'\S-\s', s.title))
     check('lowercase words in title', lower)
     check('uppercase words in title', upper)
-    check('day in title', lambda s: re.search(r'\wday\W', s.title))
+    check('day in title', lambda s: re.search(r'\wday', s.title))
     check('[bracket text] in title', lambda s: re.search(r'[\[\]]', s.title))
     check('no description', lambda s: not s.description)
-    check('no period', lambda s: (s.participants and re.search(r'\w$', s.description)))
+    check('short description (%d)' % args.short, lambda s: len(s.description) > 0 and len(s.description) < args.short)
+    check('[bracket text] in description', lambda s: re.search(r'[\[\]]', s.description))
+    check('no period at end of description', lambda s: (s.participants and re.search(r'\w$', s.description)))
     check('no duration', lambda s: s.duration == Duration('0'))
     check('negative duration', lambda s: s.duration < Duration('0'))
-    check('long duration', lambda s: s.duration >= Duration(args.duration), duration=True)
+    check('long duration (%s)' % args.duration, lambda s: s.duration >= Duration(args.duration), duration=True)
