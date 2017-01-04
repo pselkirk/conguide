@@ -58,6 +58,7 @@ import changes
 import problems
 import backup
 import dup
+import overnight
 from __init__ import __prog__, __version__
 
 # search the working directory for [input file importer]
@@ -155,6 +156,7 @@ def main():
     problems.add_args(subparsers)
     backup.add_args(subparsers)
     dup.add_args(subparsers)
+    overnight.add_args(subparsers)
 
     # parse that command line
     args = parser.parse_args()

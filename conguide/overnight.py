@@ -1,73 +1,72 @@
 #!/usr/bin/env python
 
-""" find overnight sessions (entirely within 'late night' slices) """
-# fold this into grid.py eventually
+""" Find overnight sessions (entirely within 'Late Night' slices). """
 
 import argparse
-import re
+import sys
 
 import config
 import session
 from times import Day, Time
 
-parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-?', '--help', action='help',
-                    help='show this help message and exit')
-parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
-                    help='config file (default "%s")' % config.CFG)
-parser.add_argument('-q', '--quiet', action='store_true',
-                    help='suppress warning messages')
-parser.add_argument('-h', '--html', action='store_true',
-                    help='html output')
-parser.add_argument('-x', '--xml', action='store_true',
-                    help='InDesign xml output')
-parser.add_argument('-i', '--indesign', action='store_true',
-                    help='InDesign tagged text output')
-parser.add_argument('--infile', action='store',
-                    help='input file name')
-args = parser.parse_args()
-config.cfgfile = args.cfg
-config.quiet = args.quiet
-if args.html + args.xml + args.indesign != 1:
-    print('error: exactly one output mode must be specified\n')
-    parser.print_help()
-    exit(1)
+def add_args(subparsers):
+    parser = subparsers.add_parser('overnight',
+                                   help='find overnight sessions')
+    parser.add_argument('--infile', action='store',
+                        help='input file name')
+    parser.add_argument('--start', action='store',
+                        help='start time')
+    parser.add_argument('--end', action='store',
+                        help='end time')
+    parser.set_defaults(func=main)
 
-session.read(args.infile or config.get('input files', 'schedule'))
-
-overnight = {}
-day = None
-t24 = Time('24:00')
-
-for mode in ('html', 'xml', 'indesign'):
-    if eval('args.' + mode):
+def main(args):
+    cfg_start = cfg_end = None
+    try:
         for section in config.sections():
-            if re.match('grid slice ' + mode, section):
-                name = config.get(section, 'name')
-                if name == 'Late Night':
-                    start = Time(config.get(section, 'start'))
-                    end = Time(config.get(section, 'end'))
-                    if start >= t24:
-                        start -= t24
-                        end -= t24
-                    for i, day in enumerate(Day.days):
-                        overnight = {}
-                        for time in day.time:
-                            if time >= start and time < end:
-                                for s in time.sessions:
-                                    if time + s.duration < end:
-                                        try:
-                                            overnight[s.room].append(s)
-                                        except KeyError:
-                                            overnight[s.room] = [s]
-                                        if not s.room.usage:
-                                            s.room.usage = '%s/%s' % (s.track, s.type)
-                        if overnight:
-                            print(Day.days[i-1])
-                            for room in sorted(overnight):
-                                print('Overnight %s (%s)' % (room.usage, room.name))
-                                for s in overnight[room]:
-                                    print('%s %s' % (s.time, s.title))
-                                print('')
-                            print('')
-                    exit(0)
+            if section.startswith('grid slice indesign'):
+                if config.get(section, 'name') == 'Late Night':
+                    cfg_start = config.get(section, 'start')
+                    cfg_end = config.get(section, 'end')
+                    break
+    except AttributeError:
+        pass
+    if not args.start:
+        args.start = cfg_start
+    if not args.end:
+        args.end = cfg_end
+    if not args.start or not args.end:
+        print 'error: Late Night slice not found in config, and start and/or end not specified on command line'
+        exit(1)
+
+    fn = args.infile or config.get('input files', 'schedule')
+    (sessions, participants) = session.read(fn)
+    
+    day = None
+    start = Time(args.start)
+    end = Time(args.end)
+    t24 = Time('24:00')
+    if start >= t24:
+        start -= t24
+        end -= t24
+
+    for i, day in enumerate(Day.days):
+        overnight = {}
+        for time in day.time:
+            if time >= start and time < end:
+                for s in time.sessions:
+                    if time + s.duration < end:
+                        try:
+                            overnight[s.room].append(s)
+                        except KeyError:
+                            overnight[s.room] = [s]
+                        if not s.room.usage:
+                            s.room.usage = '%s/%s' % (s.track, s.type)
+        if overnight:
+            print(Day.days[i-1])
+            for room in sorted(overnight):
+                print('Overnight %s (%s)' % (room.usage, room.name))
+                for s in overnight[room]:
+                    print('%s %s' % (s.time, s.title))
+                print('')
+            print('')
