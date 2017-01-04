@@ -98,7 +98,7 @@ class Output(output.Output):
                 title = re.sub(r' &', ',', title)
                 title = re.sub(r', and ', ', ', title)
         except AttributeError:
-            pass
+            title = session.title
         return self.cleanup(title)
 
 class TextOutput(Output):
