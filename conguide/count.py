@@ -16,6 +16,9 @@
 # TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+""" Show what rooms are in use, how many items are scheduled each day, etc.
+This can be run against a single data file, or multiple data files. """
+
 from __future__ import print_function
 
 import argparse
@@ -23,6 +26,7 @@ import argparse
 import config
 import session
 
+ncolumns = 0
 nitems = []
 day = {}
 time = {}
@@ -40,17 +44,13 @@ def incr(hash, value, i):
     try:
         hash[value][i] += 1
     except KeyError:
-        hash[value] = [0 for i in range(i+1)]
+        hash[value] = [0 for j in range(ncolumns)]
         hash[value][i] = 1
-    except IndexError:
-        hash[value].append(1)
 
 def count(fn, i):
 
     if config.debug:
         print('%d: %s' % (i, fn))
-
-    nitems.append(0)
 
     (sessions, participants) = session.read(fn, reset=True)
 
@@ -98,10 +98,14 @@ def add_args(subparsers):
 
 def main(args):
     if not args.files:
-        count(config.get('input files', 'schedule'), 0)
-    else:
-        for i, fn in enumerate(args.files):
-            count(fn, i)
+        args.files = (config.get('input files', 'schedule'))
+
+    global ncolumns, nitems
+    ncolumns = len(args.files)
+    nitems = [0 for i in range(ncolumns)]
+
+    for i, fn in enumerate(args.files):
+        count(fn, i)
 
     for n in nitems:
         print(n, end='\t')

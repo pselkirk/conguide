@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.9.6 (future)
+--------------
+
+Fix
+---
+
+- Fix a stupid error in multi-column counts.
+
 0.9.5 (2017-01-04)
 ------------------
 
