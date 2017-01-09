@@ -98,7 +98,7 @@ def add_args(subparsers):
 
 def main(args):
     if not args.files:
-        args.files = (config.get('input files', 'schedule'))
+        args.files = [config.get('input files', 'schedule')]
 
     global ncolumns, nitems
     ncolumns = len(args.files)

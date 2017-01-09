@@ -9,6 +9,8 @@ Fix
 
 - Fix a stupid error in multi-column counts.
 
+- Fix the default file if ``count`` is called without args.
+
 0.9.5 (2017-01-04)
 ------------------
 
