@@ -31,13 +31,15 @@ setup(
     long_description=long_description,
 
     # The project's main homepage.
-    url='http://conguide.psgd.org',
+    url='https://github.com/pselkirk/conguide',
 
     # Author details
     author='Paul Selkirk',
     author_email='paul@psgd.org',
 
     # Choose your license
+    # I like this one because it's concise and permissive (1-clause BSD),
+    # and I used to work for ISC, so it's what I'm used to. :)
     license='ISC',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -68,7 +70,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='sf-convention, publications',
+    keywords='sf-convention publications InDesign',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
