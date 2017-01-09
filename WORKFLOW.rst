@@ -97,35 +97,44 @@ or create a symbolic link and update that to point to the right file.)
 Statistics and Other Interesting Data
 -------------------------------------
 
-``conguide changes`` - Show changes from the last data file, or between
-any two data files. If one argument is given, it will compare the named
-file to the default input file (``pocketprogram.csv``). If two arguments
-are given, it will compare the two named files.
+``conguide changes``
+  Show changes from the last data file, or between any two data files. If
+  one argument is given, it will compare the named file to the default
+  input file (``pocketprogram.csv``). If two arguments are given, it will
+  compare the two named files.
 
-``conguide count`` - Show what rooms are in use, how many items are
-scheduled each day, etc. This can be run against a single data file, or
-multiple data files, if you want to compare. e.g. I like to compare versus
-this time last year, when we went to press last year, and where we're at
-right now.
+``conguide count``
+  Show what rooms are in use, how many items are scheduled each day,
+  etc. This can be run against a single data file, or multiple data files,
+  if you want to compare. For instance, I like to compare this time last
+  year, when we went to press last year, and where we're at right now.
+  If no argument is given, it will count the default input file
+  (``pocketprogram.csv``). If two or more arguments are given, it will
+  count the files in a tabular format.
 
-``conguide featured`` - When run with ``--research``, this identifies
-likely candidates for the "Featured Events" list, formatted for easy
-insertion into the ``[featured sessions]`` config section.
+``conguide featured``
+  When run with ``--research``, this identifies likely candidates for the
+  "Featured Events" list, formatted for easy insertion into the
+  ``[featured sessions]`` config section.
 
-``conguide problems`` - Find common problems in the data file.
+``conguide problems``
+  Find common problems in the data file.
 
-``conguide dup`` - Find duplicated/repeated sessions. If space is very
-tight in the book, it may be helpful to replace sessions with "See #nnn
-for description."
+``conguide dup``
+  Find duplicated/repeated sessions. If space is very tight in the book,
+  it may be helpful to replace sessions with "See #nnn for description."
+  Output is formatted for easy insertion into the ``[schedule deduplicate]``
+  config section.
 
-``conguide overnight`` - Find "overnight" sessions - ones that will only
-show in a Late Night grid, e.g. starting at or after 1:30am and ending
-at or before 8:30am.
+``conguide overnight``
+  Find "overnight" sessions - ones that will only show in a Late Night
+  grid, e.g. starting at or after 1:30am and ending at or before 8:30am.
 
 Generating the Pocket Program
 -----------------------------
 
 Run ``conguide all`` to generate the bulk of the book:
+
 - schedule
 - featured events
 - track list
@@ -191,7 +200,8 @@ full session (the first title) on the page.
 Grids
 -----
 
-Run ``conguide grid`` to generate the grids.
+Run ``conguide grid`` to generate the grids (if you want to do it
+separately from ``conguide all``).
 
 This emits ``grid.txt``, which is an InDesign tagged text file. (This is
 the one piece of the book which I can't do in XML, and not for lack of
@@ -286,13 +296,13 @@ Maps
 ~~~~
 
 The maps are created and edited in Illustrator. I've carefully
-organized each one into 3 layers: ``Lines`` (i.e. walls), ``Hotel labels``
+organized each one into 3 layers: ``Lines`` (walls), ``Hotel labels``
 (room names, icons for bathrooms, escalators, and the like), and
 ``Arisia labels`` (how we're using each room, or locations of desks in
-lobbies).
+lobby and prefunction areas).
 
 The maps are roughly but not obsessively to scale. There is a
-Westin-poster.ai that pulls together the maps into one cohesive hotel
+``Westin-poster.ai`` that pulls together the maps into one cohesive hotel
 map. Note that the Pocket Program has its own version of the overall
 map, in the InDesign file. This allows us to move and tweak individual
 maps to fit on the printed page.
@@ -370,10 +380,10 @@ HTML for website
 ~~~~~~~~~~~~~~~~
 
 ``conguide all -h`` generates html documents with cross-links: titles in
-the grid, the track list, the featured list, and the bios all link to
-session descriptions in the schedule; and participant names in the
-schedule link to the bios. Also, URLs and email addresses in the
-descriptions and the bios are automatically turned into links.
+the grid, track list, featured list, and bios all link to session
+descriptions in the schedule; and participant names in the schedule link
+to the bios. Also, URLs and email addresses in the descriptions and the
+bios are automatically turned into links.
 
 By convention, the file names in ``[output files html]`` do not have the
 ``.html`` extension, because we drop them into Drupal as page names.
@@ -382,9 +392,9 @@ Guidebook
 ~~~~~~~~~
 
 ``conguide guidebook`` creates the three .csv files that Guidebook
-needs. James van Zandt is responsible for liaising with guidebook.com
-and getting the files into their system. I don't much about the workflow
-beyond that.
+needs. James van Zandt is responsible for liaising with guidebook.com and
+getting the files into their system. I don't know anything about the
+workflow beyond that.
 
 Large Print
 ~~~~~~~~~~~
@@ -409,7 +419,7 @@ the Pocket Program has its own links to the map files; each one is laid
 out to its particular page size (8.5"x11" or 8"x10")).
 
 For the QR, open the website version of the book PDF (the one with
-spreads and no crop marks) in Acrobat Pro, and extract the maps page as
+spreads and no crop marks) in Acrobat Pro, and extract the QR page as
 a separate PDF (``Tools`` > ``Pages`` > ``Extract``). If you want to
 pretty it up a little, remove the bleed tab: ``Tools`` > ``Content`` >
 ``Edit Object``, click on the bleed tab, and hit delete. You can also
