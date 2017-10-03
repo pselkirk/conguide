@@ -52,7 +52,7 @@ def main(args):
     if not args.end:
         args.end = cfg_end
     if not args.start or not args.end:
-        print 'error: Late Night slice not found in config, and start and/or end not specified on command line'
+        print('error: Late Night slice not found in config, and start and/or end not specified on command line')
         exit(1)
 
     fn = args.infile or config.get('input files', 'schedule')

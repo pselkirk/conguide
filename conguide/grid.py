@@ -644,7 +644,7 @@ def matrix():
     # so the grid will only have rows for A and B
     for room in filter(lambda room: hasattr(room, 'gridrooms'), Room.rooms.values()):
         for r in room.gridrooms:
-   	    r.gridsessions += room.sessions
+            r.gridsessions += room.sessions
         room.gridsessions = []
 
     for room in Room.rooms.values():
