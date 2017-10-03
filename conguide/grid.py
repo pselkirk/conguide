@@ -219,14 +219,14 @@ class IndesignOutput(Output):
             room.major = (len(room.gridsessions) >= major_threshold)
 
         for level in set(Level.levels.values()):
-            rooms = filter(lambda room: room.major, level.rooms)
+            rooms = list(filter(lambda room: room.major, level.rooms))
             try:
                 rooms[-1].last = True
             except IndexError:
                 pass
 
         if self.fixed:
-            nrow = len(filter(lambda room: room.major, set(Room.rooms.values())))
+            nrow = len(set(filter(lambda room: room.major, set(Room.rooms.values()))))
             self.cheight = (self.theight - self.hheight) / nrow
         else:
             self.cheight = (self.theight - self.hheight) / len(gridslice.rooms)
