@@ -1,11 +1,22 @@
 Changelog
 =========
 
-0.9.6 (2017-01-09)
---------------
+0.9.7 (2017-10-03)
+------------------
 
 Fix
----
+~~~
+
+- Actually make this work in Python 3.x (d'oh).
+
+  To be clear, there's more I could do (e.g. new-style string formatting),
+  but this was about just getting it working, period.
+
+0.9.6 (2017-01-09)
+------------------
+
+Fix
+~~~
 
 - Fix a stupid error in multi-column counts.
 
@@ -15,7 +26,7 @@ Fix
 ------------------
 
 New
----
+~~~
 
 - Add de-duplication. This includes a new ``dup`` command to detect
   duplicate sessions, a new ``[schedule deduplicate]`` config section to
@@ -36,7 +47,7 @@ Change
 - Make 'major room' threshold configurable.
 
 Fix
----
+~~~
 
 - Avoid exception if ``[tracks title prune]`` doesn't exist.
 
