@@ -102,24 +102,3 @@ class Room(Level):
 
     def __str__(self):
         return self.pubsname
-
-if __name__ == '__main__':
-    import argparse
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,
-                        help='config file (default "%s")' % config.CFG)
-    args = parser.parse_args()
-    config.cfgfile = args.cfg
-
-    # force reading of config
-    r = Room('unused')
-    del Room.rooms['unused']
-
-    for r in sorted(Room.rooms.values()):
-        print('%s: %s' % (r.name, r.level))
-    print('')
-    for l in sorted(Level.levels.values()):
-        print(l.name)
-        for r in sorted(l.rooms):
-            print('\t' + r.name)
