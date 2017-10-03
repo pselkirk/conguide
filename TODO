@@ -1,28 +1,16 @@
 small:
-[x] go back to having session.read() return a list of sessions
-[x] templates for xref, featured, tracks
-[x] templates for bios
+[] re-test with Python 3.6
 [] debug/warn wrapper functions
 [] harmonize configuration that gets eval'd
-[x] test with Windows (Cygwin, CPython, ActivePython)
 [] policy configs (e.g. "major" room threshold)
-[x] pocketprogram => conguide
-[x] default config file = conguide.cfg
 [] environment variable for cmdline defaults (-q -c sasquan.cfg)
-[x] separate conguide.py into base class for reports, and main UI driver (/usr/bin)
-[x] make changes-bio a sub-report of changes
-[x] make guidebook-check a sub-report of guidebook
-[x] make each subcommand module responsible for its own subparser
 [] argument groups
-[x] remove cmdline.py, convert anything that uses it
 
 medium:
-[x] drive individual scripts from conguide, e.g. 'conguide schedule'
-[x] package/install
 [] profiling, optimization
 
 large:
 [] example data files, config, indesign files
-[] user documentation
+[] user documentation (partway there with WORKFLOW.rst)
 [] developer documentation (docstrings)
 (see doc/TODO)

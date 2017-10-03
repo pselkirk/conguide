@@ -61,8 +61,8 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
+        #'Programming Language :: Python :: 3',
+        #'Programming Language :: Python :: 3.4',
 
         # other classifiers
         'Environment :: Console',
@@ -95,7 +95,7 @@ setup(
     # installed, specify them here.  If using Python 2.6 or less, then these
     # have to be included in MANIFEST.in as well.
     package_data={
-        '': ['*.cfg', '../WORKFLOW.rst', '../CHANGELOG.rst'],
+        '': ['*.cfg', 'WORKFLOW.rst', 'CHANGELOG.rst'],
     },
 
     # Although 'package_data' is the preferred approach, in some case you may
