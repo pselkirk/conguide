@@ -74,6 +74,9 @@ class Day(object):
     def __ne__(self, other):
         return not self == other
 
+    def __hash__(self):
+        return self.index
+
     def __str__(self):
         return self.name
 
@@ -140,6 +143,9 @@ class Time(object):
 
     def __ne__(self, other):
         return not self == other
+
+    def __hash__(self):
+        return self.day.index * 24 + self.hour
 
     def __str__(self, mode=None):
         if mode == '24hr':
