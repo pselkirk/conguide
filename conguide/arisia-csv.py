@@ -108,6 +108,9 @@ def cleanup(field, minimal=False):
 
     elif (type(field) is str) or (not config.PY3 and type(field) is unicode):
         # convert all whitespace (including newlines) to single spaces
+        if not config.PY3:
+            # python 2.7 doesn't recognize non-breaking space as whitespace
+            field = field.replace(u'\u00a0', ' ')
         field = re.sub(r'\s+', ' ', field)
 
         # remove extraneous whitespace
