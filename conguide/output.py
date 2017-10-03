@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014-2015, Paul Selkirk
+# Copyright (c) 2014-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -24,7 +24,7 @@ import re
 import time
 import types
 
-import config
+from . import config
 
 class Output(object):
     """ Parent class for TextOutput etc. in schedule.py etc. """

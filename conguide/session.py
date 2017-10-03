@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014-2015, Paul Selkirk
+# Copyright (c) 2014-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -18,10 +18,10 @@
 
 import re
 
-import config
-from participant import Participant
-from room import Level, Room
-from times import Day, Time, Duration
+from . import config
+from .participant import Participant
+from .room import Level, Room
+from .times import Day, Time, Duration
 
 class Session(object):
 

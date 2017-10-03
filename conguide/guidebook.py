@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014-2015, Paul Selkirk
+# Copyright (c) 2014-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -24,12 +24,9 @@ import csv
 import re
 import time
 
-import config
-import featured
-import participant
-from room import Room
-import session as SESSION
-from times import Day
+from . import config, featured, participant, session as SESSION
+from .room import Room
+from .times import Day
 
 def check(args):
 

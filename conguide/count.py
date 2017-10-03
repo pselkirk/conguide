@@ -19,12 +19,14 @@
 """ Show what rooms are in use, how many items are scheduled each day, etc.
 This can be run against a single data file, or multiple data files. """
 
+# The print function is a standard feature as of Python 2.6, but it
+# doesn't include the "end=" syntax, which we need here.
+# (I'd conditionalize this, but that produces a SyntaxError.)
 from __future__ import print_function
 
 import argparse
 
-import config
-import session
+from . import config, session
 
 ncolumns = 0
 nitems = []

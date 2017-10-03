@@ -21,7 +21,7 @@
 import csv
 import re
 
-from conguide import config, participant, session
+from . import config, participant, session
 
 sessions = []
 participants = {}

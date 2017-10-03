@@ -19,12 +19,9 @@
 import copy
 import re
 
-import conguide
-import config
-import output
-from room import Level, Room
-from times import Day, Time, Duration
-import session
+from . import parserhelp, config, output, session
+from .room import Level, Room
+from .times import Day, Time, Duration
 
 # Threshold for deciding whether a room is "major" (>= this number of sessions)
 major_threshold = 5
@@ -721,8 +718,8 @@ def matrix():
 def add_args(subparsers):
     parser = subparsers.add_parser('grid', add_help=False,
                                    help='generate the daily grids')
-    conguide.add_modes(parser, ['h', 'x', 'i', 'a'])
-    conguide.add_io(parser)
+    parserhelp.add_modes(parser, ['h', 'x', 'i', 'a'])
+    parserhelp.add_io(parser)
     parser.set_defaults(func=main)
 
 def main(args):

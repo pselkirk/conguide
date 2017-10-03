@@ -21,9 +21,8 @@
 import argparse
 import re
 
-import config
-import session
-from times import Duration
+from . import config, session
+from .times import Duration
 
 def add_args(subparsers):
     parser = subparsers.add_parser('problems',

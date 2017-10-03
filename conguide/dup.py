@@ -20,8 +20,7 @@
 
 import argparse
 
-import config
-import session
+from . import config, session
 
 title = {}
 descr = {}

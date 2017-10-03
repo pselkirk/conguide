@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014-2015, Paul Selkirk
+# Copyright (c) 2014-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -22,9 +22,7 @@ import csv
 import difflib
 import re
 
-import config
-import session
-import participant
+from . import config, session, participant
 
 ps = []
 (sessions, participants) = session.read(config.get('input files', 'schedule'))

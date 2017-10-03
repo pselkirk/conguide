@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014-2015, Paul Selkirk
+# Copyright (c) 2014-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -19,10 +19,7 @@
 import copy
 import re
 
-import conguide
-import config
-import output
-import session
+from . import parserhelp, config, output, session
 
 class Output(output.Output):
 
@@ -175,8 +172,8 @@ def write(output, sessions):
 def add_args(subparsers):
     parser = subparsers.add_parser('featured', add_help=False,
                                    help='generate the "featured event" listing')
-    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
-    conguide.add_io(parser)
+    parserhelp.add_modes(parser, ['t', 'h', 'x', 'a'])
+    parserhelp.add_io(parser)
     parser.add_argument('--research', action='store_true',
                                  help='identify likely candidates for "featured" list')
     parser.set_defaults(func=main)

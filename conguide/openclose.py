@@ -13,9 +13,8 @@
 import argparse
 import re
 
-import config
-import session
-from times import Day, Duration
+from . import config, session
+from .times import Day, Duration
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-c', '--config', dest='cfg', default=config.CFG,

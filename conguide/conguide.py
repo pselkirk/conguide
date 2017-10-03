@@ -42,24 +42,10 @@ import os
 import sys
 import time
 
-import config
-import bios
-import featured
-import grid
-import output
-import participant
-import schedule
-import session
-import tracks
-import xref
-import guidebook
-import count
-import changes
-import problems
-import backup
-import dup
-import overnight
-from __init__ import __prog__, __version__
+from . import config, bios, featured, grid, output, participant, schedule, session, \
+    tracks, xref, guidebook, count, changes, problems, backup, dup, overnight, \
+    parserhelp
+from .__init__ import __prog__, __version__
 
 # search the working directory for [input file importer]
 sys.path[0:0] = '.'
@@ -90,33 +76,6 @@ def all_reports(args):
             f.write('</conguide>\n')
             f.close()
 
-def add_modes(parser, modes):
-    if 'h' in modes:
-        parser.add_argument('-?', '--help', action='help',
-                            help='show this help message and exit')
-    for mode in modes:
-        if mode == 't':
-            parser.add_argument('-t', '--text', action='store_true',
-                        help='text output')
-        elif mode == 'h':
-            parser.add_argument('-h', '--html', action='store_true',
-                                help='html output')
-        elif mode == 'x':
-            parser.add_argument('-x', '--xml', action='store_true',
-                                help='InDesign xml output')
-        elif mode == 'i':
-            parser.add_argument('-i', '--indesign', action='store_true',
-                                help='InDesign tagged text output')
-        elif mode == 'a':
-            parser.add_argument('-a', '--all', action='store_true',
-                                help='all output modes')
-
-def add_io(parser):
-    parser.add_argument('--infile', action='store',
-                        help='input file name')
-    parser.add_argument('--outfile', action='store',
-                        help='output file name')
-
 def main():
     # command line
     parser = argparse.ArgumentParser(add_help=False, prog=__prog__)
@@ -145,8 +104,8 @@ def main():
     # all of the previous reports at once
     parser_all = subparsers.add_parser('all', add_help=False,
                                         help='generate all reports')
-    add_modes(parser_all, ['t', 'h', 'x', 'i', 'a'])
-    add_io(parser_all)
+    parserhelp.add_modes(parser_all, ['t', 'h', 'x', 'i', 'a'])
+    parserhelp.add_io(parser_all)
     parser_all.set_defaults(func=all_reports)
 
     # more subcommands

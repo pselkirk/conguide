@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014-2015, Paul Selkirk
+# Copyright (c) 2014-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -23,7 +23,7 @@ import os, os.path
 import re
 import time
 
-import config
+from . import config
 
 def add_args(subparsers):
     parser = subparsers.add_parser('backup',

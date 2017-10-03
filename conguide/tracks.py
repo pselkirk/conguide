@@ -19,11 +19,8 @@
 import copy
 import re
 
-import conguide
-import config
-import output
-from room import Room
-import session
+from . import parserhelp, config, output, session
+from .room import Room
 
 class Output(output.Output):
 
@@ -227,8 +224,8 @@ def write(output, sessions):
 def add_args(subparsers):
     parser = subparsers.add_parser('tracks', add_help=False,
                                    help='generate the index by track or area')
-    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
-    conguide.add_io(parser)
+    parserhelp.add_modes(parser, ['t', 'h', 'x', 'a'])
+    parserhelp.add_io(parser)
     parser.set_defaults(func=main)
 
 def main(args):

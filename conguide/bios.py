@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2014-2015, Paul Selkirk
+# Copyright (c) 2014-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -19,11 +19,7 @@
 import copy
 import re
 
-import conguide
-import config
-import output
-import participant
-import session
+from . import parserhelp, config, output, participant, session
 
 class Output(output.Output):
 
@@ -256,8 +252,8 @@ def write(output, participants):
 def add_args(subparsers):
     parser = subparsers.add_parser('bios', add_help=False,
                                    help='generate the program participant bios')
-    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
-    conguide.add_io(parser)
+    parserhelp.add_modes(parser, ['t', 'h', 'x', 'a'])
+    parserhelp.add_io(parser)
     parser.set_defaults(func=main)
 
 def main(args):

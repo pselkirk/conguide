@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2015, Paul Selkirk
+# Copyright (c) 2015-2017, Paul Selkirk
 #
 # Permission to use, copy, modify, and/or distribute this software for
 # any purpose with or without fee is hereby granted, provided that the
@@ -53,11 +53,9 @@ The XML schema is like this::
 import re
 import xml.etree.ElementTree
 
-from conguide import config, participant, session
-
-import config
-from participant import Participant
-from session import Session
+from . import config
+from .participant import Participant
+from .session import Session
 
 sessions = []
 participants = {}

@@ -21,9 +21,8 @@
 import argparse
 import sys
 
-import config
-import session
-from times import Day, Time
+from . import config, session
+from .times import Day, Time
 
 def add_args(subparsers):
     parser = subparsers.add_parser('overnight',

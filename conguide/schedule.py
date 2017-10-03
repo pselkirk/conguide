@@ -19,12 +19,9 @@
 import copy
 import re
 
-import conguide
-import config
-import output
-from room import Room
-from times import Day, Duration
-import session
+from . import parserhelp, config, output, session
+from .room import Room
+from .times import Day, Duration
 
 prune = False
 dedup = False
@@ -355,8 +352,8 @@ def write(output, sessions):
 def add_args(subparsers):
     parser = subparsers.add_parser('schedule', add_help=False,
                                    help='generate the "TV Guide" style listing')
-    conguide.add_modes(parser, ['t', 'h', 'x', 'a'])
-    conguide.add_io(parser)
+    parserhelp.add_modes(parser, ['t', 'h', 'x', 'a'])
+    parserhelp.add_io(parser)
     parser.add_argument('--no-prune', dest='prune', action='store_false',
                         help='don\'t prune participants to save space (xml only)')
     parser.add_argument('--deduplicate', dest='dedup', action='store_true',
