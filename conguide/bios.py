@@ -247,7 +247,8 @@ class XmlOutput(Output):
 
 def write(output, participants):
     for p in sorted(participants.values()):
-        output.f.write(output.strBioEntry(p))
+        if p.sessions: # Don't list participants who don't have any sessions.
+            output.f.write(output.strBioEntry(p))
 
 def add_args(subparsers):
     parser = subparsers.add_parser('bios', add_help=False,
