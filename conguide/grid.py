@@ -280,6 +280,17 @@ class IndesignOutput(Output):
 
     def cleanup(self, text):
         text = Output.cleanup(self, text)
+        # According to a document downloaded from                                                               
+        # https://acdowd-designs.com/sfsu_access/indesign_cs4_taggedtext.pdf                                    
+        # this is the correct way to add "special" characters to InDesign tagged text.                          
+        # This avoids some problems with InDesign interpreting ASCII-WIN differently on                         
+	    # Macintosh.                                                                                            
+        text = text.replace(u'\u2013', '<0x2013>')
+        text = text.replace(u'\u2014', '<0x2014>')
+        text = text.replace(u'\u2018', '<0x2018>')
+        text = text.replace(u'\u2019', '<0x2019>')
+        text = text.replace(u'\u201c', '<0x201c>')
+        text = text.replace(u'\u201d', '<0x201d>')
         # convert italics
         text = text.replace('<i>', '<CharStyle:Body italic>')
         text = text.replace('</i>', '<CharStyle:>')
