@@ -295,7 +295,7 @@ class IndesignOutput(Output):
         else:
             return self.unichar_tag(ch)
 
-     def cleanup(self, text):
+    def cleanup(self, text):
         text = Output.cleanup(self, text)
         # According to a document downloaded from                                                               
         # https://acdowd-designs.com/sfsu_access/indesign_cs4_taggedtext.pdf                                    
