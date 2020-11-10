@@ -200,6 +200,14 @@ class HtmlOutput(Output):
     def strGrayCell(self, ncol):
         return '<td colspan="%d" class="gray">&nbsp;</td>\n' % ncol
 
+def add_char_range(the_set, startChar, endChar):
+    the_set |= set([chr(x) for x in range(ord(startChar), ord(endChar)+1)])
+
+BoringOldEnglishAlphabet = set(' ,.?:;!@<>_/()[]#%&*')
+add_char_range(BoringOldEnglishAlphabet, 'a', 'z')
+add_char_range(BoringOldEnglishAlphabet, 'A', 'Z')
+add_char_range(BoringOldEnglishAlphabet, '0', '9')
+
 class IndesignOutput(Output):
 
     name = 'indesign'
@@ -278,8 +286,27 @@ class IndesignOutput(Output):
             pass
         self.configSlice()
 
+    def unichar_tag(self, ch):
+        return '<0x%04x>' % (ord(ch))
+
+    def char_or_tag(self, ch):
+        if ch in BoringOldEnglishAlphabet:
+            return ch
+        else:
+            return self.unichar_tag(ch)
+
     def cleanup(self, text):
         text = Output.cleanup(self, text)
+        # According to a document downloaded from                                                               
+        # https://acdowd-designs.com/sfsu_access/indesign_cs4_taggedtext.pdf                                    
+        # the the correct way to add "special" characters to InDesign tagged text
+	# is to replace, for example, Unicode character 2013 with the string "<0x2013>".
+        # This avoids some problems with InDesign interpreting ASCII-WIN differently on                         
+	# Macintosh.                                                       
+	# The document lists a small selection of special characters to be tagged
+	# this way; but some experimenting with InDesign suggests that this will
+	# work at least for various accented letters and possibly generally.
+        text = ''.join([self.char_or_tag(ch) for ch in text])
         # convert italics
         text = text.replace('<i>', '<CharStyle:Body italic>')
         text = text.replace('</i>', '<CharStyle:>')

@@ -142,6 +142,8 @@ def read_bios(fn, participants):
             pubsname = participant.Participant.chname[pubsname]
         except (AttributeError, KeyError):
             pass
+        if ',' in pubsname:
+            print('Warning: pubsname with comma: %s' % pubsname)
         try:
             p = participants[pubsname]
         except KeyError:
