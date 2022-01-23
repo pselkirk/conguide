@@ -189,6 +189,24 @@ class HtmlOutput(Output):
         text = text.replace('\n', '<br/>\n')
         return text
 
+    '''
+    TODO: sanitize HTML 
+    We shall allow <i>tags.
+    We MIGHT allow <a> tags. If so, they will have target="_blank" added.
+    All other tags should be removed.
+    Other stray < and > characters should be replaced with the corresponding entity,
+    i.e. &lt; and &gt;. 
+    Existing entities in the text should not be clobbered. I.e., currently if 
+    the text includes &mdash; then the resulting text will include the nonsense &amp;mdash;.
+    Fix this!
+    For now, I have copied the inherited implementation to this class. Will replace with a
+    method that overrides with the correct implmentation. (Will have to fix cleanup() method
+    above as well. Also, work on strTitle(), almost the same (but excluding <a>).)
+    '''
+    def strDescription(self, session, upper=False):
+        text = self.cleanup(session.description)
+        return text.upper() if upper else text
+
     def markupSession(self, session, text):
         return '<p><a name="%s"></a>\n%s</p>' % (session.sessionid, text)
 
@@ -201,6 +219,9 @@ class HtmlOutput(Output):
             except config.NoOptionError:
                 href = None
         return '<a href="%s#%s">%s</a>' % (href, re.sub(r'\W', '', name), name) if href else name
+
+def charToEntity(ch):
+    return '&#%d;' % (ord(ch))
 
 class XmlOutput(Output):
 
@@ -283,6 +304,19 @@ class XmlOutput(Output):
     def markupIcon(self, session, text):
         return '<ss-icon>%s</ss-icon>' % text if text else ''
 
+    '''
+    TODO:
+    We will allow <i> tags but all other HTML tags must be removed. 
+    Do we want to remove the text inside <a>...</a>?
+    Do stray instances of < or > mess up InDesign's XML parsing? We can
+    replace with &lt; and &gt; respectively. (Tested with InDesign version 14 that
+    these entities are handled correctly.) 
+    If any other characters might cause trouble, replace them with entity numbers 
+    generated using the charToEntity utility function. 
+    What's the policy on entity names in Zambia descriptions (for example &mdash;?)
+    InDesign does not recognize these. So, ideally we would replace entity names
+    other than &lt; and &gt; with entity numbers.
+    '''
     def strDescription(self, session):
         if dedup:
             try:
